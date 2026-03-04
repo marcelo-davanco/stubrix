@@ -1,10 +1,10 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import { FolderOpen, ScrollText, FlaskConical } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { NavLink, Outlet } from "react-router-dom";
+import { FolderOpen, ScrollText, FlaskConical } from "lucide-react";
+import { cn } from "../lib/utils";
 
 const navItems = [
-  { to: '/', label: 'Projects', icon: FolderOpen, end: true },
-  { to: '/logs', label: 'Logs', icon: ScrollText },
+  { to: "/", label: "Projects", icon: FolderOpen, end: true },
+  { to: "/logs", label: "Logs", icon: ScrollText },
 ];
 
 export function Layout() {
@@ -23,10 +23,10 @@ export function Layout() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
                   isActive
-                    ? 'bg-primary/20 text-primary font-medium'
-                    : 'text-text-secondary hover:bg-white/5 hover:text-text-primary',
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-text-secondary hover:bg-white/5 hover:text-text-primary",
                 )
               }
             >
@@ -46,13 +46,3 @@ export function Layout() {
     </div>
   );
 }
-
-export function ProjectLayout() {
-  return (
-    <div className="flex h-full flex-col">
-      <Outlet />
-    </div>
-  );
-}
-
-

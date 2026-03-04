@@ -16,13 +16,20 @@ export class StatusService {
     private readonly wireMock: WireMockClientService,
     private readonly projects: ProjectsService,
   ) {
-    this.mocksDir = this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+    this.mocksDir =
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
   }
 
   async getStatus(): Promise<StatusResponse> {
-    const engine = (this.config.get<string>('MOCK_ENGINE') ?? 'wiremock') as 'wiremock' | 'mockoon';
+    const engine = (this.config.get<string>('MOCK_ENGINE') ?? 'wiremock') as
+      | 'wiremock'
+      | 'mockoon';
     const port = parseInt(this.config.get<string>('MOCK_PORT') ?? '8081', 10);
-    const controlPort = parseInt(this.config.get<string>('CONTROL_PORT') ?? '9090', 10);
+    const controlPort = parseInt(
+      this.config.get<string>('CONTROL_PORT') ?? '9090',
+      10,
+    );
     const proxyTarget = this.config.get<string>('PROXY_TARGET') ?? null;
 
     let engineStatus: 'running' | 'stopped' | 'error' = 'stopped';
@@ -31,8 +38,10 @@ export class StatusService {
     try {
       await this.wireMock.get('/settings');
       engineStatus = 'running';
-      const settings = await this.wireMock.get<{ record?: boolean; proxyBaseUrl?: string }>('/recordings/status');
-      recordMode = !!(settings as { status?: string }).status && (settings as { status?: string }).status === 'Recording';
+      const recStatus = await this.wireMock.get<{ status?: string }>(
+        '/recordings/status',
+      );
+      recordMode = recStatus.status === 'Recording';
     } catch {
       engineStatus = 'stopped';
     }
@@ -40,9 +49,10 @@ export class StatusService {
     const { total, byProject } = this.countMocksByProject();
     const allProjects = this.projects.findAll();
 
-    const mappingsDir = path.join(this.mocksDir, 'mappings');
     const filesDir = path.join(this.mocksDir, '__files');
-    const bodyFiles = fs.existsSync(filesDir) ? fs.readdirSync(filesDir).length : 0;
+    const bodyFiles = fs.existsSync(filesDir)
+      ? fs.readdirSync(filesDir).length
+      : 0;
 
     return {
       engine,
@@ -63,7 +73,9 @@ export class StatusService {
 
     if (!fs.existsSync(mappingsDir)) return { total: 0, byProject };
 
-    const files = fs.readdirSync(mappingsDir).filter((f) => f.endsWith('.json'));
+    const files = fs
+      .readdirSync(mappingsDir)
+      .filter((f) => f.endsWith('.json'));
     let total = 0;
 
     for (const file of files) {
