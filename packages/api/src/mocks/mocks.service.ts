@@ -95,10 +95,9 @@ export class MocksService {
   async create(projectId: string, dto: CreateMockDto): Promise<MockDetail> {
     this.projects.findOne(projectId);
 
-    const req = dto.request as Record<string, string>;
     const id = uuidv4();
-    const method = (req['method'] ?? 'GET').toLowerCase();
-    const rawUrl = req['url'] ?? req['urlPattern'] ?? 'unknown';
+    const method = (dto.request.method ?? 'GET').toLowerCase();
+    const rawUrl = dto.request.url ?? dto.request.urlPattern ?? 'unknown';
     const urlSlug = String(rawUrl)
       .replace(/[^a-z0-9]/gi, '_')
       .toLowerCase()
@@ -107,8 +106,8 @@ export class MocksService {
 
     const mapping: Mock = {
       id,
-      request: dto.request as unknown as Mock['request'],
-      response: dto.response as unknown as Mock['response'],
+      request: dto.request,
+      response: dto.response,
       metadata: { project: projectId },
     };
 
@@ -135,8 +134,8 @@ export class MocksService {
     const existing = this.findOne(projectId, id);
     const updated: Mock = {
       ...existing.mapping,
-      request: (dto.request as unknown as Mock['request']) ?? existing.mapping.request,
-      response: (dto.response as unknown as Mock['response']) ?? existing.mapping.response,
+      request: dto.request ?? existing.mapping.request,
+      response: dto.response ?? existing.mapping.response,
       metadata: { project: projectId },
     };
 

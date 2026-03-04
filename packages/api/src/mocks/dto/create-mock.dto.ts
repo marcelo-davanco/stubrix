@@ -1,13 +1,74 @@
-import { IsObject, IsOptional } from 'class-validator';
+import {
+  IsObject,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsNotEmpty,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import type { MockMetadata } from '@stubrix/shared';
 
-export class CreateMockDto {
-  @IsObject()
-  request: Record<string, unknown>;
+export class MockRequestDto {
+  @IsString()
+  @IsNotEmpty()
+  method: string;
 
-  @IsObject()
-  response: Record<string, unknown>;
+  @IsOptional()
+  @IsString()
+  url?: string;
+
+  @IsOptional()
+  @IsString()
+  urlPattern?: string;
+
+  @IsOptional()
+  @IsString()
+  urlPath?: string;
+
+  @IsOptional()
+  @IsString()
+  urlPathPattern?: string;
 
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, unknown>;
+  headers?: Record<string, unknown>;
+
+  @IsOptional()
+  bodyPatterns?: unknown[];
+}
+
+export class MockResponseDto {
+  @IsNumber()
+  status: number;
+
+  @IsOptional()
+  @IsObject()
+  headers?: Record<string, string>;
+
+  @IsOptional()
+  @IsString()
+  body?: string;
+
+  @IsOptional()
+  @IsString()
+  bodyFileName?: string;
+
+  @IsOptional()
+  @IsNumber()
+  fixedDelayMilliseconds?: number;
+}
+
+export class CreateMockDto {
+  @ValidateNested()
+  @Type(() => MockRequestDto)
+  request: MockRequestDto;
+
+  @ValidateNested()
+  @Type(() => MockResponseDto)
+  response: MockResponseDto;
+
+  @IsOptional()
+  @IsObject()
+  metadata?: MockMetadata;
 }
