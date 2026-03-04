@@ -1,0 +1,10 @@
+[
+  {
+    "id": "default",
+    "name": "Default",
+    "slug": "default",
+    "proxyTarget": null,
+    "description": "Mocks sem projeto definido",
+    "createdAt": null
+  }
+]
