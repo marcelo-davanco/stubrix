@@ -17,6 +17,7 @@ npm-debug.log*
 # Generated files
 .mockoon-env.json
 executions/
+analysis/
 coverage/
 
 # OS files
@@ -31,4 +32,3 @@ Thumbs.db
 *.swp
 *.swo
 *~
-
