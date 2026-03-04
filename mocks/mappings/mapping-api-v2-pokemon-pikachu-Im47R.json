@@ -1,0 +1,37 @@
+{
+  "id" : "3546cdbd-41f7-3cef-8ba4-6db766b7fe1d",
+  "request" : {
+    "url" : "/api/v2/pokemon/pikachu",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "bodyFileName" : "body-api-v2-pokemon-pikachu-Im47R.json",
+    "headers" : {
+      "CF-RAY" : "9d732bd6fafe4b29-GRU",
+      "Server" : "cloudflare",
+      "vary" : "Accept-Encoding,cookie,need-authorization, x-fh-requested-host, accept-encoding",
+      "function-execution-id" : "pytqhudqfs42",
+      "Access-Control-Allow-Origin" : "*",
+      "x-served-by" : "cache-scl2220076-SCL",
+      "cf-cache-status" : "HIT",
+      "x-cache-hits" : "0",
+      "strict-transport-security" : "max-age=31556926",
+      "Date" : "Wed, 04 Mar 2026 19:08:44 GMT",
+      "x-orig-accept-language" : "*",
+      "Nel" : "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+      "Report-To" : "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=MVSkXqlQVbYEI0aKzt5AZ1WHsXLoHQuMN5pK57yIZCEt4bbK6mg%2BvfcveMx80gdUVewLDUmSCamAHVh6A%2BA0ZX42Ed4ElV36\"}]}",
+      "x-cloud-trace-context" : "f7afdbef0c28a4da7558537ed685298c",
+      "x-powered-by" : "Express",
+      "x-timer" : "S1771773755.319754,VS0,VE571",
+      "etag" : "W/\"42fa5-Rki03iRHTV1iI4o430TuCZKfHZE\"",
+      "x-cache" : "MISS",
+      "alt-svc" : "h3=\":443\"; ma=86400",
+      "x-country-code" : "CL",
+      "cache-control" : "public, max-age=86400, s-maxage=86400",
+      "Age" : "9793",
+      "Content-Type" : "application/json; charset=utf-8"
+    }
+  },
+  "uuid" : "3546cdbd-41f7-3cef-8ba4-6db766b7fe1d"
+}

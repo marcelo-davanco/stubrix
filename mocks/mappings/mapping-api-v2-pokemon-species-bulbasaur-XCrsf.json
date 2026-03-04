@@ -1,0 +1,37 @@
+{
+  "id" : "5b75891f-3d6d-3671-8b34-8fb75ad2ede7",
+  "request" : {
+    "url" : "/api/v2/pokemon-species/bulbasaur",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "bodyFileName" : "body-api-v2-pokemon-species-bulbasaur-XCrsf.json",
+    "headers" : {
+      "CF-RAY" : "9d732c185d73c14e-GRU",
+      "Server" : "cloudflare",
+      "vary" : "Accept-Encoding,cookie,need-authorization, x-fh-requested-host, accept-encoding",
+      "function-execution-id" : "faurg10lj4to",
+      "Access-Control-Allow-Origin" : "*",
+      "x-served-by" : "cache-gru-sbsp2090039-GRU",
+      "cf-cache-status" : "HIT",
+      "x-cache-hits" : "0",
+      "strict-transport-security" : "max-age=31556926",
+      "Date" : "Wed, 04 Mar 2026 19:08:54 GMT",
+      "x-orig-accept-language" : "es-419,es;q=0.9,en;q=0.8",
+      "Nel" : "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+      "Report-To" : "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=oy4hn76KuDwA4ll1oqswuyEuPKHBM5ph6TqBo3MswIFgj4ro3f%2FY65NArpiriHmXuufMosBtcgf5vfar6u7qxgcTW41ghCs7JTQ%3D\"}]}",
+      "x-cloud-trace-context" : "688146660231289f52b756de5463e365",
+      "x-powered-by" : "Express",
+      "x-timer" : "S1769527427.575083,VS0,VE1",
+      "etag" : "W/\"7789-mnumYlUcAdDWP5gfZnMd6K7RDn8\"",
+      "x-cache" : "HIT",
+      "alt-svc" : "h3=\":443\"; ma=86400",
+      "x-country-code" : "BR",
+      "cache-control" : "public, max-age=86400, s-maxage=86400",
+      "Age" : "78912",
+      "Content-Type" : "application/json; charset=utf-8"
+    }
+  },
+  "uuid" : "5b75891f-3d6d-3671-8b34-8fb75ad2ede7"
+}

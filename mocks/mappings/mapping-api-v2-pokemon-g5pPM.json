@@ -1,0 +1,37 @@
+{
+  "id" : "ae7b810e-27af-368f-9b2e-38b1dde1401f",
+  "request" : {
+    "url" : "/api/v2/pokemon?limit=20",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "bodyFileName" : "body-api-v2-pokemon-g5pPM.json",
+    "headers" : {
+      "CF-RAY" : "9d732bc46a771352-GRU",
+      "Server" : "cloudflare",
+      "vary" : "Accept-Encoding,cookie,need-authorization, x-fh-requested-host, accept-encoding",
+      "function-execution-id" : "b5gx6in44knx",
+      "Access-Control-Allow-Origin" : "*",
+      "x-served-by" : "cache-gig2250077-GIG",
+      "cf-cache-status" : "HIT",
+      "x-cache-hits" : "0",
+      "strict-transport-security" : "max-age=31556926",
+      "Date" : "Wed, 04 Mar 2026 19:08:41 GMT",
+      "x-orig-accept-language" : "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+      "Nel" : "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+      "Report-To" : "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=lVcZAOF9WOfQSykhzaeH24ugdD322VD9Zv8FbaKSkemuOesGt8i5VO8i2xRqiChbF8yWwo7MfIqNY2AiKc%2BE2XHGurbirSN4cDI%3D\"}]}",
+      "x-cloud-trace-context" : "4c534c12b6771e50fe4d7082e9405022",
+      "x-powered-by" : "Express",
+      "x-timer" : "S1770900500.114493,VS0,VE320",
+      "etag" : "W/\"588-iX6bV/yoloqGkIPBxJnQfrHsFIU\"",
+      "x-cache" : "HIT",
+      "alt-svc" : "h3=\":443\"; ma=86400",
+      "x-country-code" : "BR",
+      "cache-control" : "public, max-age=86400, s-maxage=86400",
+      "Age" : "19147",
+      "Content-Type" : "application/json; charset=utf-8"
+    }
+  },
+  "uuid" : "ae7b810e-27af-368f-9b2e-38b1dde1401f"
+}
