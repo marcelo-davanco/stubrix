@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🧪 Stubrix
+<img src="assets/logo.png" alt="Stubrix Logo" width="280" />
+
+# Stubrix
 
 ### WireMock + Mockoon — Uma estrutura, dois engines
 
