@@ -4,235 +4,354 @@
 
 # Stubrix
 
-### WireMock + Mockoon — Uma estrutura, dois engines
+### One mock structure, two engines, one control panel
 
 [![GitHub](https://img.shields.io/github/stars/marcelo-davanco/stubrix?style=social)](https://github.com/marcelo-davanco/stubrix)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](#-quick-start)
-[![WireMock](https://img.shields.io/badge/WireMock-3.9.1-6DB33F?logo=java&logoColor=white)](#engines)
-[![Mockoon](https://img.shields.io/badge/Mockoon-CLI-FF6B35?logo=node.js&logoColor=white)](#engines)
+[![WireMock](https://img.shields.io/badge/WireMock-3.9.1-6DB33F?logo=java&logoColor=white)](#-mock-engines)
+[![Mockoon](https://img.shields.io/badge/Mockoon-CLI-FF6B35?logo=node.js&logoColor=white)](#-mock-engines)
+[![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)](#-control-panel)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](#-control-panel)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Container unificado para rodar **WireMock** ou **Mockoon CLI**, ambos compartilhando a mesma estrutura de mocks.  
-**Foco principal: gravação rápida de mocks para uso offline.**
+Unified container for running **WireMock** or **Mockoon CLI**, both sharing the same mock structure.
+Includes a **control panel** (API + Dashboard) for managing mocks, projects, recordings, and logs visually.
 
 </div>
 
 ---
 
-## Visão Geral
+## 🏗️ Architecture Overview
 
 ```mermaid
 graph LR
-    subgraph Container["Container Docker"]
-        direction TB
+    subgraph "📦 Monorepo (npm workspaces)"
+        Shared["@stubrix/shared\n(TypeScript types)"]
+        API["@stubrix/api\n(NestJS 11)"]
+        UI["@stubrix/ui\n(React 19 + Vite)"]
+    end
+
+    subgraph "🐳 Docker Container"
         EP["Entrypoint"]
         EP -->|"MOCK_ENGINE=wiremock"| WM["WireMock\n(Java)"]
         EP -->|"MOCK_ENGINE=mockoon"| MK["Mockoon CLI\n(Node.js)"]
-        CV["Converter"] -.->|"auto-converte\nno startup"| MK
+        CV["Converter"] -.->|"auto-converts\non startup"| MK
     end
 
-    subgraph Mocks["Estrutura Compartilhada"]
-        direction TB
+    subgraph "💾 Shared Mock Structure"
         MP["mappings/*.json"]
         FF["__files/*"]
     end
 
-    WM <-->|"lê/grava"| Mocks
-    CV <-->|"lê"| Mocks
+    UI -->|"fetch /api/*"| API
+    UI -->|"WebSocket /ws/logs"| API
+    API -->|"HTTP /__admin/*"| WM
+    Shared -->|"types"| API
+    Shared -->|"types"| UI
+    API -->|"fs read/write"| MP
+    WM <-->|"reads/writes"| MP
+    CV <-->|"reads"| MP
 
-    style Container fill:#1a1a2e,stroke:#16213e,color:#e6e6e6
-    style Mocks fill:#0f3460,stroke:#533483,color:#e6e6e6
-    style WM fill:#2d6a4f,stroke:#40916c,color:#fff
-    style MK fill:#e76f51,stroke:#f4a261,color:#fff
-    style CV fill:#457b9d,stroke:#1d3557,color:#fff
-    style EP fill:#6c757d,stroke:#495057,color:#fff
-    style MP fill:#264653,stroke:#2a9d8f,color:#e6e6e6
-    style FF fill:#264653,stroke:#2a9d8f,color:#e6e6e6
+    style Shared fill:#6366f1,color:#fff,stroke:#4f46e5
+    style API fill:#e0234e,color:#fff,stroke:#be123c
+    style UI fill:#61dafb,color:#1a1a2e,stroke:#38bdf8
+    style WM fill:#2d6a4f,color:#fff,stroke:#40916c
+    style MK fill:#e76f51,color:#fff,stroke:#f4a261
+    style CV fill:#457b9d,color:#fff,stroke:#1d3557
+    style EP fill:#6c757d,color:#fff,stroke:#495057
+    style MP fill:#264653,color:#e6e6e6,stroke:#2a9d8f
+    style FF fill:#264653,color:#e6e6e6,stroke:#2a9d8f
 ```
 
-> **Conceito**: O formato canônico é o WireMock (`mappings/` + `__files/`) por ser o mais simples e universal.  
-> Quando o Mockoon é ativado, o conversor gera automaticamente o formato nativo a partir dos mappings.
+> **Canonical format** is WireMock (`mappings/` + `__files/`) — the simplest and most universal.
+> When Mockoon is activated, the converter automatically generates the native format from mappings.
 
 ---
 
-## Estrutura do Projeto
+## 📂 Project Structure
 
 ```
 stubrix/
+├── packages/
+│   ├── shared/                    Shared TypeScript types (@stubrix/shared)
+│   │   └── src/types/               Project, Mock, Log, Recording, Status
+│   ├── api/                       NestJS control plane backend (@stubrix/api)
+│   │   └── src/
+│   │       ├── projects/            Project CRUD + JSON persistence
+│   │       ├── mocks/               Mock CRUD + WireMock integration
+│   │       ├── recording/           Start/stop/snapshot recording
+│   │       ├── logs/                REST + WebSocket (Socket.IO)
+│   │       ├── status/              Engine health + mock counts
+│   │       └── engine/              WireMock reset + status
+│   └── ui/                        React dashboard (@stubrix/ui)
+│       └── src/
+│           ├── pages/               Dashboard, Projects, Mocks, Recording, Logs
+│           ├── components/          Layout, Badge, shared UI
+│           └── lib/                 API client, WebSocket client, utils
 │
-├── mocks/                            Estrutura canônica de mocks
-│   ├── mappings/                       Definições de rotas (JSON)
-│   │   └── example_health_get.json
-│   └── __files/                        Body files referenciados
-│       └── users.json
+├── mocks/                         Canonical mock structure
+│   ├── mappings/                    Route definitions (JSON)
+│   └── __files/                     Response body files
 │
 ├── scripts/
-│   ├── converter.js                  Conversor WireMock <-> Mockoon
-│   ├── entrypoint.sh                 Entrypoint inteligente
-│   ├── record.sh                     Helper de gravação (Admin API)
-│   └── import-from-recording.sh      Importar mocks do container
+│   ├── converter.js               WireMock <-> Mockoon converter
+│   ├── entrypoint.sh              Smart Docker entrypoint
+│   ├── record.sh                  Recording helper (Admin API)
+│   └── import-from-recording.sh   Import mocks from container
 │
-├── Dockerfile                        Imagem multi-engine
-├── docker-compose.yml                4 profiles disponíveis
-├── Makefile                          Atalhos para tudo
-└── .env.example                      Variáveis de exemplo
+├── Dockerfile                     Multi-engine Docker image
+├── docker-compose.yml             4 profiles available
+├── Makefile                       CLI shortcuts for everything
+└── .env.example                   Environment variable reference
 ```
 
 ---
 
-## Quick Start
+## 🖥️ Control Panel
 
-### 1. Configure o `.env`
+The control panel provides a **visual interface** for managing the entire mock lifecycle — no manual JSON editing or curl commands required.
+
+```mermaid
+graph TD
+    subgraph "🖥️ Dashboard UI"
+        PP["📁 Projects\n(list + create)"]
+        DP["📊 Dashboard\n(stats + quick actions)"]
+        MP["📄 Mocks\n(list + search + delete)"]
+        ME["✏️ Mock Editor\n(create/edit form)"]
+        RP["🎥 Recording\n(start/stop controls)"]
+        LP["📜 Logs\n(real-time table)"]
+    end
+
+    subgraph "⚙️ API Endpoints"
+        P["/api/projects"]
+        M["/api/projects/:id/mocks"]
+        R["/api/projects/:id/recording"]
+        L["/api/logs"]
+        S["/api/status"]
+        E["/api/engine"]
+        WS["/ws/logs (WebSocket)"]
+    end
+
+    PP -->|"click project"| DP
+    DP -->|"View Mocks"| MP
+    DP -->|"Record"| RP
+    MP -->|"New/Edit"| ME
+    LP -.->|"Socket.IO"| WS
+
+    PP --> P
+    MP --> M
+    ME --> M
+    RP --> R
+    LP --> L
+    DP --> S
+
+    style PP fill:#6366f1,color:#fff,stroke:#4f46e5
+    style DP fill:#6366f1,color:#fff,stroke:#4f46e5
+    style MP fill:#6366f1,color:#fff,stroke:#4f46e5
+    style ME fill:#6366f1,color:#fff,stroke:#4f46e5
+    style RP fill:#6366f1,color:#fff,stroke:#4f46e5
+    style LP fill:#6366f1,color:#fff,stroke:#4f46e5
+```
+
+### Tech Stack
+
+| Layer | Technology |
+|:------|:-----------|
+| **API** | NestJS 11 + Express, WebSockets (Socket.IO) |
+| **UI** | React 19 + Vite, TailwindCSS, Lucide icons, React Router |
+| **Shared** | TypeScript lib consumed by both API and UI |
+| **Validation** | class-validator + class-transformer with nested DTOs |
+
+### Running the Control Panel
+
+```bash
+# Install dependencies (from project root)
+npm install
+
+# Build shared types
+npm run build --workspace=@stubrix/shared
+
+# Start API (port 9090)
+npm run start:dev --workspace=@stubrix/api
+
+# Start UI dev server (port 5173, proxies to API)
+npm run dev --workspace=@stubrix/ui
+```
+
+> The UI dev server proxies `/api/*` and `/ws/*` to the API at `localhost:9090`.
+> In production, the UI builds directly into `packages/api/public/` for single-container serving.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Configure `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-Edite o `.env` conforme necessário:
+Edit as needed:
 
 ```dotenv
-# Porta do mock server (host + container)
+# Mock server port (host + container)
 MOCK_PORT=8081
 
-# URL da API real (para gravação/proxy)
+# Real API URL (for recording/proxy)
 PROXY_TARGET=https://api.example.com
+
+# CORS allowed origins (comma-separated, or * for all)
+CORS_ORIGIN=*
 ```
 
-> O `.env` é carregado automaticamente pelo `Makefile`, `docker-compose` e scripts.
+> The `.env` file is automatically loaded by `Makefile`, `docker-compose`, and scripts.
 
-### 2. Build da imagem
+### 2. Build the image
 
 ```bash
 make build
 ```
 
-### 3. Escolha o engine e inicie
+### 3. Choose an engine and start
 
 ```bash
-make wiremock     # ou
+make wiremock     # or
 make mockoon
 ```
 
-### 4. Teste
+### 4. Test
 
 ```bash
 curl http://localhost:8081/api/health
 # → {"status": "ok", "engine": "mock-server"}
 ```
 
-> Para mudar a porta sem editar `.env`: `MOCK_PORT=9090 make wiremock`
+> To change the port without editing `.env`: `MOCK_PORT=9090 make wiremock`
 
 ---
 
-## Gravação de Mocks
+## 🎥 Mock Recording
 
-A funcionalidade mais importante deste projeto. Permite **criar mocks automaticamente** a partir de uma API real.
+The most important feature. Allows **creating mocks automatically** from a real API.
 
-### Como a gravação funciona
+### How recording works
 
 ```mermaid
 sequenceDiagram
-    participant App as Sua App / Browser
+    participant App as Your App / Browser
     participant WM as Mock Server<br/>(localhost:8081)
-    participant API as API Real<br/>(api.example.com)
+    participant API as Real API<br/>(api.example.com)
 
-    Note over WM: Modo RECORD ativado
+    Note over WM: RECORD mode active
 
     App->>WM: GET /api/users
     WM->>API: GET /api/users (proxy)
     API-->>WM: 200 OK [{...}]
     WM-->>App: 200 OK [{...}]
 
-    Note over WM: Salva automaticamente:<br/>mappings/api_users_get.json<br/>__files/body-api_users.json
+    Note over WM: Auto-saves:<br/>mappings/api_users_get.json<br/>__files/body-api_users.json
 
     App->>WM: POST /api/orders
     WM->>API: POST /api/orders (proxy)
     API-->>WM: 201 Created {...}
     WM-->>App: 201 Created {...}
 
-    Note over WM: Salva automaticamente:<br/>mappings/api_orders_post.json
+    Note over WM: Auto-saves:<br/>mappings/api_orders_post.json
 
-    Note over App,API: Depois de parar a gravação,<br/>os mocks funcionam offline
+    Note over App,API: After stopping recording,<br/>mocks work fully offline
 ```
 
 ---
 
-### Opção A — Gravação Automática (mais simples)
+### Option A — Automatic Recording (simplest)
 
-Tudo que passar pelo proxy é gravado automaticamente.
+Everything passing through the proxy is recorded automatically.
 
 ```bash
-# 1. Inicie em modo gravação apontando para a API real
+# 1. Start in recording mode pointing to the real API
 make wiremock-record PROXY_TARGET=https://api.example.com
 
-# 2. Faça requisições normalmente
+# 2. Make requests normally
 curl http://localhost:8081/api/users
 curl http://localhost:8081/api/products/42
 curl -X POST http://localhost:8081/api/orders -d '{"item":"abc"}'
 
-# 3. Pare o container
+# 3. Stop the container
 make down
 
-# 4. Pronto! Mocks gravados em mocks/mappings/
+# 4. Done! Mocks saved in mocks/mappings/
 make list-mappings
 ```
 
-### Opção B — Gravação via API (mais controle)
+### Option B — Recording via API (more control)
 
-Permite iniciar/parar a gravação sob demanda, sem reiniciar o container.
+Start/stop recording on demand without restarting the container.
 
 ```bash
-# 1. Inicie o WireMock normalmente
+# 1. Start WireMock normally
 make wiremock
 
-# 2. Em outro terminal, inicie a gravação
+# 2. In another terminal, start recording
 ./scripts/record.sh start https://api.example.com
 
-# 3. Faça suas chamadas
+# 3. Make your calls
 curl http://localhost:8081/api/users
 curl http://localhost:8081/api/config
 
-# 4. Pare a gravação (mocks são persistidos)
+# 4. Stop recording (mocks are persisted)
 ./scripts/record.sh stop
 
-# 5. Verifique os mocks gravados
+# 5. Check recorded mocks
 make list-mappings
 ```
 
-### Opção C — Snapshot (captura pontual)
+### Option C — Snapshot (point-in-time capture)
 
-Captura o estado atual de todas as respostas sem modo de gravação contínua.
+Captures the current state of all responses without continuous recording.
 
 ```bash
 ./scripts/record.sh snapshot
 ```
 
+### Option D — Via Control Panel
+
+Use the dashboard UI to manage recordings visually:
+
+1. Open `http://localhost:5173` (dev) or `http://localhost:9090` (production)
+2. Navigate to a project → **Recording**
+3. Enter the proxy target URL and click **Start Recording**
+4. Make requests against `localhost:8081`
+5. Click **Stop** or **Snapshot** to persist mocks
+
 ---
 
-## Fluxo de Trabalho Completo
+## 🔄 Complete Workflow
 
 ```mermaid
 graph TD
-    A["1 - Inicia gravação"] --> B["2 - Faz requisições<br/>contra a API real"]
-    B --> C["3 - Para a gravação"]
-    C --> D["4 - Mocks salvos<br/>em mappings/"]
-    D --> E{"Editar mocks?"}
-    E -->|"Sim"| F["5 - Edita JSONs<br/>manualmente"]
-    E -->|"Não"| G["6 - Usa offline"]
+    A["1 - Start recording"] --> B["2 - Make requests<br/>against real API"]
+    B --> C["3 - Stop recording"]
+    C --> D["4 - Mocks saved<br/>in mappings/"]
+    D --> E{"Edit mocks?"}
+    E -->|"Yes"| F["5a - Edit via Dashboard"]
+    E -->|"Yes"| F2["5b - Edit JSON manually"]
+    E -->|"No"| G["6 - Use offline"]
     F --> G
+    F2 --> G
 
-    G --> H{"Qual engine?"}
+    G --> H{"Which engine?"}
     H -->|"WireMock"| I["make wiremock"]
     H -->|"Mockoon"| J["make mockoon"]
 
-    I --> K["Mocks servidos<br/>em localhost:8081"]
+    I --> K["Mocks served<br/>on localhost:8081"]
     J --> K
 
     style A fill:#e76f51,color:#fff,stroke:#f4a261
     style B fill:#e9c46a,color:#1a1a2e,stroke:#f4a261
     style C fill:#2a9d8f,color:#fff,stroke:#264653
     style D fill:#264653,color:#e6e6e6,stroke:#2a9d8f
-    style F fill:#457b9d,color:#fff,stroke:#1d3557
+    style F fill:#6366f1,color:#fff,stroke:#4f46e5
+    style F2 fill:#457b9d,color:#fff,stroke:#1d3557
     style G fill:#6c757d,color:#fff,stroke:#495057
     style I fill:#2d6a4f,color:#fff,stroke:#40916c
     style J fill:#e76f51,color:#fff,stroke:#f4a261
@@ -241,16 +360,16 @@ graph TD
 
 ---
 
-## Proxy Mode (Mockoon)
+## 🔀 Proxy Mode (Mockoon)
 
-O Mockoon pode funcionar em modo **proxy híbrido**: rotas com mock definido retornam o mock, rotas sem mock são encaminhadas para a API real.
+Mockoon can work in **hybrid proxy mode**: routes with a defined mock return the mock, routes without one are forwarded to the real API.
 
 ```mermaid
 graph LR
     App["App / Browser"] --> MK["Mockoon<br/>localhost:8081"]
 
-    MK -->|"Rota com mock"| Mock["Resposta<br/>do mock"]
-    MK -->|"Rota sem mock"| API["API Real<br/>(proxy)"]
+    MK -->|"Route with mock"| Mock["Mock<br/>Response"]
+    MK -->|"Route without mock"| API["Real API<br/>(proxy)"]
     API --> MK
 
     style App fill:#264653,color:#e6e6e6,stroke:#2a9d8f
@@ -265,7 +384,7 @@ make mockoon-proxy PROXY_TARGET=https://api.example.com
 
 ---
 
-## Anatomia de um Mock
+## 📋 Mock Anatomy
 
 ### Inline body
 
@@ -285,9 +404,9 @@ make mockoon-proxy PROXY_TARGET=https://api.example.com
 }
 ```
 
-> Salvo em `mocks/mappings/api_health_get.json`
+> Saved at `mocks/mappings/api_health_get.json`
 
-### Body em arquivo externo
+### External body file
 
 ```json
 {
@@ -305,12 +424,12 @@ make mockoon-proxy PROXY_TARGET=https://api.example.com
 }
 ```
 
-> Mapping em `mocks/mappings/api_users_get.json`  
-> Body em `mocks/__files/users.json`
+> Mapping at `mocks/mappings/api_users_get.json`
+> Body at `mocks/__files/users.json`
 
 ---
 
-## Conversão entre Formatos
+## 🔄 Format Conversion
 
 ```mermaid
 graph LR
@@ -329,69 +448,71 @@ make convert-to-mockoon
 make convert-to-wiremock
 ```
 
-> A conversão para Mockoon acontece **automaticamente** quando o engine Mockoon é iniciado. Você só precisa rodar manualmente se quiser inspecionar ou editar o arquivo gerado.
+> Conversion to Mockoon format happens **automatically** when the Mockoon engine starts. You only need to run it manually if you want to inspect or edit the generated file.
 
 ---
 
-## Referência de Comandos
+## 📖 Command Reference
 
-### Servir Mocks
+### Serving Mocks
 
-| Comando | Engine | Descrição |
-|:--------|:------:|:----------|
-| `make wiremock` | WireMock | Serve mocks existentes |
-| `make mockoon` | Mockoon | Serve mocks existentes (auto-converte) |
+| Command | Engine | Description |
+|:--------|:------:|:------------|
+| `make wiremock` | WireMock | Serve existing mocks |
+| `make mockoon` | Mockoon | Serve existing mocks (auto-converts) |
 
-### Gravação
+### Recording
 
-| Comando | Descrição |
-|:--------|:----------|
-| `make wiremock-record PROXY_TARGET=<url>` | Inicia WireMock gravando tudo via proxy |
-| `./scripts/record.sh start <url>` | Inicia gravação via Admin API |
-| `./scripts/record.sh stop` | Para gravação e persiste mocks |
-| `./scripts/record.sh snapshot` | Captura pontual do estado atual |
-| `./scripts/record.sh status` | Verifica se está gravando |
+| Command | Description |
+|:--------|:------------|
+| `make wiremock-record PROXY_TARGET=<url>` | Start WireMock recording all proxied requests |
+| `./scripts/record.sh start <url>` | Start recording via Admin API |
+| `./scripts/record.sh stop` | Stop recording and persist mocks |
+| `./scripts/record.sh snapshot` | Point-in-time capture of current state |
+| `./scripts/record.sh status` | Check if recording is active |
 
 ### Proxy
 
-| Comando | Descrição |
-|:--------|:----------|
-| `make mockoon-proxy PROXY_TARGET=<url>` | Mockoon híbrido: mock + proxy |
+| Command | Description |
+|:--------|:------------|
+| `make mockoon-proxy PROXY_TARGET=<url>` | Mockoon hybrid: mock + proxy |
 
-### Conversão
+### Conversion
 
-| Comando | Descrição |
-|:--------|:----------|
-| `make convert-to-mockoon` | Gera `.mockoon-env.json` a partir dos mappings |
-| `make convert-to-wiremock` | Gera mappings a partir de `.mockoon-env.json` |
+| Command | Description |
+|:--------|:------------|
+| `make convert-to-mockoon` | Generate `.mockoon-env.json` from mappings |
+| `make convert-to-wiremock` | Generate mappings from `.mockoon-env.json` |
 
-### Utilitários
+### Utilities
 
-| Comando | Descrição |
-|:--------|:----------|
-| `make build` | Build da imagem Docker |
-| `make down` | Para todos os containers |
-| `make list-mappings` | Lista mocks e body files existentes |
-| `make clean` | Remove containers e arquivos gerados |
-| `make clean-mocks` | Remove **todos** os mocks (cuidado!) |
-| `make help` | Lista todos os comandos disponíveis |
-
----
-
-## Variáveis de Ambiente
-
-| Variável | Default | Descrição |
-|:---------|:-------:|:----------|
-| `MOCK_PORT` | `8081` | Porta no host e dentro do container |
-| `PROXY_TARGET` | — | URL da API real para proxy/gravação |
-| `MOCK_ENGINE` | `wiremock` | Engine: `wiremock` ou `mockoon` |
-| `RECORD_MODE` | `false` | Ativa gravação automática (WireMock) |
-
-> Todas as variáveis podem ser definidas no `.env` (carregado automaticamente) ou passadas inline: `MOCK_PORT=9090 make wiremock`
+| Command | Description |
+|:--------|:------------|
+| `make build` | Build Docker image |
+| `make down` | Stop all containers |
+| `make list-mappings` | List mocks and body files |
+| `make clean` | Remove containers and generated files |
+| `make clean-mocks` | Remove **all** mocks (careful!) |
+| `make help` | List all available commands |
 
 ---
 
-## Docker Compose — Profiles
+## ⚙️ Environment Variables
+
+| Variable | Default | Description |
+|:---------|:-------:|:------------|
+| `MOCK_PORT` | `8081` | Port on host and inside container |
+| `PROXY_TARGET` | — | Real API URL for proxy/recording |
+| `MOCK_ENGINE` | `wiremock` | Engine: `wiremock` or `mockoon` |
+| `RECORD_MODE` | `false` | Enable automatic recording (WireMock) |
+| `CONTROL_PORT` | `9090` | Control panel API port |
+| `CORS_ORIGIN` | `*` | Allowed CORS origins (comma-separated) |
+
+> All variables can be set in `.env` (auto-loaded) or passed inline: `MOCK_PORT=9090 make wiremock`
+
+---
+
+## 🐳 Docker Compose — Profiles
 
 ```mermaid
 graph TD
@@ -401,9 +522,9 @@ graph TD
     DC --> P4["mockoon-proxy"]
 
     P1 --> S1["Serve mocks offline"]
-    P2 --> S2["Proxy + grava mocks"]
+    P2 --> S2["Proxy + record mocks"]
     P3 --> S3["Serve mocks offline"]
-    P4 --> S4["Mock + proxy híbrido"]
+    P4 --> S4["Mock + hybrid proxy"]
 
     style DC fill:#1a1a2e,color:#e6e6e6,stroke:#16213e
     style P1 fill:#2d6a4f,color:#fff,stroke:#40916c
@@ -417,7 +538,7 @@ graph TD
 ```
 
 ```bash
-# Uso direto (sem Makefile)
+# Direct usage (without Makefile)
 docker compose --profile wiremock up
 docker compose --profile mockoon up
 PROXY_TARGET=https://api.example.com docker compose --profile wiremock-record up
@@ -426,68 +547,68 @@ PROXY_TARGET=https://api.example.com docker compose --profile mockoon-proxy up
 
 ---
 
-## Cenários de Uso
+## 💡 Use Cases
 
-### Desenvolvimento Offline
+### Offline Development
 
-> Preciso trabalhar sem internet mas minha app depende de 3 APIs externas.
+> I need to work without internet but my app depends on 3 external APIs.
 
 ```bash
-# 1. Com internet, grave os mocks de cada API
+# 1. With internet, record mocks for each API
 make wiremock-record PROXY_TARGET=https://api-users.example.com
-# use a app... depois pare
+# use your app... then stop
 make down
 
-# 2. Repita para outras APIs ou use record via API para múltiplas
+# 2. Repeat for other APIs or use the Recording page in the dashboard
 
-# 3. Sem internet, sirva os mocks
+# 3. Without internet, serve the mocks
 make wiremock
 ```
 
-### Testes de Integração em CI
+### Integration Tests in CI
 
-> Preciso de mocks estáveis no pipeline de CI.
+> I need stable mocks in my CI pipeline.
 
 ```bash
-# Grave uma vez localmente, commite os mocks
+# Record once locally, commit the mocks
 make wiremock-record PROXY_TARGET=https://staging.api.com
 make down
 git add mocks/ && git commit -m "add API mocks"
 
-# No CI
+# In CI
 docker compose --profile wiremock up -d
 npm test
 docker compose --profile wiremock down
 ```
 
-### Trocar de Engine sem Retrabalho
+### Switch Engines Without Rework
 
-> O time decidiu migrar de WireMock para Mockoon (ou vice-versa).
+> The team decided to migrate from WireMock to Mockoon (or vice-versa).
 
 ```bash
-# Mesmos mocks, engine diferente
-make wiremock   # antes
-make mockoon    # depois — zero mudanças nos mocks
+# Same mocks, different engine
+make wiremock   # before
+make mockoon    # after — zero changes to mocks
 ```
 
 ---
 
-## Guias Práticos
+## 📚 Guides
 
-| Guia | Descrição |
-|:-----|:----------|
-| [Gravação com PokéAPI + Postman](docs/guide-pokeapi-recording.md) | Passo a passo completo: gravar mocks da PokéAPI, servir offline e usar via Postman Collection |
+| Guide | Description |
+|:------|:------------|
+| [Recording with PokéAPI + Postman](docs/guide-pokeapi-recording.md) | Full walkthrough: record PokéAPI mocks, serve offline, and use via Postman Collection |
 
 ---
 
-## Licença
+## 📄 License
 
-MIT — veja [LICENSE](LICENSE) para detalhes.
+MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
 <div align="center">
 
-**Stubrix** — feito com ☕ por [Marcelo Davanço](https://github.com/marcelo-davanco)
+**Stubrix** — made with ☕ by [Marcelo Davanço](https://github.com/marcelo-davanco)
 
 </div>
