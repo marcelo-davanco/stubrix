@@ -13,7 +13,7 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private interval: NodeJS.Timeout | null = null;
-  private lastCount = 0;
+  private lastTimestamp: string | null = null;
 
   constructor(private readonly logsService: LogsService) {}
 
@@ -27,18 +27,29 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (this.server.sockets.sockets.size === 0 && this.interval) {
       clearInterval(this.interval);
       this.interval = null;
+      this.lastTimestamp = null;
     }
   }
 
   private async poll(): Promise<void> {
     try {
       const logs = await this.logsService.getLogs(100);
-      if (logs.total !== this.lastCount) {
-        const newEntries = logs.requests.slice(0, logs.total - this.lastCount);
-        this.lastCount = logs.total;
-        if (newEntries.length > 0) {
-          this.server.emit('logs', newEntries);
-        }
+      if (logs.requests.length === 0) {
+        this.lastTimestamp = null;
+        return;
+      }
+
+      const latestTimestamp = logs.requests[0]?.timestamp ?? null;
+      if (latestTimestamp === this.lastTimestamp) return;
+
+      const newEntries = this.lastTimestamp
+        ? logs.requests.filter((r) => r.timestamp > this.lastTimestamp!)
+        : logs.requests;
+
+      this.lastTimestamp = latestTimestamp;
+
+      if (newEntries.length > 0) {
+        this.server.emit('logs', newEntries);
       }
     } catch {
       // ignore
