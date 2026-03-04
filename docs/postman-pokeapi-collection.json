@@ -1,0 +1,164 @@
+{
+  "info": {
+    "_postman_id": "pokeapi-mocks-collection",
+    "name": "PokéAPI Mocks",
+    "description": "Collection para consumir mocks da PokéAPI gravados com o projeto mocks-servers.\n\nConfigure a variável `base_url` no environment para `http://localhost:8081` (ou a porta configurada no .env).\n\nFluxo:\n1. `make wiremock-record` (grava mocks da API real)\n2. `make wiremock` ou `make mockoon` (serve offline)\n3. Use esta collection no Postman",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8081",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Pokémons",
+      "description": "Endpoints relacionados a Pokémons",
+      "item": [
+        {
+          "name": "Listar Pokémons (limit=5)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/pokemon?limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "pokemon"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Quantidade de pokémons retornados"
+                }
+              ]
+            },
+            "description": "Retorna uma lista paginada de Pokémons.\n\nAltere `limit` e `offset` para navegar entre páginas."
+          }
+        },
+        {
+          "name": "Pikachu — Detalhes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/pokemon/pikachu",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "pokemon", "pikachu"]
+            },
+            "description": "Retorna todos os detalhes do Pikachu: stats, tipos, habilidades, sprites, etc."
+          }
+        },
+        {
+          "name": "Charizard — Detalhes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/pokemon/charizard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "pokemon", "charizard"]
+            },
+            "description": "Retorna todos os detalhes do Charizard."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tipos",
+      "description": "Tipos de Pokémon (fire, water, grass, etc.)",
+      "item": [
+        {
+          "name": "Tipo Fogo (fire)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/type/fire",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "type", "fire"]
+            },
+            "description": "Lista todos os Pokémons do tipo Fogo e as relações de dano."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Habilidades",
+      "description": "Abilities dos Pokémons",
+      "item": [
+        {
+          "name": "Habilidade Overgrow",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/ability/overgrow",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "ability", "overgrow"]
+            },
+            "description": "Detalhes da habilidade Overgrow (típica de starters tipo Grass)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Espécies",
+      "description": "Dados de espécie (flavor text, habitat, egg groups, etc.)",
+      "item": [
+        {
+          "name": "Espécie Bulbasaur",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/pokemon-species/bulbasaur",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "pokemon-species", "bulbasaur"]
+            },
+            "description": "Dados da espécie Bulbasaur: descrições, taxa de captura, habitat, etc."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Evolução",
+      "description": "Cadeias de evolução dos Pokémons",
+      "item": [
+        {
+          "name": "Cadeia de Evolução #1 (Bulbasaur)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/evolution-chain/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "evolution-chain", "1"]
+            },
+            "description": "Cadeia de evolução: Bulbasaur → Ivysaur → Venusaur."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gerações",
+      "description": "Gerações do universo Pokémon",
+      "item": [
+        {
+          "name": "Geração 1 (Kanto)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/generation/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "generation", "1"]
+            },
+            "description": "Dados da Geração I: região Kanto, pokémons, moves, etc."
+          }
+        }
+      ]
+    }
+  ]
+}

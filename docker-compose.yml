@@ -1,0 +1,72 @@
+## ==========================================================================
+## Stubrix – Docker Compose (WireMock / Mockoon)
+##
+## Usage:
+##   docker compose --profile wiremock up         # run with WireMock
+##   docker compose --profile mockoon  up         # run with Mockoon
+##   docker compose --profile wiremock-record up   # WireMock in record mode
+##   docker compose --profile mockoon-proxy  up    # Mockoon with proxy
+## ==========================================================================
+
+x-common: &common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  volumes:
+    - ./mocks:/mocks
+  ports:
+    - "${MOCK_PORT:-8081}:${MOCK_PORT:-8081}"
+  environment:
+    MOCK_PORT: ${MOCK_PORT:-8081}
+
+services:
+  # --------------------------------------------------------------------------
+  # WireMock – Serve mocks
+  # --------------------------------------------------------------------------
+  wiremock:
+    <<: *common
+    profiles: ["wiremock"]
+    container_name: mock-server-wiremock
+    environment:
+      MOCK_ENGINE: wiremock
+      MOCK_PORT: ${MOCK_PORT:-8081}
+
+  # --------------------------------------------------------------------------
+  # WireMock – Record mode (proxy + save mappings)
+  # --------------------------------------------------------------------------
+  wiremock-record:
+    <<: *common
+    profiles: ["wiremock-record"]
+    container_name: mock-server-wiremock-record
+    environment:
+      MOCK_ENGINE: wiremock
+      MOCK_PORT: ${MOCK_PORT:-8081}
+      RECORD_MODE: "true"
+      PROXY_TARGET: "${PROXY_TARGET:-http://host.docker.internal:3000}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # --------------------------------------------------------------------------
+  # Mockoon – Serve mocks (converted from WireMock format)
+  # --------------------------------------------------------------------------
+  mockoon:
+    <<: *common
+    profiles: ["mockoon"]
+    container_name: mock-server-mockoon
+    environment:
+      MOCK_ENGINE: mockoon
+      MOCK_PORT: ${MOCK_PORT:-8081}
+
+  # --------------------------------------------------------------------------
+  # Mockoon – Proxy mode (forward unmatched to real API)
+  # --------------------------------------------------------------------------
+  mockoon-proxy:
+    <<: *common
+    profiles: ["mockoon-proxy"]
+    container_name: mock-server-mockoon-proxy
+    environment:
+      MOCK_ENGINE: mockoon
+      MOCK_PORT: ${MOCK_PORT:-8081}
+      PROXY_TARGET: "${PROXY_TARGET:-http://host.docker.internal:3000}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
