@@ -1,11 +1,15 @@
-import { IsObject, IsOptional } from 'class-validator';
+import { IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { MockRequestDto, MockResponseDto } from './create-mock.dto';
 
 export class UpdateMockDto {
   @IsOptional()
-  @IsObject()
-  request?: Record<string, unknown>;
+  @ValidateNested()
+  @Type(() => MockRequestDto)
+  request?: MockRequestDto;
 
   @IsOptional()
-  @IsObject()
-  response?: Record<string, unknown>;
+  @ValidateNested()
+  @Type(() => MockResponseDto)
+  response?: MockResponseDto;
 }
