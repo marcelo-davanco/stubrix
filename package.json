@@ -1,0 +1,23 @@
+{
+  "name": "stubrix",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/shared",
+    "packages/api",
+    "packages/ui"
+  ],
+  "scripts": {
+    "build": "npm run build -w @stubrix/shared && npm run build -w @stubrix/api && npm run build -w @stubrix/ui",
+    "build:shared": "npm run build -w @stubrix/shared",
+    "build:api": "npm run build -w @stubrix/api",
+    "build:ui": "npm run build -w @stubrix/ui",
+    "dev:api": "npm run start:dev -w @stubrix/api",
+    "dev:ui": "npm run dev -w @stubrix/ui",
+    "install:all": "npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
