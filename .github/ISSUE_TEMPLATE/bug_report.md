@@ -1,38 +1,51 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
+name: 🐛 Bug Report
+about: Report a reproducible bug in Stubrix (API, UI, or mock engine)
+title: 'bug: '
+labels: 'bug'
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Description
+<!-- A clear and concise description of the bug. -->
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+## Affected Layer
+<!-- Check all that apply -->
+- [ ] Control Plane API (`packages/api`)
+- [ ] Dashboard UI (`packages/ui`)
+- [ ] WireMock engine
+- [ ] Mockoon engine
+- [ ] Docker / Docker Compose
+- [ ] Other: <!-- specify -->
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Steps to Reproduce
+1. 
+2. 
+3. 
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+## Expected Behavior
+<!-- What should have happened? -->
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+## Actual Behavior
+<!-- What actually happened? Include error messages or stack traces. -->
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+## Environment
+| Field | Value |
+|---|---|
+| Stubrix version / commit | |
+| Engine (WireMock / Mockoon / both) | |
+| Docker Compose profile | `wiremock` / `mockoon` / other |
+| Node version | |
+| OS | |
 
-**Additional context**
-Add any other context about the problem here.
+## Logs
+<!-- Paste relevant logs from `docker compose logs` or the API/UI console -->
+```
+```
+
+## Screenshots / Recordings
+<!-- If applicable, attach screenshots or screen recordings. -->
+
+## Additional Context
+<!-- Any other information that might help diagnose the issue. -->
