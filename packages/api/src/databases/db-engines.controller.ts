@@ -1,0 +1,60 @@
+import {
+  Controller,
+  Get,
+  Param,
+  NotFoundException,
+  Query,
+} from '@nestjs/common';
+import { DbEnginesService } from './db-engines.service';
+
+@Controller('db')
+export class DbEnginesController {
+  constructor(private readonly enginesService: DbEnginesService) {}
+
+  @Get('engines')
+  async listEngines() {
+    return this.enginesService.listEngines();
+  }
+
+  @Get('databases')
+  async listDatabases(@Query('projectId') projectId?: string) {
+    return this.enginesService.listDatabases(undefined, projectId);
+  }
+
+  @Get('engines/:engine/databases')
+  async listDatabasesByEngine(
+    @Param('engine') engine: string,
+    @Query('projectId') projectId?: string,
+  ) {
+    return this.enginesService.listDatabases(engine, projectId);
+  }
+
+  @Get('databases/:name/info')
+  async getDatabaseInfo(
+    @Param('name') name: string,
+    @Query('projectId') projectId?: string,
+  ) {
+    const result = await this.enginesService.getDatabaseInfo(
+      name,
+      undefined,
+      projectId,
+    );
+    if (!result) throw new NotFoundException('No active database engine found');
+    return result;
+  }
+
+  @Get('engines/:engine/databases/:name/info')
+  async getDatabaseInfoByEngine(
+    @Param('engine') engine: string,
+    @Param('name') name: string,
+    @Query('projectId') projectId?: string,
+  ) {
+    const result = await this.enginesService.getDatabaseInfo(
+      name,
+      engine,
+      projectId,
+    );
+    if (!result) throw new NotFoundException('No active database engine found');
+    return result;
+  }
+}

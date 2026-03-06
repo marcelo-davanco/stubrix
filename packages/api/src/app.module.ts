@@ -8,6 +8,7 @@ import { MocksModule } from './mocks/mocks.module';
 import { RecordingModule } from './recording/recording.module';
 import { LogsModule } from './logs/logs.module';
 import { EngineModule } from './engine/engine.module';
+import { DatabasesModule } from './databases/databases.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { EngineModule } from './engine/engine.module';
     RecordingModule,
     LogsModule,
     EngineModule,
+    DatabasesModule,
   ],
 })
 export class AppModule {}
