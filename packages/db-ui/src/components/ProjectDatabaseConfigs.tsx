@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, Wifi, WifiOff, Loader2, X, Check, ServerCrash, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, Wifi, Loader2, X, Check, ServerCrash, ChevronDown, ChevronUp } from 'lucide-react'
 import type {
   ProjectDatabaseConfigItem,
   UpsertProjectDatabaseConfigPayload,
