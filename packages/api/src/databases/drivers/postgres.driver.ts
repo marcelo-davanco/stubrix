@@ -23,12 +23,12 @@ export class PostgresDriver implements DatabaseDriverInterface {
 
   private getEnv(database?: string): NodeJS.ProcessEnv {
     return {
+      ...process.env,
       PGHOST: this.host,
       PGPORT: this.port,
       PGUSER: this.user,
       PGPASSWORD: this.password,
       PGDATABASE: database ?? this.database,
-      PATH: process.env.PATH,
     };
   }
 
@@ -65,7 +65,7 @@ export class PostgresDriver implements DatabaseDriverInterface {
       { env, encoding: 'utf-8' },
     );
     const sizeOutput = execSync(
-      `psql -t -A -c "SELECT pg_size_pretty(pg_database_size('${dbName}'));"`,
+      `psql -t -A -c "SELECT pg_size_pretty(pg_database_size(current_database()));"`,
       { env, encoding: 'utf-8' },
     );
 
