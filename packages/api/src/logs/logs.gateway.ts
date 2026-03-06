@@ -39,11 +39,16 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      const latestTimestamp = logs.requests[0]?.timestamp ?? null;
+      const latestTimestamp =
+        logs.requests[logs.requests.length - 1]?.timestamp ?? null;
       if (latestTimestamp === this.lastTimestamp) return;
 
       const newEntries = this.lastTimestamp
-        ? logs.requests.filter((r) => r.timestamp > this.lastTimestamp!)
+        ? logs.requests.filter(
+            (r) =>
+              new Date(r.timestamp).getTime() >
+              new Date(this.lastTimestamp!).getTime(),
+          )
         : logs.requests;
 
       this.lastTimestamp = latestTimestamp;
