@@ -1,21 +1,22 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { FolderOpen, ScrollText, FlaskConical } from "lucide-react";
-import { cn } from "../lib/utils";
+import { NavLink, Outlet } from 'react-router-dom';
+import { FolderOpen, ScrollText, FlaskConical, Database } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 const navItems = [
-  { to: "/", label: "Projects", icon: FolderOpen, end: true },
-  { to: "/logs", label: "Logs", icon: ScrollText },
+  { to: '/', label: 'Projects', icon: FolderOpen, end: true },
+  { to: '/databases', label: 'Databases', icon: Database },
+  { to: '/logs', label: 'Logs', icon: ScrollText },
 ];
 
 export function Layout() {
   return (
     <div className="flex h-screen overflow-hidden bg-main-bg text-text-primary">
-      <aside className="w-56 flex-shrink-0 bg-sidebar flex flex-col">
-        <div className="flex items-center gap-2 px-4 py-5 border-b border-white/10">
+      <aside className="flex w-56 flex-shrink-0 flex-col bg-sidebar">
+        <div className="flex items-center gap-2 border-b border-white/10 px-4 py-5">
           <FlaskConical size={22} className="text-primary" />
-          <span className="font-bold text-lg tracking-wide">Stubrix</span>
+          <span className="text-lg font-bold tracking-wide">Stubrix</span>
         </div>
-        <nav className="flex-1 py-4 space-y-1 px-2">
+        <nav className="flex-1 space-y-1 px-2 py-4">
           {navItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -23,10 +24,10 @@ export function Layout() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
                   isActive
-                    ? "bg-primary/20 text-primary font-medium"
-                    : "text-text-secondary hover:bg-white/5 hover:text-text-primary",
+                    ? 'bg-primary/20 font-medium text-primary'
+                    : 'text-text-secondary hover:bg-white/5 hover:text-text-primary',
                 )
               }
             >
@@ -35,7 +36,7 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="px-4 py-3 border-t border-white/10 text-xs text-text-secondary">
+        <div className="border-t border-white/10 px-4 py-3 text-xs text-text-secondary">
           v1.0.0
         </div>
       </aside>

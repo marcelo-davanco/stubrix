@@ -6,6 +6,7 @@ import { MocksPage } from './pages/MocksPage'
 import { MockEditorPage } from './pages/MockEditorPage'
 import { RecordingPage } from './pages/RecordingPage'
 import { LogsPage } from './pages/LogsPage'
+import { DatabasesPage } from '@stubrix/db-ui'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="projects/:projectId/mocks/new" element={<MockEditorPage />} />
           <Route path="projects/:projectId/mocks/:mockId/edit" element={<MockEditorPage />} />
           <Route path="projects/:projectId/recording" element={<RecordingPage />} />
+          <Route path="databases" element={<DatabasesPage />} />
           <Route path="logs" element={<LogsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
