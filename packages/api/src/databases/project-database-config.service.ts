@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -104,11 +100,6 @@ export class ProjectDatabaseConfigService {
     }
 
     const duplicateId = `${projectId}:${dto.engine}:${dto.name}`;
-    if (all.some((item) => item.id === duplicateId)) {
-      throw new ConflictException(
-        `Database config '${dto.name}' already exists for project '${projectId}'`,
-      );
-    }
 
     const created: ProjectDatabaseConfig = {
       id: duplicateId,
