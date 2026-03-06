@@ -14,7 +14,7 @@ import { DatabasesModule } from './databases/databases.module';
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
-      exclude: ['/api/(.*)'],
+      exclude: ['/api/{*any}'],
     }),
     CommonModule,
     ProjectsModule,
