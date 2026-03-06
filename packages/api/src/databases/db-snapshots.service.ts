@@ -219,6 +219,9 @@ export class DbSnapshotsService {
   }
 
   list(projectId?: string): ListSnapshotsResponse {
+    if (projectId) {
+      this.projects.findOne(projectId);
+    }
     const resolvedProjectId = projectId ?? null;
     const snapshots = this.listSnapshotFiles()
       .map(({ file, engine, stats }) => ({
