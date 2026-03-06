@@ -51,6 +51,40 @@ mockoon-proxy: build ## Start Mockoon with proxy mode
 	PROXY_TARGET=$(PROXY_TARGET) docker compose --profile mockoon-proxy up
 
 # ---------------------------------------------------------------------------
+# Databases
+# ---------------------------------------------------------------------------
+
+postgres: ## Start PostgreSQL
+	docker compose --profile postgres up
+
+postgres-up: ## Start PostgreSQL (detached)
+	docker compose --profile postgres up -d
+
+postgres-down: ## Stop PostgreSQL services
+	docker compose --profile postgres down
+
+postgres-psql: ## Open psql shell
+	docker compose exec db-postgres psql -U $${PG_USER:-postgres}
+
+mysql: ## Start MySQL
+	docker compose --profile mysql up
+
+mysql-up: ## Start MySQL (detached)
+	docker compose --profile mysql up -d
+
+mysql-down: ## Stop MySQL services
+	docker compose --profile mysql down
+
+mysql-shell: ## Open mysql shell
+	docker compose exec db-mysql mysql -u $${MYSQL_USER:-stubrix} -p$${MYSQL_PASSWORD:-stubrix}
+
+all-up: ## Start WireMock + PostgreSQL
+	docker compose --profile wiremock --profile postgres up -d
+
+all-down: ## Stop all services
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql down
+
+# ---------------------------------------------------------------------------
 # Conversion
 # ---------------------------------------------------------------------------
 
@@ -72,7 +106,7 @@ list-mappings: ## List current WireMock mappings
 	@ls -la mocks/__files/ 2>/dev/null || echo "No response files found"
 
 clean: ## Remove all generated mocks and stop containers
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy down -v 2>/dev/null || true
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql down -v 2>/dev/null || true
 	rm -f .mockoon-env.json
 
 clean-mocks: ## Remove all mock files (careful!)
@@ -81,4 +115,4 @@ clean-mocks: ## Remove all mock files (careful!)
 	@echo "All mocks cleaned."
 
 down: ## Stop all containers
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy down
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql down

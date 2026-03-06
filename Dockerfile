@@ -6,25 +6,25 @@
 # ---------------------------------------------------------------------------
 # Stage 1 – Download WireMock standalone JAR
 # ---------------------------------------------------------------------------
-FROM node:20-slim AS wiremock-download
+FROM node:24-slim AS wiremock-download
 
 ARG WIREMOCK_VERSION=3.9.1
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
-    mkdir -p /opt/wiremock && \
-    curl -sSL -o /opt/wiremock/wiremock.jar \
-      "https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/${WIREMOCK_VERSION}/wiremock-standalone-${WIREMOCK_VERSION}.jar"
+  mkdir -p /opt/wiremock && \
+  curl -sSL -o /opt/wiremock/wiremock.jar \
+  "https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/${WIREMOCK_VERSION}/wiremock-standalone-${WIREMOCK_VERSION}.jar"
 
 # ---------------------------------------------------------------------------
 # Stage 2 – Combined image (Debian-based for ARM64 + x86 compat)
 # ---------------------------------------------------------------------------
-FROM node:20-slim AS combined
+FROM node:24-slim AS combined
 
 # Install Java (headless), bash, curl, jq
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      default-jre-headless bash curl jq ca-certificates && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+  apt-get install -y --no-install-recommends \
+  default-jre-headless bash curl jq ca-certificates && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Mockoon CLI
 RUN npm install -g @mockoon/cli@latest
@@ -45,12 +45,12 @@ EXPOSE 8080
 
 # Environment defaults
 ENV MOCK_ENGINE=wiremock \
-    MOCK_PORT=8080 \
-    RECORD_MODE=false \
-    PROXY_TARGET=""
+  MOCK_PORT=8080 \
+  RECORD_MODE=false \
+  PROXY_TARGET=""
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:${MOCK_PORT}/__admin/health 2>/dev/null || \
-      curl -f http://localhost:${MOCK_PORT}/ 2>/dev/null || exit 1
+  curl -f http://localhost:${MOCK_PORT}/ 2>/dev/null || exit 1
 
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]

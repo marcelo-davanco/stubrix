@@ -16,6 +16,7 @@ npm-debug.log*
 
 # Generated files
 .mockoon-env.json
+features/
 executions/
 analysis/
 coverage/

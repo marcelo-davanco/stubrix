@@ -23,14 +23,22 @@ export class WireMockClientService {
     return res.data;
   }
 
-  async post<T>(path: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  async post<T>(
+    path: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const res = await firstValueFrom(
       this.http.post<T>(`${this.baseUrl}${path}`, data, config),
     );
     return res.data;
   }
 
-  async put<T>(path: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  async put<T>(
+    path: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const res = await firstValueFrom(
       this.http.put<T>(`${this.baseUrl}${path}`, data, config),
     );

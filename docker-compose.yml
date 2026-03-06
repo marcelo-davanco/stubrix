@@ -2,10 +2,13 @@
 ## Stubrix – Docker Compose (WireMock / Mockoon)
 ##
 ## Usage:
+##   docker compose --profile databases up        # PostgreSQL only (SQLite runs on host)
 ##   docker compose --profile wiremock up         # run with WireMock
 ##   docker compose --profile mockoon  up         # run with Mockoon
 ##   docker compose --profile wiremock-record up   # WireMock in record mode
 ##   docker compose --profile mockoon-proxy  up    # Mockoon with proxy
+##   docker compose --profile postgres up         # PostgreSQL only
+##   docker compose --profile mysql up            # MySQL only
 ## ==========================================================================
 
 x-common: &common
@@ -70,3 +73,61 @@ services:
       PROXY_TARGET: "${PROXY_TARGET:-http://host.docker.internal:3000}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  # --------------------------------------------------------------------------
+  # PostgreSQL 17
+  # --------------------------------------------------------------------------
+  db-postgres:
+    image: postgres:17
+    profiles: ["postgres", "databases"]
+    container_name: stubrix-db-postgres
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${PG_DATABASE:-postgres}
+      PGDATA: ${PGDATA:-/var/lib/postgresql/data/pgdata}
+    ports:
+      - "${PG_EXTERNAL_PORT:-5442}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./dumps/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # MySQL 8
+  # --------------------------------------------------------------------------
+  db-mysql:
+    image: mysql:8
+    profiles: ["mysql"]
+    container_name: stubrix-db-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_USER: ${MYSQL_USER:-stubrix}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-stubrix}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-stubrix}
+    ports:
+      - "${MYSQL_EXTERNAL_PORT:-3307}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./dumps/mysql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # SQLite (file-based, no container needed - using host filesystem)
+  # --------------------------------------------------------------------------
+  # SQLite runs directly on the host via the API, no Docker container needed.
+  # Database files are stored in: ./dumps/sqlite/
+
+volumes:
+  pg_data:
+  mysql_data:

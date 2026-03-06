@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -18,14 +22,19 @@ export class ProjectsService {
   private readonly projectsFile: string;
 
   constructor(private readonly config: ConfigService) {
-    const mocksDir = this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+    const mocksDir =
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
     this.projectsFile = path.join(mocksDir, 'projects.json');
     this.ensureProjectsFile();
   }
 
   private ensureProjectsFile(): void {
     if (!fs.existsSync(this.projectsFile)) {
-      fs.writeFileSync(this.projectsFile, JSON.stringify([DEFAULT_PROJECT], null, 2));
+      fs.writeFileSync(
+        this.projectsFile,
+        JSON.stringify([DEFAULT_PROJECT], null, 2),
+      );
     }
   }
 
@@ -81,14 +90,16 @@ export class ProjectsService {
     const projects = this.readProjects();
     const index = projects.findIndex((p) => p.id === id);
     if (index === -1) throw new NotFoundException(`Project '${id}' not found`);
-    if (id === 'default') throw new ConflictException('Cannot modify the default project');
+    if (id === 'default')
+      throw new ConflictException('Cannot modify the default project');
     projects[index] = { ...projects[index], ...dto };
     this.writeProjects(projects);
     return projects[index];
   }
 
   remove(id: string): void {
-    if (id === 'default') throw new ConflictException('Cannot delete the default project');
+    if (id === 'default')
+      throw new ConflictException('Cannot delete the default project');
     const projects = this.readProjects();
     const index = projects.findIndex((p) => p.id === id);
     if (index === -1) throw new NotFoundException(`Project '${id}' not found`);

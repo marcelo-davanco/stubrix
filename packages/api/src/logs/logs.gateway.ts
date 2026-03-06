@@ -4,7 +4,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { LogsService } from './logs.service';
 
 @WebSocketGateway({ namespace: '/ws/logs', cors: { origin: '*' } })
@@ -17,14 +17,14 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(private readonly logsService: LogsService) {}
 
-  handleConnection(_client: Socket) {
+  handleConnection() {
     if (!this.interval) {
       this.interval = setInterval(() => void this.poll(), 2000);
     }
   }
 
-  handleDisconnect(_client: Socket) {
-    if (this.server.sockets.sockets.size === 0 && this.interval) {
+  handleDisconnect() {
+    if (this.server?.sockets?.sockets?.size === 0 && this.interval) {
       clearInterval(this.interval);
       this.interval = null;
       this.lastTimestamp = null;
