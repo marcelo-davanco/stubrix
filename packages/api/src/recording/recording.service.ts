@@ -37,7 +37,7 @@ export class RecordingService {
       const active = status.status === 'Recording';
       return {
         active,
-        projectId: active ? projectId : null,
+        projectId: null,
         proxyTarget: active ? (status.request?.targetBaseUrl ?? null) : null,
         startedAt: null,
         requestsRecorded: 0,
