@@ -14,6 +14,9 @@ build/
 *.log
 npm-debug.log*
 
+# Vite cache
+.vite/
+
 # Generated files
 .mockoon-env.json
 features/
