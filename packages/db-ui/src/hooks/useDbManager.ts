@@ -10,6 +10,7 @@ type CreateSnapshotPayload = {
   label: string
   database: string
   category?: null | string
+  connectionId?: string
 }
 
 export function useDbManager() {
@@ -23,6 +24,7 @@ export function useDbManager() {
   )
   const [snapshots, setSnapshots] = useState([] as Array<Snapshot>)
   const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null)
+  const [selectedConnectionId, setSelectedConnectionId] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -50,12 +52,12 @@ export function useDbManager() {
   }, [])
 
   const loadDatabases = useCallback(
-    async (engine?: string | null, projectId?: string) => {
+    async (engine?: string | null, projectId?: string, connectionId?: string) => {
       if (!engine) {
         setDatabases([])
         return
       }
-      const response = await dbApi.getDatabases(engine, projectId)
+      const response = await dbApi.getDatabases(engine, projectId, connectionId || undefined)
       setDatabases(response.databases)
     },
     [],
@@ -89,8 +91,8 @@ export function useDbManager() {
   }, [loadProjectDatabaseConfigs, selectedProjectId])
 
   useEffect(() => {
-    void loadDatabases(selectedEngine, selectedProjectId)
-  }, [loadDatabases, selectedEngine, selectedProjectId])
+    void loadDatabases(selectedEngine, selectedProjectId, selectedConnectionId)
+  }, [loadDatabases, selectedEngine, selectedProjectId, selectedConnectionId])
 
   const activeEngines = useMemo(
     () => engines.filter((engine) => engine.status === 'active'),
@@ -125,11 +127,12 @@ export function useDbManager() {
         name,
         selectedEngine,
         selectedProjectId,
+        selectedConnectionId || undefined,
       )
       setDatabaseInfo(info)
       return info
     },
-    [selectedEngine, selectedProjectId],
+    [selectedEngine, selectedProjectId, selectedConnectionId],
   )
 
   const createSnapshot = useCallback(
@@ -138,6 +141,7 @@ export function useDbManager() {
       await dbApi.createSnapshot(selectedEngine, {
         ...payload,
         projectId: selectedProjectId || undefined,
+        connectionId: payload.connectionId || undefined,
       })
       await loadSnapshots(selectedProjectId)
     },
@@ -145,11 +149,14 @@ export function useDbManager() {
   )
 
   const restoreSnapshot = useCallback(
-    async (name: string, database: string) => {
+    async (name: string, database: string, options?: { connectionId?: string }) => {
       if (!selectedEngine) throw new Error('No engine selected')
-      await dbApi.restoreSnapshot(selectedEngine, name, database)
+      await dbApi.restoreSnapshot(selectedEngine, name, database, {
+        projectId: selectedProjectId || undefined,
+        connectionId: options?.connectionId || undefined,
+      })
     },
-    [selectedEngine],
+    [selectedEngine, selectedProjectId],
   )
 
   const deleteSnapshot = useCallback(
@@ -187,6 +194,8 @@ export function useDbManager() {
     databases,
     preferredProjectConfig,
     projectDatabaseConfigs,
+    selectedConnectionId,
+    setSelectedConnectionId,
     snapshots: filteredSnapshots,
     databaseInfo,
     loading,
