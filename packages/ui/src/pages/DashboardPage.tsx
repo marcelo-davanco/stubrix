@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Video, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus, Video, RefreshCw, FolderOpen } from 'lucide-react';
 import type { Project, StatusResponse, RecordingState } from '@stubrix/shared';
 import { api } from '../lib/api';
 import { Badge } from '../components/ui/Badge';
@@ -96,6 +96,12 @@ export function DashboardPage() {
         <div className="bg-white/5 border border-white/10 rounded-lg p-4">
           <h3 className="font-medium mb-3">Quick Actions</h3>
           <div className="flex flex-wrap gap-2">
+            <Link
+              to={`/projects/${projectId}/mocks`}
+              className="flex items-center gap-1.5 text-sm bg-primary/20 text-primary hover:bg-primary/30 px-3 py-1.5 rounded-md"
+            >
+              <FolderOpen size={14} /> View Mocks
+            </Link>
             <Link
               to={`/projects/${projectId}/mocks/new`}
               className="flex items-center gap-1.5 text-sm bg-primary/20 text-primary hover:bg-primary/30 px-3 py-1.5 rounded-md"
