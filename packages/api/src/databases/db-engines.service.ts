@@ -29,8 +29,16 @@ export class DbEnginesService {
     return { engines };
   }
 
-  async listDatabases(engine?: string, projectId?: string) {
-    const resolvedContext = this.projectContext.resolve(projectId, engine);
+  async listDatabases(
+    engine?: string,
+    projectId?: string,
+    connectionId?: string,
+  ) {
+    const resolvedContext = this.projectContext.resolve(
+      projectId,
+      engine,
+      connectionId,
+    );
     const resolvedEngine = resolvedContext?.engine ?? engine;
     const driver = resolvedEngine
       ? this.registry.get(resolvedEngine)
@@ -40,7 +48,16 @@ export class DbEnginesService {
       return { engine: null, databases: [], projectContext: resolvedContext };
     }
 
-    const databases = await driver.listDatabases();
+    const overrides = resolvedContext
+      ? {
+          host: resolvedContext.host,
+          port: resolvedContext.port,
+          username: resolvedContext.username,
+          password: resolvedContext.password,
+        }
+      : undefined;
+
+    const databases = await driver.listDatabases(overrides);
     const preferredDatabase = resolvedContext?.database;
     const orderedDatabases = preferredDatabase
       ? [
@@ -56,8 +73,17 @@ export class DbEnginesService {
     };
   }
 
-  async getDatabaseInfo(name: string, engine?: string, projectId?: string) {
-    const resolvedContext = this.projectContext.resolve(projectId, engine);
+  async getDatabaseInfo(
+    name: string,
+    engine?: string,
+    projectId?: string,
+    connectionId?: string,
+  ) {
+    const resolvedContext = this.projectContext.resolve(
+      projectId,
+      engine,
+      connectionId,
+    );
     const resolvedEngine = resolvedContext?.engine ?? engine;
     const resolvedName = resolvedContext?.database ?? name;
     const driver = resolvedEngine
@@ -68,7 +94,16 @@ export class DbEnginesService {
       return null;
     }
 
-    const info = await driver.getDatabaseInfo(resolvedName);
+    const overrides = resolvedContext
+      ? {
+          host: resolvedContext.host,
+          port: resolvedContext.port,
+          username: resolvedContext.username,
+          password: resolvedContext.password,
+        }
+      : undefined;
+
+    const info = await driver.getDatabaseInfo(resolvedName, overrides);
     return { engine: driver.engine, projectContext: resolvedContext, ...info };
   }
 }

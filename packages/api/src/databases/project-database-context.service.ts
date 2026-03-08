@@ -20,9 +20,25 @@ export class ProjectDatabaseContextService {
   resolve(
     projectId?: string,
     engine?: string,
+    connectionId?: string,
   ): ResolvedProjectDatabaseContext | null {
     if (!projectId) {
       return null;
+    }
+
+    if (connectionId) {
+      const config = this.configs.get(projectId, connectionId);
+      return {
+        projectId,
+        engine: config.engine,
+        connectionName: config.name,
+        database: config.database,
+        host: config.host,
+        port: config.port,
+        username: config.username,
+        password: config.password,
+        filePath: config.filePath,
+      };
     }
 
     const projectConfigs = this.configs.list(projectId);

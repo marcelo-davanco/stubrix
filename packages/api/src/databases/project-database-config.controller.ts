@@ -1,11 +1,14 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { execSync } from 'child_process';
+import * as mysql from 'mysql2/promise';
+import * as fs from 'fs';
 import { ProjectDatabaseConfigService } from './project-database-config.service';
 import { UpsertProjectDatabaseDto } from './dto/upsert-project-database.dto';
-import { DriverRegistryService } from './drivers/driver-registry.service';
+import type { ProjectDatabaseConfig } from './project-database-config.service';
 
 @Controller('projects/:projectId/databases/configs')
 export class ProjectDatabaseConfigController {
-  constructor(private readonly configs: ProjectDatabaseConfigService, private readonly driverRegistry: DriverRegistryService) {}
+  constructor(private readonly configs: ProjectDatabaseConfigService) {}
 
   @Get()
   list(@Param('projectId') projectId: string) {
@@ -37,15 +40,67 @@ export class ProjectDatabaseConfigController {
     @Param('id') id: string,
   ) {
     const config = this.configs.get(projectId, id);
-    const driver = this.driverRegistry.get(config.engine);
-    if (!driver) {
-      return { ok: false, message: `No driver found for engine '${config.engine}'` };
-    }
     try {
-      const healthy = await driver.healthCheck();
-      return { ok: healthy, message: healthy ? 'Connection successful' : 'Connection failed' };
+      const ok = await this.testConfigConnection(config);
+      this.configs.updateConnectionStatus(projectId, id, ok ? 'ok' : 'error');
+      return {
+        ok,
+        message: ok ? 'Connection successful' : 'Connection failed',
+      };
     } catch (err) {
-      return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+      this.configs.updateConnectionStatus(projectId, id, 'error');
+      return {
+        ok: false,
+        message: err instanceof Error ? err.message : 'Unknown error',
+      };
     }
+  }
+
+  private async testConfigConnection(
+    config: ProjectDatabaseConfig,
+  ): Promise<boolean> {
+    if (config.engine === 'postgres') {
+      try {
+        execSync('pg_isready', {
+          env: {
+            ...process.env,
+            PGHOST: config.host ?? 'localhost',
+            PGPORT: config.port ?? '5432',
+            PGUSER: config.username ?? 'postgres',
+            PGPASSWORD: config.password ?? '',
+            PGDATABASE: config.database ?? 'postgres',
+          },
+          stdio: 'ignore',
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    if (config.engine === 'mysql') {
+      let conn: mysql.Connection | null = null;
+      try {
+        conn = await mysql.createConnection({
+          host: config.host ?? 'localhost',
+          port: Number(config.port ?? 3306),
+          user: config.username ?? 'root',
+          password: config.password ?? '',
+          database: config.database ?? undefined,
+        });
+        await conn.query('SELECT 1');
+        return true;
+      } catch {
+        return false;
+      } finally {
+        await conn?.end();
+      }
+    }
+
+    if (config.engine === 'sqlite') {
+      return Boolean(config.filePath && fs.existsSync(config.filePath));
+    }
+
+    return false;
   }
 }

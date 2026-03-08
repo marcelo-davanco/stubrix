@@ -20,4 +20,8 @@ export class CreateSnapshotDto {
   @IsString()
   @IsOptional()
   projectId?: string;
+
+  @IsString()
+  @IsOptional()
+  connectionId?: string;
 }
