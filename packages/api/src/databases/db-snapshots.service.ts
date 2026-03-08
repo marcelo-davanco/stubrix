@@ -10,6 +10,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ProjectsService } from '../projects/projects.service';
 import { DriverRegistryService } from './drivers/driver-registry.service';
+import { ProjectDatabaseConfigService } from './project-database-config.service';
 import type { CreateSnapshotDto } from './dto/create-snapshot.dto';
 import type { UpdateSnapshotDto } from './dto/update-snapshot.dto';
 import type { RestoreSnapshotDto } from './dto/restore-snapshot.dto';
@@ -73,6 +74,7 @@ export class DbSnapshotsService {
     private readonly config: ConfigService,
     private readonly registry: DriverRegistryService,
     private readonly projects: ProjectsService,
+    private readonly dbConfigs: ProjectDatabaseConfigService,
   ) {
     this.dumpsDir =
       this.config.get<string>('DUMPS_DIR') ??
@@ -189,31 +191,57 @@ export class DbSnapshotsService {
       .slice(0, 15);
   }
 
-  private getPostgresEnv(database?: string): NodeJS.ProcessEnv {
+  private getPostgresEnv(
+    database?: string,
+    overrides?: Partial<{
+      host: string;
+      port: string;
+      user: string;
+      password: string;
+    }>,
+  ): NodeJS.ProcessEnv {
     return {
       ...process.env,
-      PGHOST: this.postgresHost,
-      PGPORT: this.postgresPort,
-      PGUSER: this.postgresUser,
-      PGPASSWORD: this.postgresPassword,
+      PGHOST: overrides?.host ?? this.postgresHost,
+      PGPORT: overrides?.port ?? this.postgresPort,
+      PGUSER: overrides?.user ?? this.postgresUser,
+      PGPASSWORD: overrides?.password ?? this.postgresPassword,
       PGDATABASE: database ?? this.postgresDatabase,
     };
   }
 
-  private createPostgresSnapshot(database: string, filepath: string): void {
+  private createPostgresSnapshot(
+    database: string,
+    filepath: string,
+    envOverrides?: Partial<{
+      host: string;
+      port: string;
+      user: string;
+      password: string;
+    }>,
+  ): void {
     execFileSync(
       'pg_dump',
       ['--clean', '--if-exists', '--file', filepath, database],
       {
-        env: this.getPostgresEnv(database),
+        env: this.getPostgresEnv(database, envOverrides),
         stdio: 'pipe',
       },
     );
   }
 
-  private restorePostgresSnapshot(database: string, filepath: string): void {
+  private restorePostgresSnapshot(
+    database: string,
+    filepath: string,
+    envOverrides?: Partial<{
+      host: string;
+      port: string;
+      user: string;
+      password: string;
+    }>,
+  ): void {
     execFileSync('psql', ['--file', filepath, database], {
-      env: this.getPostgresEnv(database),
+      env: this.getPostgresEnv(database, envOverrides),
       stdio: 'pipe',
     });
   }
@@ -247,6 +275,32 @@ export class DbSnapshotsService {
     return { snapshots, metadata: this.readMetadata() };
   }
 
+  private resolveConnectionOverrides(
+    projectId: string | null,
+    connectionId: string | undefined,
+    engine: string,
+  ):
+    | Partial<{ host: string; port: string; user: string; password: string }>
+    | undefined {
+    if (!connectionId || !projectId) {
+      return undefined;
+    }
+    try {
+      const cfg = this.dbConfigs.get(projectId, connectionId);
+      if (cfg.engine !== engine) {
+        return undefined;
+      }
+      return {
+        host: cfg.host ?? undefined,
+        port: cfg.port ?? undefined,
+        user: cfg.username ?? undefined,
+        password: cfg.password ?? undefined,
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
   async create(
     dto: CreateSnapshotDto,
     engineParam?: string,
@@ -270,7 +324,12 @@ export class DbSnapshotsService {
     const filepath = path.join(targetDir, filename);
 
     if (driver.engine === 'postgres') {
-      this.createPostgresSnapshot(database, filepath);
+      const envOverrides = this.resolveConnectionOverrides(
+        projectId,
+        dto.connectionId,
+        driver.engine,
+      );
+      this.createPostgresSnapshot(database, filepath, envOverrides);
     } else {
       fs.writeFileSync(
         filepath,
@@ -337,7 +396,7 @@ export class DbSnapshotsService {
     ];
     const updates: Partial<SnapshotMeta> = {};
     for (const key of allowed) {
-      if (key in dto) {
+      if (key in dto && (dto as Record<string, unknown>)[key] !== undefined) {
         (updates as Record<string, unknown>)[key] = (
           dto as Record<string, unknown>
         )[key];
@@ -380,7 +439,12 @@ export class DbSnapshotsService {
     const database = dto.database ?? 'default';
 
     if (engine === 'postgres') {
-      this.restorePostgresSnapshot(database, snapshot.filepath);
+      const overrides = this.resolveConnectionOverrides(
+        dto.projectId ?? null,
+        dto.connectionId,
+        engine,
+      );
+      this.restorePostgresSnapshot(database, snapshot.filepath, overrides);
       return {
         message: `Snapshot "${name}" restored to database "${database}"`,
         engine,
