@@ -9,10 +9,10 @@ export function DatabaseInfo({ info }: DatabaseInfoProps) {
   if (!info) return null
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
+    <div className="rounded-2xl border border-white/10 bg-surface-1 p-5">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.06] text-base">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-2 text-base">
             🐘
           </div>
           <div>
@@ -20,7 +20,7 @@ export function DatabaseInfo({ info }: DatabaseInfoProps) {
             <p className="text-xs capitalize text-text-secondary">{info.engine}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 rounded-xl bg-white/[0.06] px-3 py-1.5">
+        <div className="flex items-center gap-1.5 rounded-xl bg-surface-2 px-3 py-1.5">
           <HardDrive size={12} className="text-text-secondary" />
           <span className="text-xs font-semibold text-text-primary">{info.totalSize}</span>
         </div>
@@ -36,7 +36,7 @@ export function DatabaseInfo({ info }: DatabaseInfoProps) {
           </div>
           <div className="space-y-1">
             {info.tables.map((table) => (
-              <div key={table.name} className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2">
+              <div key={table.name} className="flex items-center justify-between rounded-lg bg-main-bg px-3 py-2">
                 <span className="font-mono text-xs text-text-primary">{table.name}</span>
                 <span className="text-xs text-text-secondary">{table.size}</span>
               </div>

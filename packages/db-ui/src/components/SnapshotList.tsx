@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { RotateCcw, Trash2, Loader2, Camera, Star, Lock, Tag, Filter } from 'lucide-react'
+import { EmptyState } from './EmptyState'
 import type { Snapshot } from '@stubrix/shared'
 import { dbApi } from '../lib/db-api'
 
@@ -59,7 +60,7 @@ export function SnapshotList({ snapshots, onDelete, onRestore, onUpdate }: Snaps
   const hasFilters = filterMode !== 'all' || !!filterCategory
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
+    <div className="rounded-2xl border border-white/10 bg-surface-1 p-5">
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -78,21 +79,21 @@ export function SnapshotList({ snapshots, onDelete, onRestore, onUpdate }: Snaps
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="appearance-none rounded-lg border border-white/8 bg-white/[0.04] py-1 pl-7 pr-6 text-xs text-text-secondary outline-none focus:border-primary/40"
+                  className="rounded-lg border border-white/10 bg-main-bg py-1 pl-7 pr-6 text-xs text-text-secondary outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary/40"
                 >
                   <option value="">Categoria</option>
                   {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             )}
-            <div className="flex rounded-lg border border-white/8 bg-white/[0.03] p-0.5">
+            <div className="flex rounded-lg border border-white/10 bg-main-bg p-0.5">
               {(['all', 'favorites', 'protected'] as FilterMode[]).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => setFilterMode(mode)}
                   title={mode === 'all' ? 'Todos' : mode === 'favorites' ? 'Favoritos' : 'Protegidos'}
-                  className={`rounded-md p-1.5 transition-colors ${filterMode === mode ? 'bg-white/10 text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                  className={`rounded-md p-1.5 transition-colors ${filterMode === mode ? 'bg-surface-2 text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
                 >
                   {mode === 'all' && <Filter size={12} />}
                   {mode === 'favorites' && <Star size={12} />}
@@ -115,14 +116,17 @@ export function SnapshotList({ snapshots, onDelete, onRestore, onUpdate }: Snaps
 
       {/* List */}
       {snapshots.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/10 py-8 text-center">
-          <Camera size={20} className="mx-auto mb-2 text-text-secondary/30" />
-          <p className="text-sm text-text-secondary">Nenhum snapshot criado ainda.</p>
-        </div>
+        <EmptyState
+          icon={<Camera size={22} strokeWidth={1.5} />}
+          title="Nenhum snapshot criado"
+          description="Crie um snapshot para salvar o estado atual do database e restaurá-lo quando necessário."
+        />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/10 py-6 text-center">
-          <p className="text-sm text-text-secondary">Nenhum snapshot para este filtro.</p>
-        </div>
+        <EmptyState
+          icon={<Filter size={22} strokeWidth={1.5} />}
+          title="Nenhum resultado"
+          description="Nenhum snapshot corresponde ao filtro selecionado."
+        />
       ) : (
         <div className="space-y-2">
           {filtered.map((snapshot) => {
@@ -133,9 +137,9 @@ export function SnapshotList({ snapshots, onDelete, onRestore, onUpdate }: Snaps
             return (
               <div
                 key={snapshot.name}
-                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-colors ${snapshot.protected
-                    ? 'border-warning/20 bg-warning/[0.03]'
-                    : 'border-white/6 bg-white/[0.03] hover:border-white/10'
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-all ${snapshot.protected
+                    ? 'border-warning/20 bg-warning/[0.04]'
+                    : 'border-white/8 bg-main-bg hover:border-white/15 hover:bg-surface-2'
                   }`}
               >
                 {/* Favorite star */}
@@ -195,7 +199,7 @@ export function SnapshotList({ snapshots, onDelete, onRestore, onUpdate }: Snaps
                     disabled={!!state || snapshot.protected}
                     onClick={() => void handleRestore(snapshot.name)}
                     title={snapshot.protected ? 'Snapshot protegido — remova a proteção para restaurar' : 'Restaurar snapshot'}
-                    className="flex items-center gap-1.5 rounded-xl bg-primary/15 px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/25 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex items-center gap-1.5 rounded-lg bg-primary/15 px-2.5 py-1.5 text-xs font-medium text-primary transition-all hover:bg-primary/25 focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {state === 'restoring' ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
                     {state === 'restoring' ? 'Restaurando...' : 'Restaurar'}

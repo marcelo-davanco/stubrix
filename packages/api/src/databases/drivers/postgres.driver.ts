@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { execSync } from 'child_process';
-import type { DatabaseDriverInterface } from './database-driver.interface';
+import type {
+  ConnectionOverrides,
+  DatabaseDriverInterface,
+} from './database-driver.interface';
 
 @Injectable()
 export class PostgresDriver implements DatabaseDriverInterface {
@@ -21,13 +24,16 @@ export class PostgresDriver implements DatabaseDriverInterface {
     this.database = this.config.get<string>('PG_DATABASE') ?? 'postgres';
   }
 
-  private getEnv(database?: string): NodeJS.ProcessEnv {
+  private getEnv(
+    database?: string,
+    overrides?: ConnectionOverrides,
+  ): NodeJS.ProcessEnv {
     return {
       ...process.env,
-      PGHOST: this.host,
-      PGPORT: this.port,
-      PGUSER: this.user,
-      PGPASSWORD: this.password,
+      PGHOST: overrides?.host ?? this.host,
+      PGPORT: overrides?.port ?? this.port,
+      PGUSER: overrides?.username ?? this.user,
+      PGPASSWORD: overrides?.password ?? this.password,
       PGDATABASE: database ?? this.database,
     };
   }
@@ -46,20 +52,23 @@ export class PostgresDriver implements DatabaseDriverInterface {
     }
   }
 
-  listDatabases(): Promise<string[]> {
+  listDatabases(overrides?: ConnectionOverrides): Promise<string[]> {
     const output = execSync(
       `psql -t -A -c "SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;"`,
-      { env: this.getEnv(), encoding: 'utf-8' },
+      { env: this.getEnv(undefined, overrides), encoding: 'utf-8' },
     );
     return Promise.resolve(output.trim().split('\n').filter(Boolean));
   }
 
-  getDatabaseInfo(dbName: string): Promise<{
+  getDatabaseInfo(
+    dbName: string,
+    overrides?: ConnectionOverrides,
+  ): Promise<{
     database: string;
     totalSize: string;
     tables: Array<{ name: string; size: string }>;
   }> {
-    const env = this.getEnv(dbName);
+    const env = this.getEnv(dbName, overrides);
     const tablesOutput = execSync(
       `psql -t -A -c "SELECT schemaname || '.' || tablename AS table_name, pg_size_pretty(pg_total_relation_size((quote_ident(schemaname) || '.' || quote_ident(tablename))::regclass)) AS size FROM pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY pg_total_relation_size((quote_ident(schemaname) || '.' || quote_ident(tablename))::regclass) DESC LIMIT 20;"`,
       { env, encoding: 'utf-8' },

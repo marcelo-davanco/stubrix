@@ -2,13 +2,13 @@
 ## Stubrix – Docker Compose (WireMock / Mockoon)
 ##
 ## Usage:
-##   docker compose --profile databases up        # PostgreSQL only (SQLite runs on host)
-##   docker compose --profile wiremock up         # run with WireMock
-##   docker compose --profile mockoon  up         # run with Mockoon
-##   docker compose --profile wiremock-record up   # WireMock in record mode
-##   docker compose --profile mockoon-proxy  up    # Mockoon with proxy
-##   docker compose --profile postgres up         # PostgreSQL only
-##   docker compose --profile mysql up            # MySQL only
+##   docker compose --profile databases up -d         # PostgreSQL only (SQLite runs on host)
+##   docker compose --profile wiremock up -d          # run with WireMock
+##   docker compose --profile mockoon  up -d          # run with Mockoon
+##   docker compose --profile wiremock-record up -d   # WireMock in record mode
+##   docker compose --profile mockoon-proxy  up -d    # Mockoon with proxy
+##   docker compose --profile postgres up -d          # PostgreSQL only
+##   docker compose --profile mysql up -d             # MySQL only
 ## ==========================================================================
 
 x-common: &common

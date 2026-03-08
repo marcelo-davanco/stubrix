@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, Wifi, Loader2, X, Check, ServerCrash, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, Wifi, Loader2, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import type {
   ProjectDatabaseConfigItem,
   UpsertProjectDatabaseConfigPayload,
@@ -14,6 +14,7 @@ type ProjectDatabaseConfigsProps = {
   configs: Array<ProjectDatabaseConfigItem>
   onSave: (payload: UpsertProjectDatabaseConfigPayload) => Promise<void>
   onDelete: (id: string) => Promise<void>
+  onRefresh: () => void
 }
 
 const EMPTY_FORM: ConfigFormState = {
@@ -40,7 +41,7 @@ const ENGINE_STYLE: Record<string, { badge: string; icon: string }> = {
   sqlite: { badge: 'bg-teal-500/15 text-teal-300 ring-1 ring-teal-500/30', icon: '📁' },
 }
 
-const INPUT_CLASS = 'w-full rounded-xl border border-white/8 bg-white/[0.04] px-3.5 py-2.5 text-sm text-text-primary placeholder-white/20 outline-none focus:border-primary/60 focus:bg-white/[0.06] transition-all'
+const INPUT_CLASS = 'w-full rounded-lg border border-white/10 bg-main-bg px-3.5 py-2.5 text-sm text-text-primary placeholder-white/20 outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary/40'
 const LABEL_CLASS = 'mb-1.5 block text-xs font-medium text-text-secondary'
 
 function ConfigForm({
@@ -191,7 +192,7 @@ function ConfigForm({
         <button
           type="submit"
           disabled={submitting || !form.name.trim()}
-          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
           {submitting ? 'Salvando...' : 'Salvar'}
@@ -199,7 +200,7 @@ function ConfigForm({
         <button
           type="button"
           onClick={onCancel}
-          className="flex items-center gap-2 rounded-md border border-white/10 px-4 py-2 text-sm text-text-secondary hover:bg-white/5"
+          className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary focus:outline-none focus:ring-1 focus:ring-white/20"
         >
           <X size={14} /> Cancelar
         </button>
@@ -213,15 +214,20 @@ function ConfigCard({
   projectId,
   onEdit,
   onDelete,
+  onRefresh,
 }: {
   config: ProjectDatabaseConfigItem
   projectId: string
   onEdit: () => void
   onDelete: () => void
+  onRefresh: () => void
 }) {
   const [testStatus, setTestStatus] = useState<TestStatus>('idle')
   const [testMessage, setTestMessage] = useState('')
   const [expanded, setExpanded] = useState(false)
+
+  const persistedStatus = config.connectionStatus
+  const displayStatus: TestStatus = testStatus !== 'idle' ? testStatus : (persistedStatus as TestStatus)
 
   async function handleTest() {
     setTestStatus('testing')
@@ -230,9 +236,11 @@ function ConfigCard({
       const result = await dbApi.testProjectDatabaseConfig(projectId, config.id)
       setTestStatus(result.ok ? 'ok' : 'error')
       setTestMessage(result.message)
+      onRefresh()
     } catch (err) {
       setTestStatus('error')
       setTestMessage(err instanceof Error ? err.message : 'Erro desconhecido')
+      onRefresh()
     }
   }
 
@@ -243,7 +251,7 @@ function ConfigCard({
     : config.host ? `${config.host}:${config.port || '?'}` : 'Sem host'
 
   return (
-    <div className={`overflow-hidden rounded-2xl border transition-all duration-200 ${expanded ? 'border-white/15 bg-white/[0.05]' : 'border-white/8 bg-white/[0.03] hover:border-white/12'
+    <div className={`overflow-hidden rounded-2xl border transition-all duration-200 ${expanded ? 'border-white/15 bg-surface-2' : 'border-white/8 bg-main-bg hover:border-white/15'
       }`}>
       <div className="flex items-center gap-2.5 px-3.5 py-3">
         <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${style.badge}`}>
@@ -251,21 +259,22 @@ function ConfigCard({
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium leading-tight text-text-primary">{config.name}</p>
+          <div className="flex items-center gap-1.5">
+            {displayStatus === 'ok' && (
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-400 shadow-[0_0_4px_theme(colors.green.400)]" />
+            )}
+            {displayStatus === 'error' && (
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />
+            )}
+            {displayStatus !== 'ok' && displayStatus !== 'error' && (
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/20" />
+            )}
+            <p className="truncate text-sm font-medium leading-tight text-text-primary">{config.name}</p>
+          </div>
           <p className="truncate font-mono text-xs text-text-secondary">{connStr}</p>
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5">
-          {testStatus === 'ok' && (
-            <span className="mr-1 flex items-center gap-0.5 rounded-full bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-400">
-              <Wifi size={9} /> OK
-            </span>
-          )}
-          {testStatus === 'error' && (
-            <span className="mr-1 flex items-center gap-0.5 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-medium text-red-400">
-              <ServerCrash size={9} /> Erro
-            </span>
-          )}
           <button
             type="button"
             onClick={() => void handleTest()}
@@ -291,7 +300,7 @@ function ConfigCard({
       </div>
 
       {expanded && (
-        <div className="border-t border-white/8 bg-white/[0.02] px-4 py-3">
+        <div className="border-t border-white/8 bg-surface-1 px-4 py-3">
           <div className="grid gap-x-6 gap-y-2 text-xs md:grid-cols-2">
             {!isSqlite ? (
               <>
@@ -324,10 +333,16 @@ function ConfigCard({
                 <span className="text-text-primary">{config.notes}</span>
               </div>
             )}
-            <div className="flex items-center justify-between md:col-span-2 pt-1 border-t border-white/5">
+            <div className="flex items-center justify-between pt-1 border-t border-white/5">
               <span className="text-text-secondary">Atualizado</span>
               <span className="text-white/40">{new Date(config.updatedAt).toLocaleString('pt-BR')}</span>
             </div>
+            {config.connectionTestedAt && (
+              <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                <span className="text-text-secondary">Último teste</span>
+                <span className="text-white/40">{new Date(config.connectionTestedAt).toLocaleString('pt-BR')}</span>
+              </div>
+            )}
           </div>
           {testStatus === 'error' && testMessage && (
             <p className="mt-2 text-xs text-red-400">{testMessage}</p>
@@ -343,6 +358,7 @@ export function ProjectDatabaseConfigs({
   configs,
   onSave,
   onDelete,
+  onRefresh,
 }: ProjectDatabaseConfigsProps) {
   const [showForm, setShowForm] = useState(false)
   const [editingConfig, setEditingConfig] = useState<ProjectDatabaseConfigItem | null>(null)
@@ -378,7 +394,7 @@ export function ProjectDatabaseConfigs({
     : EMPTY_FORM
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
+    <div className="flex-1 rounded-2xl border border-white/10 bg-surface-1 p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-text-primary">Conexões do projeto</h2>
@@ -388,15 +404,15 @@ export function ProjectDatabaseConfigs({
           <button
             type="button"
             onClick={() => { setEditingConfig(null); setShowForm(true) }}
-            className="flex items-center gap-1.5 rounded-xl bg-primary/20 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/30"
+            className="flex items-center gap-1.5 rounded-lg bg-primary/20 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/30 focus:outline-none focus:ring-1 focus:ring-primary/40"
           >
-            <Plus size={13} /> Nova conexão
+            <Plus size={13} strokeWidth={2.5} /> Nova conexão
           </button>
         )}
       </div>
 
       {showForm && (
-        <div className="mb-4 overflow-hidden rounded-2xl border border-primary/20 bg-primary/[0.04]">
+        <div className="mb-4 overflow-hidden rounded-2xl border border-primary/20 bg-surface-2">
           <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
             <p className="text-sm font-semibold text-text-primary">
               {editingConfig ? `Editar — ${editingConfig.name}` : 'Nova conexão'}
@@ -415,7 +431,7 @@ export function ProjectDatabaseConfigs({
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed border-white/10 py-8 text-center transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
+          className="flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-white/15 py-8 text-center transition-all hover:border-primary/40 hover:bg-primary/[0.04]"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-xl">🔌</div>
           <div>
@@ -432,6 +448,7 @@ export function ProjectDatabaseConfigs({
               projectId={projectId}
               onEdit={() => handleEdit(config)}
               onDelete={() => void onDelete(config.id)}
+              onRefresh={onRefresh}
             />
           ))}
         </div>

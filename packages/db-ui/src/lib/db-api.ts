@@ -12,6 +12,8 @@ export type ProjectDatabaseConfigItem = {
   password: null | string
   filePath: null | string
   notes: null | string
+  connectionStatus: 'unknown' | 'ok' | 'error'
+  connectionTestedAt: null | string
   createdAt: string
   updatedAt: string
 }
@@ -57,13 +59,19 @@ type MessageResponse = {
 const DB_API_BASE = '/api/db'
 const API_BASE = '/api'
 
-function withProjectId(url: string, projectId?: string): string {
-  if (!projectId) {
-    return url
-  }
-
+function withQueryParams(
+  url: string,
+  params: Record<string, string | undefined>,
+): string {
+  const entries = Object.entries(params).filter(
+    (entry): entry is [string, string] => Boolean(entry[1]),
+  )
+  if (entries.length === 0) return url
   const separator = url.includes('?') ? '&' : '?'
-  return `${url}${separator}projectId=${encodeURIComponent(projectId)}`
+  const qs = entries
+    .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+    .join('&')
+  return `${url}${separator}${qs}`
 }
 
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
@@ -97,18 +105,18 @@ export const dbApi = {
   testProjectDatabaseConfig: (projectId: string, id: string) =>
     request<{ ok: boolean; message: string }>(`${API_BASE}/projects/${encodeURIComponent(projectId)}/databases/configs/${encodeURIComponent(id)}/test`),
   getEngines: () => request<EnginesResponse>(`${DB_API_BASE}/engines`),
-  getDatabases: (engine?: string, projectId?: string) =>
+  getDatabases: (engine?: string, projectId?: string, connectionId?: string) =>
     request<DatabasesResponse>(
-      withProjectId(
+      withQueryParams(
         engine ? `${DB_API_BASE}/engines/${engine}/databases` : `${DB_API_BASE}/databases`,
-        projectId,
+        { projectId, connectionId },
       ),
     ),
-  getDatabaseInfo: (name: string, engine?: string, projectId?: string) =>
+  getDatabaseInfo: (name: string, engine?: string, projectId?: string, connectionId?: string) =>
     request<DatabaseInfo>(
-      withProjectId(
+      withQueryParams(
         engine ? `${DB_API_BASE}/engines/${engine}/databases/${name}/info` : `${DB_API_BASE}/databases/${name}/info`,
-        projectId,
+        { projectId, connectionId },
       ),
     ),
   getSnapshots: (projectId?: string) =>
@@ -117,7 +125,13 @@ export const dbApi = {
     ),
   createSnapshot: (
     engine: string,
-    payload: { label: string; database: string; category?: null | string; projectId?: null | string },
+    payload: {
+      label: string
+      database: string
+      category?: null | string
+      projectId?: null | string
+      connectionId?: string
+    },
   ) =>
     request<SnapshotMutationResponse>(`${DB_API_BASE}/engines/${engine}/snapshots`, {
       method: 'POST',
@@ -134,10 +148,15 @@ export const dbApi = {
     request<MessageResponse>(`${DB_API_BASE}/snapshots/${encodeURIComponent(name)}`, {
       method: 'DELETE',
     }),
-  restoreSnapshot: (engine: string, name: string, database: string) =>
+  restoreSnapshot: (
+    engine: string,
+    name: string,
+    database: string,
+    options?: { projectId?: string; connectionId?: string },
+  ) =>
     request<MessageResponse>(`${DB_API_BASE}/engines/${engine}/snapshots/${encodeURIComponent(name)}/restore`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ database }),
+      body: JSON.stringify({ database, ...options }),
     }),
 }

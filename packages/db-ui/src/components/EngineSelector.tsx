@@ -1,4 +1,6 @@
 import type { Engine } from '@stubrix/shared'
+import { Server } from 'lucide-react'
+import { EmptyState } from './EmptyState'
 
 type EngineSelectorProps = {
   engines: Array<Engine>
@@ -37,14 +39,16 @@ const ENGINE_COLOR: Record<string, { ring: string; bg: string; text: string; glo
 export function EngineSelector({ allEngines, selectedEngine, onSelect }: EngineSelectorProps) {
   if (allEngines.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 text-center">
-        <p className="text-sm text-text-secondary">Nenhuma engine configurada.</p>
-      </div>
+      <EmptyState
+        icon={<Server size={24} strokeWidth={1.5} />}
+        title="Nenhuma engine configurada"
+        description="Configure uma engine de banco de dados para começar a gerenciar suas conexões e snapshots."
+      />
     )
   }
 
   return (
-    <div className="grid gap-3 grid-cols-3">
+    <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${allEngines.length}, minmax(0, 1fr))` }}>
       {allEngines.map((engine) => {
         const isSelected = selectedEngine === engine.name
         const isActive = engine.status === 'active'
@@ -62,11 +66,11 @@ export function EngineSelector({ allEngines, selectedEngine, onSelect }: EngineS
               isSelected && isActive
                 ? `ring-1 ${color.ring} border-transparent ${color.bg} shadow-lg ${color.glow}`
                 : isActive
-                  ? 'border-white/8 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.06]'
-                  : 'cursor-not-allowed border-white/5 bg-white/[0.02] opacity-40',
+                  ? 'border-white/8 bg-surface-1 hover:border-white/15 hover:bg-surface-2'
+                  : 'cursor-not-allowed border-white/5 bg-main-bg opacity-40',
             ].join(' ')}
           >
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-2xl ${isSelected ? color.bg : 'bg-white/5'}`}>
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-2xl ${isSelected ? color.bg : 'bg-main-bg'}`}>
               {icon}
             </div>
             <div className="flex-1 min-w-0">
