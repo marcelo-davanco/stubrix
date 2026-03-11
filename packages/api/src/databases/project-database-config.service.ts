@@ -18,6 +18,7 @@ export interface ProjectDatabaseConfig {
   password: string | null;
   filePath: string | null;
   notes: string | null;
+  enabled: boolean;
   connectionStatus: 'unknown' | 'ok' | 'error';
   connectionTestedAt: string | null;
   createdAt: string;
@@ -36,6 +37,7 @@ interface DbRow {
   password: string | null;
   file_path: string | null;
   notes: string | null;
+  enabled: number;
   connection_status: string;
   connection_tested_at: string | null;
   created_at: string;
@@ -78,12 +80,20 @@ export class ProjectDatabaseConfigService implements OnModuleDestroy {
         password TEXT,
         file_path TEXT,
         notes TEXT,
+        enabled INTEGER NOT NULL DEFAULT 0,
         connection_status TEXT NOT NULL DEFAULT 'unknown',
         connection_tested_at TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
     `);
+    try {
+      this.db.exec(
+        `ALTER TABLE project_database_configs ADD COLUMN enabled INTEGER NOT NULL DEFAULT 0`,
+      );
+    } catch {
+      // column already exists — safe to ignore
+    }
   }
 
   private migrateFromJson(jsonPath: string): void {
@@ -141,6 +151,7 @@ export class ProjectDatabaseConfigService implements OnModuleDestroy {
       password: row.password,
       filePath: row.file_path,
       notes: row.notes,
+      enabled: row.enabled === 1,
       connectionStatus:
         row.connection_status as ProjectDatabaseConfig['connectionStatus'],
       connectionTestedAt: row.connection_tested_at,
@@ -218,8 +229,8 @@ export class ProjectDatabaseConfigService implements OnModuleDestroy {
     this.db
       .prepare(
         `INSERT INTO project_database_configs
-          (id, project_id, engine, name, database_name, host, port, username, password, file_path, notes, connection_status, connection_tested_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unknown', NULL, ?, ?)`,
+          (id, project_id, engine, name, database_name, host, port, username, password, file_path, notes, enabled, connection_status, connection_tested_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'unknown', NULL, ?, ?)`,
       )
       .run(
         id,
@@ -250,6 +261,23 @@ export class ProjectDatabaseConfigService implements OnModuleDestroy {
         'UPDATE project_database_configs SET connection_status = ?, connection_tested_at = ? WHERE project_id = ? AND id = ?',
       )
       .run(status, now, projectId, id);
+    if (result.changes === 0) {
+      throw new NotFoundException(
+        `Database config '${id}' not found in project '${projectId}'`,
+      );
+    }
+    return this.get(projectId, id);
+  }
+
+  toggleEnabled(projectId: string, id: string): ProjectDatabaseConfig {
+    const now = new Date().toISOString();
+    const current = this.get(projectId, id);
+    const newValue = current.enabled ? 0 : 1;
+    const result = this.db
+      .prepare(
+        'UPDATE project_database_configs SET enabled = ?, updated_at = ? WHERE project_id = ? AND id = ?',
+      )
+      .run(newValue, now, projectId, id);
     if (result.changes === 0) {
       throw new NotFoundException(
         `Database config '${id}' not found in project '${projectId}'`,

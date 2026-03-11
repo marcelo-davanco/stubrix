@@ -12,6 +12,7 @@ export type ProjectDatabaseConfigItem = {
   password: null | string
   filePath: null | string
   notes: null | string
+  enabled: boolean
   connectionStatus: 'unknown' | 'ok' | 'error'
   connectionTestedAt: null | string
   createdAt: string
@@ -97,6 +98,10 @@ export const dbApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+    }),
+  toggleProjectDatabaseConfig: (projectId: string, id: string) =>
+    request<ProjectDatabaseConfigItem>(`${API_BASE}/projects/${encodeURIComponent(projectId)}/databases/configs/${encodeURIComponent(id)}/toggle`, {
+      method: 'PATCH',
     }),
   deleteProjectDatabaseConfig: (projectId: string, id: string) =>
     request<MessageResponse>(`${API_BASE}/projects/${encodeURIComponent(projectId)}/databases/configs/${encodeURIComponent(id)}`, {
