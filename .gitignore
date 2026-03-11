@@ -29,7 +29,6 @@ coverage/
 Thumbs.db
 
 # IDE / Editor
-.windsurf/
 .cursor/
 .vscode/
 .idea/
@@ -38,3 +37,4 @@ Thumbs.db
 *~
 dumps/
 **/dumps/
+# MCP node_modules are gitignored via packages/mcp/.gitignore
