@@ -2,6 +2,16 @@
 
 Custom [Model Context Protocol](https://modelcontextprotocol.io/) servers built for the Stubrix platform. These provide direct programmatic access to WireMock, the Stubrix API, and Docker Compose from AI coding assistants like Windsurf Cascade.
 
+## Architecture
+
+The Stubrix MCP servers are organized as separate packages within the `packages/mcp/` directory:
+
+- **@stubrix/wiremock-mcp**: Direct WireMock Admin API access
+- **@stubrix/stubrix-mcp**: Full Stubrix Control Plane API access  
+- **@stubrix/docker-mcp**: Docker Compose management for Stubrix profiles
+
+Each server is a standalone Node.js application with its own `package.json` and can be run independently.
+
 ## Servers
 
 ### @stubrix/wiremock-mcp
@@ -86,12 +96,102 @@ Docker Compose management scoped to Stubrix profiles.
 ## Installation
 
 ```bash
+# Install all MCP servers
+cd packages/mcp && npm install
+
+# Install individual servers
 cd packages/mcp/wiremock-mcp && npm install
-cd packages/mcp/stubrix-mcp && npm install
+cd packages/mcp/stubrix-mcp && npm install  
 cd packages/mcp/docker-mcp && npm install
 ```
 
-## Windsurf Configuration
+## Development
+
+Each MCP server can be run independently for development:
+
+```bash
+# WireMock MCP
+cd packages/mcp/wiremock-mcp && npm start
+
+# Stubrix MCP  
+cd packages/mcp/stubrix-mcp && npm start
+
+# Docker MCP
+cd packages/mcp/docker-mcp && npm start
+```
+
+## Requirements
+
+- **Node.js** >= 24 (required by all MCP servers)
+- **Docker** and **Docker Compose** (for docker-mcp)
+- **WireMock** running on port 8081 (for wiremock-mcp)
+- **Stubrix API** running on port 9090 (for stubrix-mcp)
+
+## Project Structure
+
+```
+packages/mcp/
+├── README.md                    # This file
+├── mcp-config-snippet.json      # Configuration template
+├── wiremock-mcp/               # WireMock Admin API MCP
+│   ├── package.json
+│   └── src/index.js
+├── stubrix-mcp/                # Stubrix Control Plane API MCP  
+│   ├── package.json
+│   └── src/index.js
+└── docker-mcp/                 # Docker Compose MCP
+    ├── package.json
+    └── src/index.js
+```
+
+## Usage Examples
+
+### WireMock Operations
+```javascript
+// List all mappings
+await wiremock_list_mappings()
+
+// Create a new mapping
+await wiremock_create_mapping({
+  request: { method: "GET", url: "/api/test" },
+  response: { status: 200, body: "Hello World" }
+})
+```
+
+### Stubrix Platform Management
+```javascript
+// List all projects
+await stubrix_list_projects()
+
+// Create a new project
+await stubrix_create_project({
+  name: "My Project",
+  description: "Test project"
+})
+```
+
+### Docker Compose Management
+```javascript
+// Start WireMock profile
+await docker_compose_up(["wiremock"])
+
+// Check service health
+await docker_health()
+```
+
+## Configuration
+
+### Environment Variables
+
+Each MCP server can be configured via environment variables:
+
+| Server | Variable | Default | Description |
+|--------|----------|---------|-------------|
+| wiremock-mcp | `WIREMOCK_URL` | `http://localhost:8081` | WireMock server URL |
+| stubrix-mcp | `STUBRIX_API_URL` | `http://localhost:9090` | Stubrix API base URL |
+| docker-mcp | `COMPOSE_PROJECT_DIR` | `.` | Docker Compose project directory |
+
+### Windsurf Configuration
 
 Add to your `~/.codeium/windsurf/mcp_config.json`:
 
@@ -123,8 +223,54 @@ Add to your `~/.codeium/windsurf/mcp_config.json`:
 }
 ```
 
-## Requirements
-- Node.js >= 20
-- Docker and Docker Compose (for docker-mcp)
-- WireMock running (for wiremock-mcp)
-- Stubrix API running (for stubrix-mcp)
+> **Note**: Use the absolute path to your stubrix repository in the `args` and `COMPOSE_PROJECT_DIR` fields.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Server not starting**: Ensure Node.js >= 24 is installed
+2. **Connection refused**: Verify target services are running on correct ports
+3. **Permission denied**: Check file paths in configuration are correct
+4. **Docker commands failing**: Ensure Docker daemon is running and user has permissions
+
+### Debug Mode
+
+Run MCP servers with debug logging:
+
+```bash
+DEBUG=mcp:* cd packages/mcp/wiremock-mcp && npm start
+```
+
+### Health Checks
+
+Verify MCP server connectivity:
+
+```bash
+# Test WireMock connection
+curl http://localhost:8081/__admin/
+
+# Test Stubrix API  
+curl http://localhost:9090/api/health
+
+# Test Docker Compose
+docker-compose ps
+```
+
+## Contributing
+
+When adding new MCP servers or modifying existing ones:
+
+1. Follow the existing package structure in `packages/mcp/`
+2. Use `@stubrix/<name>-mcp` naming convention
+3. Include comprehensive tool descriptions in the README
+4. Update this README with new servers
+5. Test with Windsurf Cascade before submitting changes
+
+## Dependencies
+
+All MCP servers depend on:
+- `@modelcontextprotocol/sdk`: ^1.12.1
+- Node.js >= 24.0.0
+
+Each server is a lightweight wrapper around its target API with minimal dependencies.
