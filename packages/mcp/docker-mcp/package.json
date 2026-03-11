@@ -1,0 +1,20 @@
+{
+  "name": "@stubrix/docker-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MCP server for Docker Compose operations — manage containers, profiles, logs and health checks",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "docker-mcp": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

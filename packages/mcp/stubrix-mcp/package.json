@@ -1,0 +1,20 @@
+{
+  "name": "@stubrix/stubrix-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MCP server for the Stubrix Control Plane API — manage projects, mocks, recordings, databases, and snapshots",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "stubrix-mcp": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

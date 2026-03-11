@@ -1,0 +1,30 @@
+{
+  "_comment": "Add these entries to your ~/.codeium/windsurf/mcp_config.json under mcpServers",
+  "wiremock-mcp": {
+    "command": "node",
+    "args": [
+      "/Users/killvorak/mvps/hyper-stubrix/stubrix/packages/mcp/wiremock-mcp/src/index.js"
+    ],
+    "env": {
+      "WIREMOCK_URL": "http://localhost:8081"
+    }
+  },
+  "stubrix-mcp": {
+    "command": "node",
+    "args": [
+      "/Users/killvorak/mvps/hyper-stubrix/stubrix/packages/mcp/stubrix-mcp/src/index.js"
+    ],
+    "env": {
+      "STUBRIX_API_URL": "http://localhost:9090"
+    }
+  },
+  "docker-mcp": {
+    "command": "node",
+    "args": [
+      "/Users/killvorak/mvps/hyper-stubrix/stubrix/packages/mcp/docker-mcp/src/index.js"
+    ],
+    "env": {
+      "COMPOSE_PROJECT_DIR": "/Users/killvorak/mvps/hyper-stubrix/stubrix"
+    }
+  }
+}
