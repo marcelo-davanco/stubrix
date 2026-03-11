@@ -153,7 +153,7 @@ function DatabasesPageInner() {
           </section>
 
           {/* Main grid */}
-          <div className="grid grid-cols-[1fr_340px] gap-x-5 gap-y-4">
+          <div className="grid grid-cols-[1fr_630px] gap-x-5 gap-y-4">
 
             {/* Row 1: section titles */}
             <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary/60">

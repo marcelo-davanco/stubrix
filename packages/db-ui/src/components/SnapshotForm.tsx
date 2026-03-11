@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Camera, Loader2, ChevronDown } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Camera, Loader2, ChevronDown, Plus, X } from 'lucide-react'
 import type { ProjectDatabaseConfigItem } from '../lib/db-api'
 
 type SnapshotFormProps = {
@@ -22,6 +22,145 @@ const STATUS_DOT: Record<string, string> = {
   ok: 'bg-green-400 shadow-[0_0_4px_theme(colors.green.400)]',
   error: 'bg-red-400',
   unknown: 'bg-white/20',
+}
+
+const DEFAULT_CATEGORIES = ['backup', 'staging', 'production', 'homolog', 'dev', 'teste', 'release', 'migration']
+const STORAGE_KEY = 'stubrix:snapshot-categories'
+
+function loadStoredCategories(): Array<string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as Array<string>) : []
+  } catch {
+    return []
+  }
+}
+
+function saveStoredCategories(cats: Array<string>): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cats))
+  } catch {
+    // ignore
+  }
+}
+
+function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [customCategories, setCustomCategories] = useState<Array<string>>(loadStoredCategories)
+  const [open, setOpen] = useState(false)
+  const [newValue, setNewValue] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const allOptions = [...new Set([...DEFAULT_CATEGORIES, ...customCategories])]
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  function handleSelect(cat: string) {
+    onChange(cat === value ? '' : cat)
+    setOpen(false)
+  }
+
+  function handleAddNew() {
+    const trimmed = newValue.trim().toLowerCase()
+    if (!trimmed) return
+    if (!allOptions.includes(trimmed)) {
+      const updated = [...customCategories, trimmed]
+      setCustomCategories(updated)
+      saveStoredCategories(updated)
+    }
+    onChange(trimmed)
+    setNewValue('')
+    setOpen(false)
+  }
+
+  function handleRemoveCustom(cat: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    const updated = customCategories.filter((c) => c !== cat)
+    setCustomCategories(updated)
+    saveStoredCategories(updated)
+    if (value === cat) onChange('')
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`${INPUT_CLASS} flex items-center justify-between gap-2 text-left ${
+          value ? 'text-text-primary' : 'text-white/20'
+        }`}
+      >
+        <span className="truncate">{value || 'Selecionar ou adicionar...'}</span>
+        <div className="flex shrink-0 items-center gap-1">
+          {value && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); onChange('') }}
+              onKeyDown={(e) => e.key === 'Enter' && onChange('')}
+              className="rounded p-0.5 text-white/30 hover:text-white/60"
+            >
+              <X size={11} />
+            </span>
+          )}
+          <ChevronDown size={12} className={`text-text-secondary transition-transform ${open ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-white/10 bg-surface-2 shadow-xl">
+          <div className="max-h-52 overflow-y-auto p-1.5">
+            {allOptions.map((cat) => (
+              <div
+                key={cat}
+                className={`group flex cursor-pointer items-center justify-between rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                  value === cat ? 'bg-primary/20 text-primary' : 'text-text-primary hover:bg-white/8'
+                }`}
+                onClick={() => handleSelect(cat)}
+              >
+                <span>{cat}</span>
+                {customCategories.includes(cat) && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleRemoveCustom(cat, e)}
+                    className="hidden rounded p-0.5 text-white/30 hover:text-red-400 group-hover:flex"
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-white/8 p-1.5">
+            <div className="flex gap-1.5">
+              <input
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddNew()}
+                placeholder="Nova categoria..."
+                className="flex-1 rounded-lg border border-white/10 bg-main-bg px-3 py-1.5 text-xs text-text-primary placeholder-white/20 outline-none focus:border-primary"
+              />
+              <button
+                type="button"
+                onClick={handleAddNew}
+                disabled={!newValue.trim()}
+                className="flex items-center gap-1 rounded-lg bg-primary/20 px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/30 disabled:opacity-40"
+              >
+                <Plus size={11} /> Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function SnapshotForm({ databases, loadingDatabases = false, connections, onSubmit, onConnectionChange }: SnapshotFormProps) {
@@ -166,12 +305,7 @@ export function SnapshotForm({ databases, loadingDatabases = false, connections,
           <label className="mb-1.5 block text-xs font-medium text-text-secondary">
             Categoria <span className="font-normal text-white/25">(opcional)</span>
           </label>
-          <input
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="ex: staging"
-            className={INPUT_CLASS}
-          />
+          <CategoryCombobox value={category} onChange={setCategory} />
         </div>
       </div>
 
