@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { execSync } from 'child_process';
 import * as mysql from 'mysql2/promise';
 import * as fs from 'fs';
@@ -26,6 +34,14 @@ export class ProjectDatabaseConfigController {
     @Body() dto: UpsertProjectDatabaseDto,
   ) {
     return this.configs.upsert(projectId, dto);
+  }
+
+  @Patch(':id/toggle')
+  toggleEnabled(
+    @Param('projectId') projectId: string,
+    @Param('id') id: string,
+  ) {
+    return this.configs.toggleEnabled(projectId, id);
   }
 
   @Delete(':id')

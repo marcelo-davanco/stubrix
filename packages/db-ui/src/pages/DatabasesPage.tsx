@@ -30,9 +30,10 @@ function DatabasesPageInner() {
     selectedEngine,
     setSelectedEngine,
     databases,
+    loadingDatabases,
     projectDatabaseConfigs,
     selectedConnectionId,
-    setSelectedConnectionId,
+    selectConnection,
     snapshots,
     loading,
     error,
@@ -69,9 +70,12 @@ function DatabasesPageInner() {
     }
   }
 
+  const selectedConnection = projectDatabaseConfigs.find((c) => c.id === selectedConnectionId) ?? null
+  const restoreTargetDatabase = selectedConnection?.database || databases[0] || ''
+
   async function handleRestoreSnapshot(name: string) {
     try {
-      await restoreSnapshot(name, databases[0] || 'default', { connectionId: selectedConnectionId || undefined })
+      await restoreSnapshot(name, restoreTargetDatabase || 'default', { connectionId: selectedConnectionId || undefined })
       toast({ type: 'success', title: 'Snapshot restaurado', description: `"${name}" foi restaurado com sucesso.` })
     } catch (err) {
       toast({ type: 'error', title: 'Falha ao restaurar snapshot', description: err instanceof Error ? err.message : 'Erro desconhecido.' })
@@ -149,7 +153,7 @@ function DatabasesPageInner() {
           </section>
 
           {/* Main grid */}
-          <div className="grid grid-cols-[1fr_340px] gap-x-5 gap-y-4">
+          <div className="grid grid-cols-[1fr_630px] gap-x-5 gap-y-4">
 
             {/* Row 1: section titles */}
             <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary/60">
@@ -163,9 +167,10 @@ function DatabasesPageInner() {
             <div className="flex flex-col">
               <SnapshotForm
                 databases={databases}
+                loadingDatabases={loadingDatabases}
                 connections={projectDatabaseConfigs}
                 onSubmit={handleCreateSnapshot}
-                onConnectionChange={setSelectedConnectionId}
+                onConnectionChange={selectConnection}
               />
             </div>
             <div className="flex flex-col">
@@ -181,6 +186,7 @@ function DatabasesPageInner() {
             {/* Row 3+: remaining content */}
             <SnapshotList
               snapshots={snapshots}
+              targetDatabase={restoreTargetDatabase}
               onDelete={handleDeleteSnapshot}
               onRestore={handleRestoreSnapshot}
               onUpdate={() => void refreshAll()}

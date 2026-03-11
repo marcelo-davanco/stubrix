@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, Wifi, Loader2, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, Wifi, Loader2, X, Check, ChevronDown, ChevronUp, Power } from 'lucide-react'
 import type {
   ProjectDatabaseConfigItem,
   UpsertProjectDatabaseConfigPayload,
@@ -225,6 +225,17 @@ function ConfigCard({
   const [testStatus, setTestStatus] = useState<TestStatus>('idle')
   const [testMessage, setTestMessage] = useState('')
   const [expanded, setExpanded] = useState(false)
+  const [toggling, setToggling] = useState(false)
+
+  async function handleToggleEnabled() {
+    setToggling(true)
+    try {
+      await dbApi.toggleProjectDatabaseConfig(projectId, config.id)
+      onRefresh()
+    } finally {
+      setToggling(false)
+    }
+  }
 
   const persistedStatus = config.connectionStatus
   const displayStatus: TestStatus = testStatus !== 'idle' ? testStatus : (persistedStatus as TestStatus)
@@ -251,8 +262,10 @@ function ConfigCard({
     : config.host ? `${config.host}:${config.port || '?'}` : 'Sem host'
 
   return (
-    <div className={`overflow-hidden rounded-2xl border transition-all duration-200 ${expanded ? 'border-white/15 bg-surface-2' : 'border-white/8 bg-main-bg hover:border-white/15'
-      }`}>
+    <div className={`overflow-hidden rounded-2xl border transition-all duration-200 ${
+      !config.enabled ? 'border-white/5 bg-main-bg/60 opacity-70' :
+      expanded ? 'border-white/15 bg-surface-2' : 'border-white/8 bg-main-bg hover:border-white/15'
+    }`}>
       <div className="flex items-center gap-2.5 px-3.5 py-3">
         <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${style.badge}`}>
           {style.icon} {config.engine}
@@ -277,9 +290,22 @@ function ConfigCard({
         <div className="flex shrink-0 items-center gap-0.5">
           <button
             type="button"
+            onClick={() => void handleToggleEnabled()}
+            disabled={toggling}
+            title={config.enabled ? 'Desativar conexão' : 'Ativar conexão'}
+            className={`rounded-lg p-1.5 transition-colors disabled:opacity-40 ${
+              config.enabled
+                ? 'text-green-400 hover:bg-green-500/15 hover:text-green-300'
+                : 'text-white/25 hover:bg-white/8 hover:text-text-secondary'
+            }`}
+          >
+            {toggling ? <Loader2 size={13} className="animate-spin" /> : <Power size={13} />}
+          </button>
+          <button
+            type="button"
             onClick={() => void handleTest()}
-            disabled={testStatus === 'testing'}
-            title="Testar conexão"
+            disabled={testStatus === 'testing' || !config.enabled}
+            title={config.enabled ? 'Testar conexão' : 'Ative a conexão para testar'}
             className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-white/8 hover:text-primary disabled:opacity-40"
           >
             {testStatus === 'testing' ? <Loader2 size={13} className="animate-spin" /> : <Wifi size={13} />}
