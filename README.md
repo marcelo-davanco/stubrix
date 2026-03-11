@@ -17,6 +17,20 @@ Includes a **control panel** (API + Dashboard) for managing mocks, projects, rec
 
 ---
 
+## 🏆 Key Differentials
+
+| Differential | Description |
+|---|---|
+| **Dual-Engine, Zero Lock-in** | Same mocks run on WireMock (Java) or Mockoon (Node.js) — switch with one command |
+| **Database Snapshot Control** | Project-scoped snapshot/restore for PostgreSQL (real `pg_dump`/`psql`), MySQL, SQLite — manage state alongside mocks |
+| **AI-Ready (MCP Servers)** | 3 custom [Model Context Protocol](https://modelcontextprotocol.io/) servers with **55+ tools** for AI-assisted mock management from your IDE |
+| **4 Recording Modes** | Auto, API, Snapshot, Dashboard UI — create mocks from real API traffic effortlessly |
+| **Micro Frontend Architecture** | Modular UI with `@stubrix/db-ui` micro frontend; extensible pattern for future modules |
+| **Full Visual Control** | NestJS 11 API + React 19 Dashboard — no CLI-only workflow required |
+| **Project-Scoped Everything** | Mocks, recordings, database configs, and snapshots are all scoped to projects |
+
+---
+
 ## Requirements
 
 - Node.js 24
@@ -100,11 +114,15 @@ stubrix/
 │   │       ├── hooks/               Database state and project context
 │   │       ├── lib/                 Database API client
 │   │       └── pages/               Databases page
-│   └── ui/                        React dashboard (@stubrix/ui)
-│       └── src/
-│           ├── pages/               Dashboard, Projects, Mocks, Recording, Logs, Databases
-│           ├── components/          Layout, Badge, shared UI
-│           └── lib/                 API client, WebSocket client, utils
+│   ├── ui/                        React dashboard (@stubrix/ui)
+│   │   └── src/
+│   │       ├── pages/               Dashboard, Projects, Mocks, Recording, Logs, Databases
+│   │       ├── components/          Layout, Badge, shared UI
+│   │       └── lib/                 API client, WebSocket client, utils
+│   └── mcp/                       Custom MCP servers
+│       ├── stubrix-mcp/             Full Stubrix API control (27 tools)
+│       ├── wiremock-mcp/            Direct WireMock Admin API (16 tools)
+│       └── docker-mcp/              Docker Compose management (12 tools)
 │
 ├── mocks/                         Canonical mock structure
 │   ├── mappings/                    Route definitions (JSON)
@@ -485,6 +503,80 @@ Then in the UI:
 4. Create a snapshot.
 5. Confirm the dump file exists in `dumps/postgres/`.
 6. Restore the snapshot to a valid PostgreSQL database.
+
+---
+
+## 🤖 MCP Ecosystem (AI-Assisted Mock Management)
+
+Stubrix includes **3 custom Model Context Protocol (MCP) servers** with **55+ tools**, enabling AI coding assistants (Windsurf Cascade, Cursor, etc.) to manage mocks, databases, and infrastructure directly from your IDE.
+
+```mermaid
+graph LR
+    AI["🤖 AI Assistant\n(Windsurf / Cursor)"] --> S1["@stubrix/stubrix-mcp\n27 tools"]
+    AI --> S2["@stubrix/wiremock-mcp\n16 tools"]
+    AI --> S3["@stubrix/docker-mcp\n12 tools"]
+
+    S1 --> API["Stubrix API\nlocalhost:9090"]
+    S2 --> WM["WireMock Admin\nlocalhost:8081"]
+    S3 --> DC["Docker Compose\nprofiles & containers"]
+
+    style AI fill:#7c3aed,color:#fff,stroke:#6d28d9
+    style S1 fill:#e0234e,color:#fff,stroke:#be123c
+    style S2 fill:#2d6a4f,color:#fff,stroke:#40916c
+    style S3 fill:#2563eb,color:#fff,stroke:#1d4ed8
+```
+
+### Available MCP Servers
+
+| Server | Tools | Coverage |
+|--------|-------|----------|
+| **@stubrix/stubrix-mcp** | 27 | Projects, mocks, recording, databases, snapshots, configs |
+| **@stubrix/wiremock-mcp** | 16 | Mappings, recording, requests, server state |
+| **@stubrix/docker-mcp** | 12 | Compose up/down, logs, health, exec, volumes |
+
+### Example AI Interactions
+
+```
+You: "Create a GET /api/users mock that returns 3 users"
+→ AI calls stubrix_create_mock(...)
+
+You: "Take a snapshot of the postgres database before I run migrations"
+→ AI calls stubrix_create_snapshot(...)
+
+You: "Start recording against the staging API"
+→ AI calls stubrix_start_recording(...)
+
+You: "Spin up WireMock and check if it's healthy"
+→ AI calls docker_compose_up(["wiremock"]) + docker_health()
+```
+
+### Setup
+
+Add to your MCP configuration (e.g., `~/.codeium/windsurf/mcp_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "stubrix-mcp": {
+      "command": "node",
+      "args": ["packages/mcp/stubrix-mcp/src/index.js"],
+      "env": { "STUBRIX_API_URL": "http://localhost:9090" }
+    },
+    "wiremock-mcp": {
+      "command": "node",
+      "args": ["packages/mcp/wiremock-mcp/src/index.js"],
+      "env": { "WIREMOCK_URL": "http://localhost:8081" }
+    },
+    "docker-mcp": {
+      "command": "node",
+      "args": ["packages/mcp/docker-mcp/src/index.js"],
+      "env": { "COMPOSE_PROJECT_DIR": "/path/to/stubrix" }
+    }
+  }
+}
+```
+
+> Full documentation: [`packages/mcp/README.md`](packages/mcp/README.md)
 
 ---
 
