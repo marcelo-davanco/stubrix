@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 dist/
+packages/api/public/assets/
+packages/api/public/index.html
 build/
 
 # Environment
