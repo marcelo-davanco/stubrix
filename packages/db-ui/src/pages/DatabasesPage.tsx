@@ -30,9 +30,10 @@ function DatabasesPageInner() {
     selectedEngine,
     setSelectedEngine,
     databases,
+    loadingDatabases,
     projectDatabaseConfigs,
     selectedConnectionId,
-    setSelectedConnectionId,
+    selectConnection,
     snapshots,
     loading,
     error,
@@ -69,9 +70,12 @@ function DatabasesPageInner() {
     }
   }
 
+  const selectedConnection = projectDatabaseConfigs.find((c) => c.id === selectedConnectionId) ?? null
+  const restoreTargetDatabase = selectedConnection?.database || databases[0] || ''
+
   async function handleRestoreSnapshot(name: string) {
     try {
-      await restoreSnapshot(name, databases[0] || 'default', { connectionId: selectedConnectionId || undefined })
+      await restoreSnapshot(name, restoreTargetDatabase || 'default', { connectionId: selectedConnectionId || undefined })
       toast({ type: 'success', title: 'Snapshot restaurado', description: `"${name}" foi restaurado com sucesso.` })
     } catch (err) {
       toast({ type: 'error', title: 'Falha ao restaurar snapshot', description: err instanceof Error ? err.message : 'Erro desconhecido.' })
@@ -163,9 +167,10 @@ function DatabasesPageInner() {
             <div className="flex flex-col">
               <SnapshotForm
                 databases={databases}
+                loadingDatabases={loadingDatabases}
                 connections={projectDatabaseConfigs}
                 onSubmit={handleCreateSnapshot}
-                onConnectionChange={setSelectedConnectionId}
+                onConnectionChange={selectConnection}
               />
             </div>
             <div className="flex flex-col">
@@ -181,6 +186,7 @@ function DatabasesPageInner() {
             {/* Row 3+: remaining content */}
             <SnapshotList
               snapshots={snapshots}
+              targetDatabase={restoreTargetDatabase}
               onDelete={handleDeleteSnapshot}
               onRestore={handleRestoreSnapshot}
               onUpdate={() => void refreshAll()}

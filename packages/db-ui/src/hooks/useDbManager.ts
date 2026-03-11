@@ -19,14 +19,22 @@ export function useDbManager() {
   const [engines, setEngines] = useState([] as Array<Engine>)
   const [selectedEngine, setSelectedEngine] = useState<string | null>(null)
   const [databases, setDatabases] = useState([] as Array<string>)
+  const [loadingDatabases, setLoadingDatabases] = useState(false)
   const [projectDatabaseConfigs, setProjectDatabaseConfigs] = useState(
     [] as Array<ProjectDatabaseConfigItem>,
   )
   const [snapshots, setSnapshots] = useState([] as Array<Snapshot>)
   const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null)
   const [selectedConnectionId, setSelectedConnectionId] = useState('')
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const selectConnection = useCallback((id: string) => {
+    setDatabases([])
+    setLoadingDatabases(true)
+    setSelectedConnectionId(id)
+  }, [])
 
   const loadProjects = useCallback(async () => {
     const response = await dbApi.getProjects()
@@ -57,8 +65,13 @@ export function useDbManager() {
         setDatabases([])
         return
       }
-      const response = await dbApi.getDatabases(engine, projectId, connectionId || undefined)
-      setDatabases(response.databases)
+      setLoadingDatabases(true)
+      try {
+        const response = await dbApi.getDatabases(engine, projectId, connectionId || undefined)
+        setDatabases(response.databases)
+      } finally {
+        setLoadingDatabases(false)
+      }
     },
     [],
   )
@@ -192,10 +205,12 @@ export function useDbManager() {
     selectedEngine,
     setSelectedEngine,
     databases,
+    loadingDatabases,
     preferredProjectConfig,
     projectDatabaseConfigs,
     selectedConnectionId,
     setSelectedConnectionId,
+    selectConnection,
     snapshots: filteredSnapshots,
     databaseInfo,
     loading,
