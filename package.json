@@ -23,7 +23,10 @@
     "version:minor": "node scripts/version.js --minor", 
     "version:patch": "node scripts/version.js --patch",
     "version:dry": "node scripts/version.js --dry-run",
-    "release": "npm run version && npm run build:shared && npm run build"
+    "release": "./scripts/release.sh",
+    "release:patch": "npm run version:patch && npm run build && git add . && git commit -m \"🔖 chore: bump version\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release v$(node -p \"require('./package.json').version\")\" && git push origin main --tags",
+    "release:minor": "npm run version:minor && npm run build && git add . && git commit -m \"🔖 chore: bump version\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release v$(node -p \"require('./package.json').version\")\" && git push origin main --tags",
+    "release:major": "npm run version:major && npm run build && git add . && git commit -m \"🔖 chore: bump version\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release v$(node -p \"require('./package.json').version\")\" && git push origin main --tags"
   },
   "engines": {
     "node": ">=24.0.0",
