@@ -4,6 +4,35 @@ description: Create, review and manage pull requests using GitHub MCP integratio
 
 # Pull Request Workflow
 
+## ⛔ GATE 0 — Branch Setup (MANDATORY start for every task)
+
+Before writing any code or making any change, always run this sequence:
+
+// turbo
+```bash
+git checkout main
+```
+// turbo
+```bash
+git pull origin main
+```
+```bash
+git checkout -b <type>/<short-description>
+```
+
+| Type | Pattern | Example |
+| ---- | ------- | ------- |
+| Feature | `feature/<name>` | `feature/mock-ui-extraction` |
+| Bug fix | `fix/<name>` | `fix/sqlite-rebuild` |
+| Docs | `docs/<name>` | `docs/update-readme` |
+| Chore | `chore/<name>` | `chore/version-bump` |
+| Refactor | `refactor/<name>` | `refactor/extract-db-ui` |
+| Hotfix | `hotfix/<name>` | `hotfix/api-crash` |
+
+⛔ **Never start work on `main`. Always branch first.**
+
+---
+
 ## Creating a PR
 
 1. Ensure your branch is up to date

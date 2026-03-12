@@ -61,6 +61,36 @@ Impact: <how this improves the project>
 
 ## Steps
 
+### GATE 0 — Branch Check (MANDATORY before anything else)
+
+Verify you are NOT on `main` before proceeding. If you are, STOP and create a branch first.
+
+// turbo
+```bash
+git branch --show-current
+```
+
+If the output is `main` → **STOP**. Run the branch setup sequence:
+
+```bash
+git checkout main && git pull origin main && git checkout -b <type>/<short-description>
+```
+
+Branch naming convention:
+
+| Type | Pattern |
+| ---- | ------- |
+| Feature | `feature/<name>` |
+| Bug fix | `fix/<name>` |
+| Docs | `docs/<name>` |
+| Chore | `chore/<name>` |
+| Refactor | `refactor/<name>` |
+| Hotfix | `hotfix/<name>` |
+
+⛔ **Never commit directly to `main`. If on `main`, branch first — always.**
+
+---
+
 ### GATE 1 — File Selection (no git add allowed yet)
 
 1. **List modified files:**
