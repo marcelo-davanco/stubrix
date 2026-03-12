@@ -39,7 +39,9 @@ Direct access to the WireMock Admin API (`/__admin/`).
 **Env**: `WIREMOCK_URL` (default: `http://localhost:8081`)
 
 ### @stubrix/stubrix-mcp
-Full control of the Stubrix Control Plane API (`/api/`).
+Full control of the Stubrix Control Plane API (`/api/`) — **27 tools + 8 prompts**.
+
+#### Tools
 
 | Tool | Description |
 |------|-------------|
@@ -70,6 +72,19 @@ Full control of the Stubrix Control Plane API (`/api/`).
 | `stubrix_list_db_configs` | List project DB configs |
 | `stubrix_create_db_config` | Create DB config |
 | `stubrix_delete_db_config` | Delete DB config |
+
+#### Prompts (AI-assisted workflows)
+
+| Prompt | Description |
+|--------|-------------|
+| `setup_mock_project` | Guide to create a new mock project from scratch |
+| `record_api_mocks` | Step-by-step recording workflow for a target API |
+| `create_mock_from_spec` | Generate mock from an OpenAPI/Swagger spec snippet |
+| `debug_mock_not_matching` | Diagnose why a request isn't matching a mock |
+| `migrate_to_project` | Migrate existing mocks to a named project |
+| `database_snapshot_workflow` | Guide snapshot/restore flow for a database |
+| `review_mock_coverage` | Analyze mock coverage for a project |
+| `cleanup_project` | Safe cleanup workflow for a project |
 
 **Env**: `STUBRIX_API_URL` (default: `http://localhost:9090`)
 

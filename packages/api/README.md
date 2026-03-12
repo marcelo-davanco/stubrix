@@ -1,98 +1,142 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# @stubrix/api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS 11 control plane for the Stubrix mock server platform.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Overview
 
-## Description
+Provides the REST API and WebSocket server that powers the Stubrix dashboard. Manages projects, mock mappings, traffic recording, real-time logs, engine control, and database snapshot operations.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+| Layer | Technology |
+| ----- | ---------- |
+| Framework | NestJS 11 + Express |
+| WebSockets | Socket.IO (`/ws/logs`) |
+| Validation | class-validator + class-transformer |
+| Persistence | JSON files (mocks/projects), filesystem (snapshots) |
+| Database ops | pg_dump/psql (PostgreSQL), driver pattern (MySQL/SQLite) |
 
-```bash
-$ npm install
+## Module Structure
+
+```
+src/
+├── projects/         Project CRUD — JSON persistence in data/projects.json
+├── mocks/            Mock CRUD — reads/writes WireMock mappings/*.json
+├── recording/        Start/stop/snapshot — calls WireMock /__admin/recording
+├── logs/             REST + WebSocket — Socket.IO namespace /ws/logs
+├── status/           Engine health + mock counts by project
+├── engine/           WireMock reset + engine info
+└── databases/        Engines, databases, snapshots, project DB configs
 ```
 
-## Compile and run the project
+## API Reference
 
-```bash
-# development
-$ npm run start
+### Projects
 
-# watch mode
-$ npm run start:dev
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/projects` | List all projects |
+| GET | `/api/projects/:id` | Get project by ID |
+| POST | `/api/projects` | Create project |
+| PUT | `/api/projects/:id` | Update project |
+| DELETE | `/api/projects/:id` | Delete project |
 
-# production mode
-$ npm run start:prod
+### Mocks
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/projects/:id/mocks` | List mocks for project |
+| GET | `/api/projects/:id/mocks/:mockId` | Get mock detail |
+| POST | `/api/projects/:id/mocks` | Create mock mapping |
+| PUT | `/api/projects/:id/mocks/:mockId` | Update mock mapping |
+| DELETE | `/api/projects/:id/mocks/:mockId` | Delete mock mapping |
+
+### Recording
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/projects/:id/recording/status` | Recording status |
+| POST | `/api/projects/:id/recording/start` | Start recording |
+| POST | `/api/projects/:id/recording/stop` | Stop and save mocks |
+| POST | `/api/projects/:id/recording/snapshot` | Take snapshot |
+
+### Status & Engine
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/status` | Engine status + mock counts by project |
+| GET | `/api/engine` | Engine name, port, health |
+| POST | `/api/engine/reset` | Reset WireMock state |
+
+### Logs
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/logs` | Recent request logs |
+| WS | `/ws/logs` | Real-time log stream (Socket.IO) |
+
+### Databases
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/db/engines` | List available DB engines |
+| GET | `/api/db/databases` | List databases for engine |
+| GET | `/api/db/databases/:name` | Database info |
+| GET | `/api/db/snapshots` | List snapshots |
+| POST | `/api/db/snapshots` | Create snapshot |
+| POST | `/api/db/snapshots/:name/restore` | Restore snapshot |
+| DELETE | `/api/db/snapshots/:name` | Delete snapshot |
+| GET | `/api/projects/:id/databases/configs` | Project DB configs |
+| PUT | `/api/projects/:id/databases/configs` | Upsert project DB config |
+| DELETE | `/api/projects/:id/databases/configs/:configId` | Delete DB config |
+
+## Environment Variables
+
+```dotenv
+PORT=9090
+MOCK_ENGINE=wiremock       # wiremock | mockoon
+MOCK_PORT=8081
+WIREMOCK_URL=http://localhost:8081
+CORS_ORIGIN=*
+
+# PostgreSQL
+PG_HOST=localhost
+PG_PORT=5442
+PG_USER=postgres
+PG_PASSWORD=postgres
+PG_DATABASE=postgres
+
+# MySQL
+MYSQL_HOST=localhost
+MYSQL_PORT=3307
+MYSQL_USER=stubrix
+MYSQL_PASSWORD=stubrix
+MYSQL_DATABASE=stubrix
+
+# SQLite
+SQLITE_DB_PATH=
+
+# Snapshots
+DUMPS_DIR=./dumps
 ```
 
-## Run tests
+## Development
 
 ```bash
-# unit tests
-$ npm run test
+# From monorepo root
+npm run dev:api        # Watch mode on :9090
+npm run build:api      # Production build (nest build)
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# From packages/api
+npm run start:dev      # Watch mode
+npm run test           # Unit tests
+npm run test:cov       # Coverage report
 ```
 
-## Deployment
+## Build Output
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Production build goes to `dist/`. The UI build (`npm run build:ui`) copies the Vite output to `packages/api/public/` for single-container serving.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Interactive Docs
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Swagger UI available at `http://localhost:9090/api/docs` when running in development mode.

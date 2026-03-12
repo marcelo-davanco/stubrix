@@ -25,7 +25,7 @@ Includes a **control panel** (API + Dashboard) for managing mocks, projects, rec
 | **Database Snapshot Control** | Project-scoped snapshot/restore for PostgreSQL (real `pg_dump`/`psql`), MySQL, SQLite — manage state alongside mocks |
 | **AI-Ready (MCP Servers)** | 3 custom [Model Context Protocol](https://modelcontextprotocol.io/) servers with **55+ tools** for AI-assisted mock management from your IDE |
 | **4 Recording Modes** | Auto, API, Snapshot, Dashboard UI — create mocks from real API traffic effortlessly |
-| **Micro Frontend Architecture** | Modular UI with `@stubrix/db-ui` micro frontend; extensible pattern for future modules |
+| **Micro Frontend Architecture** | Modular UI with `@stubrix/db-ui` and `@stubrix/mock-ui` micro frontends — fully decoupled from the host app |
 | **Full Visual Control** | NestJS 11 API + React 19 Dashboard — no CLI-only workflow required |
 | **Project-Scoped Everything** | Mocks, recordings, database configs, and snapshots are all scoped to projects |
 
@@ -48,6 +48,7 @@ graph LR
         Shared["@stubrix/shared\n(TypeScript types)"]
         API["@stubrix/api\n(NestJS 11)"]
         DBUI["@stubrix/db-ui\n(Database microfrontend)"]
+        MOCKUI["@stubrix/mock-ui\n(Mock UI microfrontend)"]
         UI["@stubrix/ui\n(React 19 + Vite)"]
     end
 
@@ -64,12 +65,15 @@ graph LR
     end
 
     UI -->|"consumes db-ui"| DBUI
+    UI -->|"consumes mock-ui"| MOCKUI
     UI -->|"fetch /api/*"| API
     UI -->|"WebSocket /ws/logs"| API
     DBUI -->|"fetch /api/db + /api/projects/*/databases/configs"| API
+    MOCKUI -->|"fetch /api/projects/* + /api/status"| API
     API -->|"HTTP /__admin/*"| WM
     Shared -->|"types"| API
     Shared -->|"types"| DBUI
+    Shared -->|"types"| MOCKUI
     Shared -->|"types"| UI
     API -->|"fs read/write"| MP
     WM <-->|"reads/writes"| MP
@@ -78,6 +82,7 @@ graph LR
     style Shared fill:#6366f1,color:#fff,stroke:#4f46e5
     style API fill:#e0234e,color:#fff,stroke:#be123c
     style DBUI fill:#7c3aed,color:#fff,stroke:#6d28d9
+    style MOCKUI fill:#0ea5e9,color:#fff,stroke:#0284c7
     style UI fill:#61dafb,color:#1a1a2e,stroke:#38bdf8
     style WM fill:#2d6a4f,color:#fff,stroke:#40916c
     style MK fill:#e76f51,color:#fff,stroke:#f4a261
@@ -111,16 +116,22 @@ stubrix/
 │   ├── db-ui/                     Database microfrontend (@stubrix/db-ui)
 │   │   └── src/
 │   │       ├── components/          Database widgets and forms
-│   │       ├── hooks/               Database state and project context
-│   │       ├── lib/                 Database API client
-│   │       └── pages/               Databases page
-│   ├── ui/                        React dashboard (@stubrix/ui)
+│   │       ├── hooks/               useDbManager central state hook
+│   │       ├── lib/                 Database API client (db-api.ts)
+│   │       └── pages/               DatabasesPage
+│   ├── mock-ui/                   Mock server microfrontend (@stubrix/mock-ui)
 │   │   └── src/
-│   │       ├── pages/               Dashboard, Projects, Mocks, Recording, Logs, Databases
+│   │       ├── components/          StatCard, ProjectCard, MockMethodBadge, ToastProvider, etc.
+│   │       ├── hooks/               useMockManager central state hook
+│   │       ├── lib/                 Mock API client (mock-api.ts)
+│   │       └── pages/               MockServersPage, ProjectDashboardPage, MocksListPage, etc.
+│   ├── ui/                        React dashboard host (@stubrix/ui)
+│   │   └── src/
+│   │       ├── pages/               Bridge wrappers + LogsPage
 │   │       ├── components/          Layout, Badge, shared UI
 │   │       └── lib/                 API client, WebSocket client, utils
 │   └── mcp/                       Custom MCP servers
-│       ├── stubrix-mcp/             Full Stubrix API control (27 tools)
+│       ├── stubrix-mcp/             Full Stubrix API control (30+ tools + prompts)
 │       ├── wiremock-mcp/            Direct WireMock Admin API (16 tools)
 │       └── docker-mcp/              Docker Compose management (12 tools)
 │
@@ -155,14 +166,20 @@ The control panel provides a **visual interface** for managing the entire mock l
 
 ```mermaid
 graph TD
-    subgraph "🖥️ Dashboard UI"
-        PP["📁 Projects\n(list + create)"]
-        DP["📊 Dashboard\n(stats + quick actions)"]
-        MP["📄 Mocks\n(list + search + delete)"]
-        ME["✏️ Mock Editor\n(create/edit form)"]
-        RP["🎥 Recording\n(start/stop controls)"]
-        DBP["🗃️ Databases\n(project configs + snapshots)"]
+    subgraph "🖥️ @stubrix/ui (host)"
         LP["📜 Logs\n(real-time table)"]
+    end
+
+    subgraph "🔷 @stubrix/mock-ui"
+        PP["📁 MockServersPage\n(list + create)"]
+        DP["📊 ProjectDashboardPage\n(stats + quick actions)"]
+        MP["📄 MocksListPage\n(list + search + delete)"]
+        ME["✏️ MockEditorPage\n(create/edit form)"]
+        RP["🎥 RecordingPanelPage\n(start/stop controls)"]
+    end
+
+    subgraph "🟣 @stubrix/db-ui"
+        DBP["🗃️ DatabasesPage\n(project configs + snapshots)"]
     end
 
     subgraph "⚙️ API Endpoints"
@@ -173,7 +190,6 @@ graph TD
         DB["/api/db/*"]
         L["/api/logs"]
         S["/api/status"]
-        E["/api/engine"]
         WS["/ws/logs (WebSocket)"]
     end
 
@@ -185,19 +201,19 @@ graph TD
     LP -.->|"Socket.IO"| WS
 
     PP --> P
+    PP --> S
     MP --> M
     ME --> M
     RP --> R
     DBP --> DBC
     DBP --> DB
     LP --> L
-    DP --> S
 
-    style PP fill:#6366f1,color:#fff,stroke:#4f46e5
-    style DP fill:#6366f1,color:#fff,stroke:#4f46e5
-    style MP fill:#6366f1,color:#fff,stroke:#4f46e5
-    style ME fill:#6366f1,color:#fff,stroke:#4f46e5
-    style RP fill:#6366f1,color:#fff,stroke:#4f46e5
+    style PP fill:#0ea5e9,color:#fff,stroke:#0284c7
+    style DP fill:#0ea5e9,color:#fff,stroke:#0284c7
+    style MP fill:#0ea5e9,color:#fff,stroke:#0284c7
+    style ME fill:#0ea5e9,color:#fff,stroke:#0284c7
+    style RP fill:#0ea5e9,color:#fff,stroke:#0284c7
     style DBP fill:#7c3aed,color:#fff,stroke:#6d28d9
     style LP fill:#6366f1,color:#fff,stroke:#4f46e5
 ```
@@ -207,8 +223,10 @@ graph TD
 | Layer | Technology |
 | ----- | ---------- |
 | **API** | NestJS 11 + Express, WebSockets (Socket.IO) |
-| **UI** | React 19 + Vite, TailwindCSS, Lucide icons, React Router |
-| **Shared** | TypeScript lib consumed by both API and UI |
+| **Mock UI** | React 19, TailwindCSS, Lucide — `@stubrix/mock-ui` microfrontend |
+| **Database UI** | React 19, TailwindCSS — `@stubrix/db-ui` microfrontend |
+| **Host UI** | React 19 + Vite 7, React Router 7 — `@stubrix/ui` |
+| **Shared** | TypeScript lib consumed by all packages — `@stubrix/shared` |
 | **Validation** | class-validator + class-transformer with nested DTOs |
 
 ### Running the Control Panel
