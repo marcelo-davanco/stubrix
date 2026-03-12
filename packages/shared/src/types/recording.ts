@@ -4,10 +4,14 @@ export interface RecordingState {
   proxyTarget: string | null;
   startedAt: string | null;
   requestsRecorded: number;
+  includePatterns?: string[];
+  excludePatterns?: string[];
 }
 
 export interface StartRecordingDto {
   proxyTarget?: string;
+  includePatterns?: string[];
+  excludePatterns?: string[];
 }
 
 export interface RecordingStopResult {

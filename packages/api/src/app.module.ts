@@ -10,6 +10,7 @@ import { RecordingModule } from './recording/recording.module';
 import { LogsModule } from './logs/logs.module';
 import { EngineModule } from './engine/engine.module';
 import { DatabasesModule } from './databases/databases.module';
+import { ImportModule } from './import/import.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -19,6 +20,7 @@ export function setupSwagger(app: any) {
     .addTag('projects', 'Project management')
     .addTag('mocks', 'Mock server management')
     .addTag('recording', 'Traffic recording')
+    .addTag('import', 'Import HAR/Postman collections')
     .addTag('databases', 'Database snapshots')
     .addTag('engine', 'Mock engine control')
     .addTag('logs', 'Real-time logs')
@@ -60,6 +62,7 @@ export function setupSwagger(app: any) {
     StatusModule,
     MocksModule,
     RecordingModule,
+    ImportModule,
     LogsModule,
     EngineModule,
     DatabasesModule,
