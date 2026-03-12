@@ -493,6 +493,299 @@ server.tool(
 );
 
 // ---------------------------------------------------------------------------
+// MCP Prompts - Predefined workflows for AI assistants
+// ---------------------------------------------------------------------------
+
+server.prompt(
+  "setup-recording-session",
+  "Guides through setting up a complete recording session for API traffic",
+  {
+    projectId: z.string().optional().describe("Optional: Project ID to use (will create if not provided)"),
+    proxyTarget: z.string().describe("Target API URL to record from (e.g., https://api.example.com)"),
+    includePatterns: z.string().optional().describe("Optional: Comma-separated URL patterns to include (e.g., /api/*,/api/users/**)"),
+    excludePatterns: z.string().optional().describe("Optional: Comma-separated URL patterns to exclude (e.g., /api/health,/api/metrics/*)"),
+  },
+  async ({ projectId, proxyTarget, includePatterns, excludePatterns }) => {
+    const steps = [];
+    const tools = [];
+    
+    // Step 1: Get or create project
+    if (projectId) {
+      steps.push("1. Get existing project");
+      tools.push("stubrix_get_project");
+    } else {
+      steps.push("1. Create new project");
+      tools.push("stubrix_create_project");
+    }
+    
+    // Step 2: Start recording
+    steps.push("2. Start recording session");
+    tools.push("stubrix_start_recording");
+    
+    // Step 3: Monitor recording
+    steps.push("3. Monitor recording status");
+    tools.push("stubrix_get_recording_status");
+    
+    // Step 4: Stop recording
+    steps.push("4. Stop recording when done");
+    tools.push("stubrix_stop_recording");
+    
+    const prompt = `I'll help you set up a complete recording session. Here's the workflow:
+
+**Target API:** ${proxyTarget}
+${includePatterns ? `**Include Patterns:** ${includePatterns}` : ''}
+${excludePatterns ? `**Exclude Patterns:** ${excludePatterns}` : ''}
+
+**Steps to follow:**
+${steps.map(step => `- ${step}`).join('\n')}
+
+**Available tools:**
+${tools.map(tool => `- \`${tool}\``).join('\n')}
+
+**Example commands:**
+\`\`\`bash
+# Step 1 - Get or create project
+${projectId ? `stubrix_get_project projectId="${projectId}"` : `stubrix_create_project name="API Recording" description="Recording session for ${proxyTarget}"`}
+
+# Step 2 - Start recording
+stubrix_start_recording projectId="${projectId || 'NEW_PROJECT_ID'}" proxyTarget="${proxyTarget}"${includePatterns ? ` includePatterns="${includePatterns}"` : ''}${excludePatterns ? ` excludePatterns="${excludePatterns}"` : ''}
+
+# Step 3 - Check status
+stubrix_get_recording_status projectId="${projectId || 'NEW_PROJECT_ID'}"
+
+# Step 4 - Stop when done
+stubrix_stop_recording projectId="${projectId || 'NEW_PROJECT_ID'}"
+\`\`\`
+
+**Next actions:**
+1. ${projectId ? 'Get the project details' : 'Create a new project'}
+2. Start the recording session
+3. Make your API calls against localhost:8081
+4. Stop recording to persist mocks
+
+Would you like me to execute any of these steps?`;
+
+    return {
+      content: [{ type: "text", text: prompt }],
+    };
+  },
+);
+
+server.prompt(
+  "create-mock-from-description",
+  "Creates a complete mock from natural language description",
+  {
+    projectId: z.string().describe("Project ID where to create the mock"),
+    description: z.string().describe("Natural language description of the mock behavior"),
+  },
+  async ({ projectId, description }) => {
+    const prompt = `I'll help you create a mock based on your description.
+
+**Project:** ${projectId}
+**Description:** ${description}
+
+**Let me analyze this and create the appropriate mock...**
+
+Based on your description, I'll need to:
+1. Extract HTTP method and URL pattern
+2. Determine response status and content type
+3. Generate appropriate response body
+4. Create the mock using the available tools
+
+**Available tools:**
+- \`stubrix_create_mock\` - Create the actual mock
+- \`stubrix_get_project\` - Get project details if needed
+
+**Example mock structure:**
+\`\`\`json
+{
+  "request": {
+    "method": "GET|POST|PUT|DELETE",
+    "url": "/api/endpoint"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{...response data...}"
+  }
+}
+\`\`\`
+
+**Next steps:**
+1. I'll analyze your description to extract the mock details
+2. Create the mock with appropriate parameters
+3. Confirm the mock was created successfully
+
+Would you like me to proceed with creating this mock?`;
+
+    return {
+      content: [{ type: "text", text: prompt }],
+    };
+  },
+);
+
+server.prompt(
+  "database-snapshot-cycle",
+  "Guides through snapshot, make changes, and restore database workflow",
+  {
+    projectId: z.string().describe("Project ID for database operations"),
+    databaseEngine: z.string().optional().describe("Optional: Database engine (postgres, mysql, sqlite)"),
+    snapshotName: z.string().optional().describe("Optional: Custom snapshot name"),
+  },
+  async ({ projectId, databaseEngine, snapshotName }) => {
+    const steps = [
+      "1. Check database configurations",
+      "2. Create snapshot before changes",
+      "3. Make your database changes",
+      "4. Restore snapshot when needed"
+    ];
+    
+    const tools = [
+      "stubrix_get_db_configs",
+      "stubrix_get_databases",
+      "stubrix_create_snapshot",
+      "stubrix_list_snapshots",
+      "stubrix_restore_snapshot"
+    ];
+    
+    const prompt = `I'll guide you through a complete database snapshot cycle.
+
+**Project:** ${projectId}
+${databaseEngine ? `**Database Engine:** ${databaseEngine}` : ''}
+${snapshotName ? `**Snapshot Name:** ${snapshotName}` : ''}
+
+**Workflow Steps:**
+${steps.map(step => `- ${step}`).join('\n')}
+
+**Available tools:**
+${tools.map(tool => `- \`${tool}\``).join('\n')}
+
+**Example commands:**
+\`\`\`bash
+# Step 1 - Check database configs
+stubrix_get_db_configs projectId="${projectId}"
+
+# Step 2 - List available databases
+stubrix_get_databases projectId="${projectId}"${databaseEngine ? ` engine="${databaseEngine}"` : ''}
+
+# Step 3 - Create snapshot
+stubrix_create_snapshot projectId="${projectId}"${databaseEngine ? ` engine="${databaseEngine}"` : ''}${snapshotName ? ` name="${snapshotName}"` : ''}
+
+# Step 4 - List snapshots
+stubrix_list_snapshots projectId="${projectId}"
+
+# Step 5 - Restore when needed
+stubrix_restore_snapshot projectId="${projectId}" name="SNAPSHOT_NAME"${databaseEngine ? ` engine="${databaseEngine}"` : ''}
+\`\`\`
+
+**Best practices:**
+- Always create snapshot before making changes
+- Use descriptive snapshot names
+- Test database connectivity before operations
+- Verify snapshot creation success
+
+**Next actions:**
+1. Check your database configurations
+2. Create a snapshot before making changes
+3. Proceed with your database operations
+4. Restore if needed
+
+Ready to start the snapshot cycle?`;
+
+    return {
+      content: [{ type: "text", text: prompt }],
+    };
+  },
+);
+
+server.prompt(
+  "full-platform-health-check",
+  "Comprehensive health check of all Stubrix services and components",
+  {
+    includeDatabases: z.boolean().optional().describe("Optional: Include database health check"),
+    includeContainers: z.boolean().optional().describe("Optional: Include Docker container health"),
+  },
+  async ({ includeDatabases, includeContainers }) => {
+    const checks = [
+      "1. Check API server status",
+      "2. Check mock server engine",
+      "3. List projects and mocks",
+      "4. Check recording status"
+    ];
+    
+    const tools = [
+      "stubrix_get_status",
+      "stubrix_get_engine_status",
+      "stubrix_list_projects",
+      "stubrix_get_mock_stats"
+    ];
+    
+    if (includeDatabases) {
+      checks.push("5. Check database engines and configs");
+      tools.push("stubrix_list_db_engines", "stubrix_get_databases");
+    }
+    
+    if (includeContainers) {
+      checks.push("6. Check Docker containers");
+      // Note: Container checks would require docker-mcp tools
+    }
+    
+    const prompt = `I'll perform a comprehensive health check of your Stubrix platform.
+
+**Health Check Scope:**
+${includeDatabases ? '✅ Include database checks' : ''}
+${includeContainers ? '✅ Include container checks' : ''}
+
+**Health Check Steps:**
+${checks.map(step => `- ${step}`).join('\n')}
+
+**Available tools:**
+${tools.map(tool => `- \`${tool}\``).join('\n')}
+
+**Example health check commands:**
+\`\`\`bash
+# Step 1 - API Status
+stubrix_get_status
+
+# Step 2 - Engine Status
+stubrix_get_engine_status
+
+# Step 3 - Projects Overview
+stubrix_list_projects
+
+# Step 4 - Mock Statistics
+stubrix_get_mock_stats${includeDatabases ? `
+# Step 5 - Database Engines
+stubrix_list_db_engines` : ''}${includeDatabases ? `
+# Step 6 - Database Health
+stubrix_get_databases projectId="PROJECT_ID"` : ''}
+\`\`\`
+
+**Health indicators to check:**
+- ✅ API server responsive
+- ✅ Mock engine running
+- ✅ Projects accessible
+- ✅ Mocks loading correctly
+- ✅ Recording functionality
+${includeDatabases ? '- ✅ Database connections' : ''}
+${includeContainers ? '- ✅ Docker containers healthy' : ''}
+
+**Next steps:**
+1. Run the health check commands
+2. Analyze results for any issues
+3. Provide recommendations for fixes
+
+Ready to start the health check?`;
+
+    return {
+      content: [{ type: "text", text: prompt }],
+    };
+  },
+);
+
+// ---------------------------------------------------------------------------
 // Start server
 // ---------------------------------------------------------------------------
 
