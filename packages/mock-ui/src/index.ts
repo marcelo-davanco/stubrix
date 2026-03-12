@@ -16,6 +16,9 @@ export { MockMethodBadge } from './components/MockMethodBadge.js';
 export { EngineStatusBar } from './components/EngineStatusBar.js';
 export { ProjectCard } from './components/ProjectCard.js';
 export { CreateProjectModal } from './components/CreateProjectModal.js';
+export { ToastProvider, useToast } from './components/ToastProvider.js';
+export type { ToastType } from './components/ToastProvider.js';
+export { InlineAlert } from './components/InlineAlert.js';
 
 // Hooks
 export { useMockManager } from './hooks/useMockManager.js';
