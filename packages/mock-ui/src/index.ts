@@ -20,5 +20,9 @@ export { CreateProjectModal } from './components/CreateProjectModal.js';
 // Hooks
 export { useMockManager } from './hooks/useMockManager.js';
 
-// TODO: Add exports as implemented
-// - Pages: MockServersPage, ProjectDashboard, MocksList, etc.
+// Pages
+export { MockServersPage } from './pages/MockServersPage.js';
+export { ProjectDashboardPage } from './pages/ProjectDashboardPage.js';
+export { MocksListPage } from './pages/MocksListPage.js';
+export { MockEditorPage } from './pages/MockEditorPage.js';
+export { RecordingPanelPage } from './pages/RecordingPanelPage.js';
