@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -12,6 +12,7 @@ interface SqliteTableRow {
 @Injectable()
 export class SqliteDriver implements DatabaseDriverInterface {
   readonly engine = 'sqlite';
+  private readonly logger = new Logger(SqliteDriver.name);
 
   private readonly dbPath: string | undefined;
 
@@ -52,5 +53,102 @@ export class SqliteDriver implements DatabaseDriverInterface {
       totalSize: `${Math.round(stats.size / 1024)} KB`,
       tables: tables.map((row) => ({ name: row.name, size: 'n/a' })),
     });
+  }
+
+  async createSnapshot(
+    database: string,
+    filepath: string,
+  ): Promise<void> {
+    if (!this.isConfigured()) {
+      throw new Error('SQLite driver is not configured');
+    }
+
+    try {
+      const sourcePath = this.dbPath!;
+      
+      // Check if source database exists
+      if (!fs.existsSync(sourcePath)) {
+        throw new Error(`Source database file not found: ${sourcePath}`);
+      }
+
+      this.logger.log(`Creating SQLite snapshot: ${sourcePath} -> ${filepath}`);
+      
+      // Copy the database file
+      fs.copyFileSync(sourcePath, filepath);
+      
+      // Also copy WAL and SHM files if they exist
+      const walPath = `${sourcePath}-wal`;
+      const shmPath = `${sourcePath}-shm`;
+      const walDest = `${filepath}-wal`;
+      const shmDest = `${filepath}-shm`;
+      
+      if (fs.existsSync(walPath)) {
+        fs.copyFileSync(walPath, walDest);
+      }
+      if (fs.existsSync(shmPath)) {
+        fs.copyFileSync(shmPath, shmDest);
+      }
+
+      this.logger.log(`SQLite snapshot created successfully: ${filepath}`);
+    } catch (error) {
+      this.logger.error(`Failed to create SQLite snapshot: ${error.message}`);
+      throw new Error(`SQLite snapshot failed: ${error.message}`);
+    }
+  }
+
+  async restoreSnapshot(
+    database: string,
+    filepath: string,
+  ): Promise<void> {
+    if (!this.isConfigured()) {
+      throw new Error('SQLite driver is not configured');
+    }
+
+    try {
+      const targetPath = this.dbPath!;
+      
+      // Check if snapshot file exists
+      if (!fs.existsSync(filepath)) {
+        throw new Error(`Snapshot file not found: ${filepath}`);
+      }
+
+      this.logger.log(`Restoring SQLite snapshot: ${filepath} -> ${targetPath}`);
+      
+      // Close any existing connections by attempting to open in read-only mode first
+      try {
+        const testDb = new Database(targetPath, { readonly: true });
+        testDb.close();
+      } catch {
+        // Database might be locked, continue anyway
+      }
+      
+      // Copy the database file
+      fs.copyFileSync(filepath, targetPath);
+      
+      // Also restore WAL and SHM files if they exist
+      const walPath = `${filepath}-wal`;
+      const shmPath = `${filepath}-shm`;
+      const walDest = `${targetPath}-wal`;
+      const shmDest = `${targetPath}-shm`;
+      
+      if (fs.existsSync(walPath)) {
+        fs.copyFileSync(walPath, walDest);
+      } else if (fs.existsSync(walDest)) {
+        // Remove existing WAL if snapshot doesn't have one
+        fs.unlinkSync(walDest);
+      }
+      
+      if (fs.existsSync(shmPath)) {
+        fs.copyFileSync(shmPath, shmDest);
+      } else if (fs.existsSync(shmDest)) {
+        // Remove existing SHM if snapshot doesn't have one
+        fs.unlinkSync(shmDest);
+      }
+
+      this.logger.log(`SQLite snapshot restored successfully: ${filepath}`);
+    } catch (error) {
+      this.logger.error(`Failed to restore SQLite snapshot: ${error.message}`);
+      throw new Error(`SQLite restore failed: ${error.message}`);
+    }
   }
 }
