@@ -18,4 +18,14 @@ export interface DatabaseDriverInterface {
     totalSize: string;
     tables: Array<{ name: string; size: string }>;
   }>;
+  createSnapshot?(
+    database: string,
+    filepath: string,
+    overrides?: ConnectionOverrides,
+  ): Promise<void>;
+  restoreSnapshot?(
+    database: string,
+    filepath: string,
+    overrides?: ConnectionOverrides,
+  ): Promise<void>;
 }

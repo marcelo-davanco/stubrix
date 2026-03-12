@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { execFileSync } from 'child_process';
+import * as fs from 'fs';
 import * as mysql from 'mysql2/promise';
 import type {
   ConnectionOverrides,
@@ -9,6 +11,7 @@ import type {
 @Injectable()
 export class MysqlDriver implements DatabaseDriverInterface {
   readonly engine = 'mysql';
+  private readonly logger = new Logger(MysqlDriver.name);
 
   private readonly host: string | undefined;
   private readonly port: string;
@@ -84,5 +87,94 @@ export class MysqlDriver implements DatabaseDriverInterface {
         }),
       ),
     };
+  }
+
+  async createSnapshot(
+    database: string,
+    filepath: string,
+    overrides?: ConnectionOverrides,
+  ): Promise<void> {
+    if (!this.isConfigured()) {
+      throw new Error('MySQL driver is not configured');
+    }
+
+    try {
+      // Build mysqldump command
+      const args = [
+        '--single-transaction',
+        '--routines',
+        '--triggers',
+        '--databases',
+        database,
+        '--result-file=' + filepath,
+      ];
+
+      // Add connection parameters
+      if (overrides?.host ?? this.host) {
+        args.push(`--host=${overrides?.host ?? this.host}`);
+      }
+      if (overrides?.port ?? this.port) {
+        args.push(`--port=${overrides?.port ?? this.port}`);
+      }
+      if (overrides?.username ?? this.user) {
+        args.push(`--user=${overrides?.username ?? this.user}`);
+      }
+      
+      // Execute mysqldump
+      this.logger.log(`Creating MySQL snapshot: ${database} -> ${filepath}`);
+      execFileSync('mysqldump', args, {
+        env: {
+          ...process.env,
+          MYSQL_PWD: overrides?.password ?? this.password,
+        },
+        stdio: 'pipe',
+      });
+
+      this.logger.log(`MySQL snapshot created successfully: ${filepath}`);
+    } catch (error) {
+      this.logger.error(`Failed to create MySQL snapshot: ${error.message}`);
+      throw new Error(`MySQL snapshot failed: ${error.message}`);
+    }
+  }
+
+  async restoreSnapshot(
+    database: string,
+    filepath: string,
+    overrides?: ConnectionOverrides,
+  ): Promise<void> {
+    if (!this.isConfigured()) {
+      throw new Error('MySQL driver is not configured');
+    }
+
+    try {
+      // Build mysql command
+      const args = [database];
+
+      // Add connection parameters
+      if (overrides?.host ?? this.host) {
+        args.push(`--host=${overrides?.host ?? this.host}`);
+      }
+      if (overrides?.port ?? this.port) {
+        args.push(`--port=${overrides?.port ?? this.port}`);
+      }
+      if (overrides?.username ?? this.user) {
+        args.push(`--user=${overrides?.username ?? this.user}`);
+      }
+
+      this.logger.log(`Restoring MySQL snapshot: ${filepath} -> ${database}`);
+      execFileSync('mysql', args, {
+        input: fs.readFileSync(filepath, 'utf8'),
+        env: {
+          ...process.env,
+          MYSQL_PWD: overrides?.password ?? this.password,
+        },
+        stdio: 'pipe',
+      });
+
+      this.logger.log(`MySQL snapshot restored successfully: ${filepath}`);
+    } catch (error) {
+      this.logger.error(`Failed to restore MySQL snapshot: ${error.message}`);
+      throw new Error(`MySQL restore failed: ${error.message}`);
+    }
   }
 }
