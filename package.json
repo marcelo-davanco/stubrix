@@ -1,6 +1,6 @@
 {
   "name": "stubrix",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "workspaces": [
     "packages/shared",
@@ -20,7 +20,7 @@
     "install:all": "npm install",
     "version": "node scripts/version.js",
     "version:major": "node scripts/version.js --major",
-    "version:minor": "node scripts/version.js --minor", 
+    "version:minor": "node scripts/version.js --minor",
     "version:patch": "node scripts/version.js --patch",
     "version:dry": "node scripts/version.js --dry-run",
     "release": "./scripts/release.sh",
