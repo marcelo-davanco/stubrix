@@ -39,6 +39,29 @@ Root `package.json`:
 - `npm install` — installs all workspace deps, creates symlinks
 - `npm run {script} -w @stubrix/{package}` — run script in specific package
 - `npm run build` — builds all in correct order (defined in root scripts)
+- `npm run version` — semantic versioning across all packages
+- `npm run version:dry` — preview version changes without applying
+
+## Version Management Integration
+
+All packages use semantic versioning coordinated by the version management system:
+
+### Version Update Process
+1. **Code changes** → Commit with conventional format
+2. **Version detection** → `npm run version` (auto-detects increment type)
+3. **Build order** → `npm run build:shared` first, then others
+4. **Version commit** → Separate commit for version changes
+
+### Workspace Dependencies
+- Internal packages use `"workspace:*"` protocol
+- Version updates maintain consistency across all packages
+- Shared package must be built first after version changes
+
+### Build Order After Version Update
+1. `npm run build:shared` — Updated types
+2. `npm run build:api` — Updated API
+3. `npm run build:db-ui` — Updated microfrontend
+4. `npm run build:ui` — Updated dashboard (last)
 
 ## Adding a New Package
 1. Create directory: `packages/{name}/`
@@ -61,6 +84,9 @@ Root `package.json`:
 - **Symlink issues**: `rm -rf node_modules && npm install`
 - **Version conflicts**: check that workspace deps use `"*"` for local packages
 - **TypeScript errors across packages**: verify `tsconfig.json` paths and references
+- **Version not updating**: check commit format, run `npm run version:dry` to debug
+- **Build errors after version update**: rebuild in correct order starting with shared
+- **Git hook warnings**: run `npm run version` before committing code changes
 
 ## MCP Tools to Use
 - **Sequential Thinking**: for planning package restructuring
