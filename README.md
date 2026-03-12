@@ -847,6 +847,89 @@ make convert-to-wiremock
 
 ---
 
+## 🔄 Issue Management & Documentation
+
+Stubrix follows a structured issue management workflow to ensure proper documentation and project tracking.
+
+### Issue Closure Process
+
+After a PR is merged, all related issues must be properly closed with comprehensive documentation:
+
+```bash
+# Close a single issue with documentation
+npm run close-issue [PR_NUMBER] [ISSUE_NUMBER] [VERSION]
+
+# Example: Close issue #19 from PR #28 in version 1.1.0
+npm run close-issue 28 19 1.1.0
+
+# Close multiple issues at once
+npm run close-issues [PR_NUMBER] [VERSION] [ISSUE1] [ISSUE2] ...
+
+# Example: Batch close multiple issues from PR #28
+npm run close-issues 28 1.1.0 19 22
+```
+
+### Automated Issue Documentation
+
+The issue closure script automatically:
+
+- ✅ Verifies all acceptance criteria are met
+- ✅ Extracts implementation details from the PR
+- ✅ Generates comprehensive documentation
+- ✅ References PR number and version
+- ✅ Documents testing coverage
+- ✅ Closes the issue with proper status
+
+### Issue Closure Template
+
+Each closed issue follows this standardized format:
+
+```markdown
+## ✅ **COMPLETED** - [Feature Name]
+
+### **Delivered in PR #[PR_NUMBER]:** [PR Title](PR_URL)
+
+---
+
+### 🎯 **What was implemented:**
+
+#### **✅ All Acceptance Criteria Met:**
+- [x] [Criterion 1]
+- [x] [Criterion 2]
+- [x] [Criterion 3]
+
+#### **🔧 Technical Implementation:**
+- **Implementation Detail 1**: Description
+- **Implementation Detail 2**: Description
+- **Implementation Detail 3**: Description
+
+#### **🧪 Testing Coverage:**
+- **X unit tests** covering functionality
+- **Edge cases** and error scenarios
+
+---
+
+### 🚀 **Impact:**
+- **Benefit 1**: Description of user value
+- **Benefit 2**: Description of technical improvement
+- **Developer Experience**: How this improves DX
+
+**Issue #[ISSUE_NUMBER] has been successfully completed and merged into main v[VERSION]!** 🎯
+```
+
+### Workflow Integration
+
+This process integrates with:
+
+- **Version Management**: Run after version bump
+- **Release Process**: Part of release checklist  
+- **Project Management**: Ensures proper issue tracking
+- **Documentation**: Maintains project history
+
+> 📋 **Full workflow documentation**: [`.windsurf/workflows/issue-closure.md`](.windsurf/workflows/issue-closure.md)
+
+---
+
 ## ⚙️ Environment Variables
 
 | Variable | Default | Description |
