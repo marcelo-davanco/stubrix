@@ -7,7 +7,16 @@
 export { mockApi, configureMockApi } from './lib/mock-api.js';
 export type { CreateMockDto, UpdateMockDto } from './lib/mock-api.js';
 
-// TODO: Add exports as components are implemented
-// - Components: ProjectCard, StatCard, MockMethodBadge, etc.
+// Shared Components
+export { StatCard } from './components/StatCard.js';
+export { ActionBtn } from './components/ActionBtn.js';
+export { Field } from './components/Field.js';
+export { EmptyState } from './components/EmptyState.js';
+export { MockMethodBadge } from './components/MockMethodBadge.js';
+export { EngineStatusBar } from './components/EngineStatusBar.js';
+export { ProjectCard } from './components/ProjectCard.js';
+export { CreateProjectModal } from './components/CreateProjectModal.js';
+
+// TODO: Add exports as implemented
 // - Hooks: useMockManager (central state management)
 // - Pages: MockServersPage, ProjectDashboard, MocksList, etc.
