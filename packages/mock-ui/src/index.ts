@@ -17,6 +17,8 @@ export { EngineStatusBar } from './components/EngineStatusBar.js';
 export { ProjectCard } from './components/ProjectCard.js';
 export { CreateProjectModal } from './components/CreateProjectModal.js';
 
+// Hooks
+export { useMockManager } from './hooks/useMockManager.js';
+
 // TODO: Add exports as implemented
-// - Hooks: useMockManager (central state management)
 // - Pages: MockServersPage, ProjectDashboard, MocksList, etc.
