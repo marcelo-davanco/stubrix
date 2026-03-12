@@ -14,8 +14,9 @@ const { execSync } = require('child_process');
 // Configuration
 const PACKAGES = [
   'packages/shared',
-  'packages/api', 
+  'packages/api',
   'packages/db-ui',
+  'packages/mock-ui',
   'packages/ui'
 ];
 
