@@ -4,6 +4,15 @@ description: Build all packages and prepare for deployment or production run
 
 # Build & Deploy Workflow
 
+## 🔄 Pre-Build: Version Management
+
+Before building for deployment, ensure versions are up-to-date:
+
+```bash
+npm run version          # Update package versions based on commits
+npm run version:dry      # Preview version changes first
+```
+
 ## Build Order (critical — shared must be first)
 
 1. Build shared types package
@@ -35,6 +44,16 @@ npm run build
 ## Build Docker Image
 ```bash
 make build
+```
+
+## 🏷️ Create Version Tag (after successful build)
+
+```bash
+# Tag with current version
+git tag -a v$(node -p "require('./package.json').version") -m "Release v$(node -p "require('./package.json').version")"
+
+# Push tags to remote
+git push origin --tags
 ```
 
 ## Production Run

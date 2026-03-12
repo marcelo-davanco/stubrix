@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../stubrix-internal"
+		}
+	],
+	"settings": {
+		"problems.showCurrentInStatus": true
+	}
+}

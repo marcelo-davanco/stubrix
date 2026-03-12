@@ -167,3 +167,15 @@ git push origin <branch>
     - Draft by default (except hotfix).
 
 12. **Review** the created PR — never assign reviewers without confirmation.
+
+---
+
+## 🔄 Version Management Reminder
+
+After committing code changes, remember to update package versions:
+
+1. **Update versions**: `npm run version` (auto-detects increment type)
+2. **Build packages**: `npm run build:shared && npm run build`
+3. **Commit version changes**: `git commit -m "🔧 chore(version): update package versions"`
+
+The pre-commit hook will remind you about version updates when needed.

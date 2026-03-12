@@ -9,7 +9,7 @@
     "packages/db-ui"
   ],
   "scripts": {
-    "build": "npm run build -w @stubrix/shared && npm run build -w @stubrix/api && npm run build -w @stubrix/db-ui && npm run build -w @stubrix/ui",
+    "build": "npm run build:shared && npm run build:api && npm run build:db-ui && npm run build:ui",
     "build:shared": "npm run build -w @stubrix/shared",
     "build:api": "npm run build -w @stubrix/api",
     "build:db-ui": "npm run build -w @stubrix/db-ui",
@@ -17,7 +17,13 @@
     "dev": "npm run dev:api & npm run dev:ui",
     "dev:api": "npm run start:dev -w @stubrix/api",
     "dev:ui": "npm run dev -w @stubrix/ui",
-    "install:all": "npm install"
+    "install:all": "npm install",
+    "version": "node scripts/version.js",
+    "version:major": "node scripts/version.js --major",
+    "version:minor": "node scripts/version.js --minor", 
+    "version:patch": "node scripts/version.js --patch",
+    "version:dry": "node scripts/version.js --dry-run",
+    "release": "npm run version && npm run build:shared && npm run build"
   },
   "engines": {
     "node": ">=24.0.0",
