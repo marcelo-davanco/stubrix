@@ -6,13 +6,15 @@
     "packages/shared",
     "packages/api",
     "packages/ui",
-    "packages/db-ui"
+    "packages/db-ui",
+    "packages/mock-ui"
   ],
   "scripts": {
-    "build": "npm run build:shared && npm run build:api && npm run build:db-ui && npm run build:ui",
+    "build": "npm run build:shared && npm run build:api && npm run build:db-ui && npm run build:mock-ui && npm run build:ui",
     "build:shared": "npm run build -w @stubrix/shared",
     "build:api": "npm run build -w @stubrix/api",
     "build:db-ui": "npm run build -w @stubrix/db-ui",
+    "build:mock-ui": "npm run build -w @stubrix/mock-ui",
     "build:ui": "npm run build -w @stubrix/ui",
     "dev": "npm run dev:api & npm run dev:ui",
     "dev:api": "npm run start:dev -w @stubrix/api",
