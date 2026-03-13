@@ -42,4 +42,10 @@ Thumbs.db
 *~
 dumps/
 **/dumps/
+
+# Config database & backups (F34)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/backups/
 # MCP node_modules are gitignored via packages/mcp/.gitignore
