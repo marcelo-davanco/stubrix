@@ -1,0 +1,61 @@
+{
+  "name": "stubrix-vscode",
+  "displayName": "Stubrix",
+  "description": "Stubrix mock server integration for VS Code and Windsurf",
+  "version": "1.3.1",
+  "publisher": "stubrix",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other", "Testing"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "stubrix",
+          "title": "Stubrix",
+          "icon": "resources/stubrix.svg"
+        }
+      ]
+    },
+    "views": {
+      "stubrix": [
+        { "id": "stubrix.mocks", "name": "Mocks" },
+        { "id": "stubrix.status", "name": "Status" },
+        { "id": "stubrix.scenarios", "name": "Scenarios" }
+      ]
+    },
+    "commands": [
+      { "command": "stubrix.refreshMocks", "title": "Stubrix: Refresh Mocks" },
+      { "command": "stubrix.startEngine", "title": "Stubrix: Start Mock Engine" },
+      { "command": "stubrix.stopEngine", "title": "Stubrix: Stop Mock Engine" },
+      { "command": "stubrix.captureScenario", "title": "Stubrix: Capture Scenario" },
+      { "command": "stubrix.openDocs", "title": "Stubrix: Open API Docs" },
+      { "command": "stubrix.doctor", "title": "Stubrix: Doctor (Health Check)" }
+    ],
+    "configuration": {
+      "title": "Stubrix",
+      "properties": {
+        "stubrix.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:9090",
+          "description": "Stubrix API base URL"
+        },
+        "stubrix.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Stubrix status in the status bar"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -watch -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}
