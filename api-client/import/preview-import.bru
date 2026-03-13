@@ -1,0 +1,18 @@
+meta {
+  name: Preview Import
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{api_url}}/api/import/preview
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "content": "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"Test\",\"version\":\"1.0\"},\"paths\":{\"/users\":{\"get\":{\"responses\":{\"200\":{\"description\":\"OK\"}}}}}}",
+    "filename": "spec.json"
+  }
+}

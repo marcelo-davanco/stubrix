@@ -1,5 +1,7 @@
 .PHONY: build wiremock mockoon record record-stop convert-to-mockoon convert-to-wiremock clean help \
-        adminer adminer-up adminer-down cloudbeaver cloudbeaver-up cloudbeaver-down db-viewer db-viewer-down
+        adminer adminer-up adminer-down cloudbeaver cloudbeaver-up cloudbeaver-down db-viewer db-viewer-down \
+        hoppscotch hoppscotch-down hoppscotch-logs \
+        bruno-test bruno-test-collection
 
 # Load .env if it exists (values can still be overridden from CLI)
 -include .env
@@ -110,8 +112,25 @@ db-viewer-down: ## Stop all DB viewers
 all-up: ## Start WireMock + PostgreSQL
 	docker compose --profile wiremock --profile postgres up -d
 
+hoppscotch: ## Start Hoppscotch self-hosted API client (F8.01 — http://localhost:3100)
+	docker compose --profile hoppscotch up
+
+hoppscotch-down: ## Stop Hoppscotch
+	docker compose --profile hoppscotch down
+
+hoppscotch-logs: ## Tail Hoppscotch logs
+	docker compose --profile hoppscotch logs -f hoppscotch
+
+bruno-test: ## Run Bruno API tests (all collections)
+	@mkdir -p reports
+	COLLECTION=api-client bash scripts/bruno-test.sh
+
+bruno-test-collection: ## Run Bruno tests for a specific collection (e.g. make bruno-test-collection COLLECTION=control-plane)
+	@mkdir -p reports
+	COLLECTION=$(COLLECTION) bash scripts/bruno-test.sh
+
 all-down: ## Stop all services
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver down
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch down
 
 # ---------------------------------------------------------------------------
 # Conversion
@@ -135,7 +154,7 @@ list-mappings: ## List current WireMock mappings
 	@ls -la mocks/__files/ 2>/dev/null || echo "No response files found"
 
 clean: ## Remove all generated mocks and stop containers
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver down -v 2>/dev/null || true
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch down -v 2>/dev/null || true
 	rm -f .mockoon-env.json
 
 clean-mocks: ## Remove all mock files (careful!)

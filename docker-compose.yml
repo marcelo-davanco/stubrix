@@ -17,10 +17,14 @@
 ##   docker compose --profile cloudbeaver up -d       # CloudBeaver → http://localhost:8083
 ##   docker compose --profile db-viewer up -d         # Both viewers (Adminer + CloudBeaver)
 ##
+## API Clients (F8):
+##   docker compose --profile hoppscotch up -d        # Hoppscotch → http://localhost:3100
+##
 ## Shortcuts (see Makefile):
 ##   make adminer-up      # PostgreSQL + Adminer
 ##   make cloudbeaver-up  # PostgreSQL + CloudBeaver
 ##   make db-viewer       # PostgreSQL + both viewers
+##   make hoppscotch      # Hoppscotch API client
 ## ==========================================================================
 
 x-common: &common
@@ -174,6 +178,35 @@ services:
     volumes:
       - cloudbeaver_data:/opt/cloudbeaver/workspace
       - ./config/cloudbeaver:/opt/cloudbeaver/conf:ro
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Hoppscotch – Self-Hosted API Client (F8.01)
+  # Access: http://localhost:3100
+  # --------------------------------------------------------------------------
+  hoppscotch:
+    image: hoppscotch/hoppscotch:latest
+    profiles: ["hoppscotch"]
+    container_name: stubrix-hoppscotch
+    ports:
+      - "${HOPPSCOTCH_PORT:-3100}:3000"
+    environment:
+      VITE_BASE_URL: http://localhost:3100
+      VITE_SHORTCODE_BASE_URL: http://localhost:3100
+      VITE_ADMIN_URL: http://localhost:3100/admin
+      VITE_BACKEND_GQL_URL: http://localhost:3100/backend/graphql
+      VITE_BACKEND_WS_URL: wss://localhost:3100/backend/graphql
+      VITE_BACKEND_API_URL: http://localhost:3100/backend/v1
+      DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
+      SECRET: ${HOPPSCOTCH_SECRET:-stubrix-hoppscotch-secret}
+      TOKEN_SALT_COMPLEXITY: 10
+      MAGIC_LINK_TOKEN_VALIDITY: 3
+      REFRESH_TOKEN_VALIDITY: 604800000
+      ACCESS_TOKEN_VALIDITY: 86400000
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
     restart: unless-stopped
 
 volumes:

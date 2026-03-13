@@ -786,6 +786,69 @@ Ready to start the health check?`;
 );
 
 // ===========================================================================
+// Universal Import (F23)
+// ===========================================================================
+
+server.tool(
+  "import_formats",
+  "List all supported import formats (HAR, Postman, OpenAPI, Swagger).",
+  {},
+  async () => api("/api/import/formats", { method: "POST" }),
+);
+
+server.tool(
+  "import_preview",
+  "Preview what mocks would be imported from content without actually creating them.",
+  {
+    content: z.string().describe("Raw content of the file (HAR JSON, Postman JSON, OpenAPI JSON/YAML)"),
+    filename: z.string().optional().describe("Original filename to help detect format (e.g., spec.yaml, collection.json)"),
+    baseUrl: z.string().optional().describe("Base URL for OpenAPI specs without a server block"),
+  },
+  async ({ content, filename, baseUrl }) =>
+    api("/api/import/preview", {
+      method: "POST",
+      body: JSON.stringify({ content, filename, baseUrl }),
+    }),
+);
+
+server.tool(
+  "import_url",
+  "Import mocks from a URL (e.g., a public OpenAPI spec URL). Auto-detects format.",
+  {
+    url: z.string().describe("URL of the spec/collection to import (must be publicly accessible)"),
+    projectId: z.string().describe("Target project ID"),
+    deduplicate: z.boolean().optional().describe("Skip duplicate mappings (default: true)"),
+    overwrite: z.boolean().optional().describe("Overwrite existing mappings (default: false)"),
+    filterMethods: z.array(z.string()).optional().describe("Only import specific HTTP methods, e.g. ['GET', 'POST']"),
+    filterStatusCodes: z.array(z.number()).optional().describe("Only import specific response status codes, e.g. [200, 201]"),
+  },
+  async ({ url, projectId, deduplicate, overwrite, filterMethods, filterStatusCodes }) =>
+    api("/api/import/url", {
+      method: "POST",
+      body: JSON.stringify({ url, projectId, deduplicate, overwrite, filterMethods, filterStatusCodes }),
+    }),
+);
+
+server.tool(
+  "import_content",
+  "Import mocks from raw file content (HAR, Postman Collection v2.1, OpenAPI 3.x, Swagger 2.0). Auto-detects format.",
+  {
+    content: z.string().describe("Raw content of the file to import"),
+    projectId: z.string().describe("Target project ID"),
+    filename: z.string().optional().describe("Original filename to help detect format"),
+    deduplicate: z.boolean().optional().describe("Skip duplicate mappings (default: true)"),
+    overwrite: z.boolean().optional().describe("Overwrite existing mappings (default: false)"),
+    filterMethods: z.array(z.string()).optional().describe("Only import specific HTTP methods"),
+    filterStatusCodes: z.array(z.number()).optional().describe("Only import specific response status codes"),
+  },
+  async ({ content, projectId, filename, deduplicate, overwrite, filterMethods, filterStatusCodes }) =>
+    api("/api/import/content", {
+      method: "POST",
+      body: JSON.stringify({ content, projectId, filename, deduplicate, overwrite, filterMethods, filterStatusCodes }),
+    }),
+);
+
+// ===========================================================================
 // Stateful Mocks (F10)
 // ===========================================================================
 

@@ -9,7 +9,11 @@
     "packages/db-ui",
     "packages/mock-ui"
   ],
+  "devDependencies": {
+    "@usebruno/cli": "^1.4.0"
+  },
   "scripts": {
+    "bruno-test": "bash scripts/bruno-test.sh",
     "build": "npm run build:shared && npm run build:api && npm run build:db-ui && npm run build:mock-ui && npm run build:ui",
     "build:shared": "npm run build -w @stubrix/shared",
     "build:api": "npm run build -w @stubrix/api",

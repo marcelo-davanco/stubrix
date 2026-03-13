@@ -1,0 +1,25 @@
+meta {
+  name: Create Mock
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{api_url}}/api/projects/{{project_id}}/mocks
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "request": {
+      "method": "GET",
+      "urlPath": "/api/users"
+    },
+    "response": {
+      "status": 200,
+      "headers": { "Content-Type": "application/json" },
+      "body": "{\"users\":[]}"
+    }
+  }
+}
