@@ -46,6 +46,12 @@
 ##   docker compose --profile keycloak up -d            # Keycloak → :8180
 ##   docker compose --profile zitadel up -d             # Zitadel → :8080
 ##
+## Queue & Cache:
+##   docker compose --profile redis up -d              # Redis → localhost:6379
+##
+## Infrastructure (local dev — all infra services):
+##   docker compose --profile infra --profile postgres --profile wiremock up -d
+##
 ## Network Chaos (F26):
 ##   docker compose --profile toxiproxy up -d          # Toxiproxy → http://localhost:8474
 ##
@@ -224,6 +230,26 @@ services:
       PROXY_TARGET: "${PROXY_TARGET:-http://host.docker.internal:3000}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  # --------------------------------------------------------------------------
+  # Redis – Queue & Cache (BullMQ backend)
+  # Access: localhost:6379
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    profiles: ["redis", "infra"]
+    container_name: stubrix-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   # --------------------------------------------------------------------------
   # PostgreSQL 17
@@ -619,6 +645,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  redis_data:
   pg_data:
   mysql_data:
   cloudbeaver_data:
