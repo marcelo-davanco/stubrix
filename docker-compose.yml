@@ -23,6 +23,13 @@
 ## Contracts (F13):
 ##   docker compose --profile pact up -d               # Pact Broker → http://localhost:9292
 ##
+## Events (F16):
+##   docker compose --profile kafka up -d               # Redpanda (Kafka) → :9092 / :8082
+##   docker compose --profile rabbitmq up -d            # RabbitMQ → :5672 / :15672
+##
+## gRPC (F15):
+##   docker compose --profile gripmock up -d            # GripMock → :4770 / :4771
+##
 ## Network Chaos (F26):
 ##   docker compose --profile toxiproxy up -d          # Toxiproxy → http://localhost:8474
 ##
@@ -187,6 +194,71 @@ services:
     volumes:
       - cloudbeaver_data:/opt/cloudbeaver/workspace
       - ./config/cloudbeaver:/opt/cloudbeaver/conf:ro
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Redpanda – Kafka-compatible broker for event-driven mocking (F16.01)
+  # Kafka: localhost:9092 | REST: http://localhost:8082 | Console: http://localhost:8080
+  # --------------------------------------------------------------------------
+  redpanda:
+    image: redpandadata/redpanda:latest
+    profiles: ["kafka", "events"]
+    container_name: stubrix-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp 1
+      - --memory 512M
+      - --kafka-addr PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://localhost:9092
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+      - "${KAFKA_REST_PORT:-8082}:8082"
+    restart: unless-stopped
+
+  redpanda-console:
+    image: redpandadata/console:latest
+    profiles: ["kafka", "events"]
+    container_name: stubrix-redpanda-console
+    ports:
+      - "${KAFKA_CONSOLE_PORT:-8080}:8080"
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+    depends_on:
+      - redpanda
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # RabbitMQ – AMQP message broker (F16.02)
+  # AMQP: localhost:5672 | Management: http://localhost:15672 (guest/guest)
+  # --------------------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    profiles: ["rabbitmq", "events"]
+    container_name: stubrix-rabbitmq
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # GripMock – gRPC mock engine (F15.06)
+  # gRPC: localhost:4770 | Stub API: http://localhost:4771
+  # --------------------------------------------------------------------------
+  gripmock:
+    image: tkpd/gripmock:latest
+    profiles: ["gripmock", "grpc"]
+    container_name: stubrix-gripmock
+    ports:
+      - "${GRIPMOCK_PORT:-4770}:4770"
+      - "${GRIPMOCK_API_PORT:-4771}:4771"
+    volumes:
+      - ./mocks/proto:/proto:ro
     restart: unless-stopped
 
   # --------------------------------------------------------------------------

@@ -19,6 +19,9 @@ import { IntelligenceModule } from './intelligence/intelligence.module';
 import { ChaosModule } from './chaos/chaos.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { ChaosNetworkModule } from './chaos-network/chaos-network.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { EventsModule } from './events/events.module';
+import { ProtocolsModule } from './protocols/protocols.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -40,6 +43,9 @@ export function setupSwagger(app: any) {
     .addTag('chaos', 'Fault injection and chaos engineering')
     .addTag('contracts', 'Pact Broker contract testing')
     .addTag('chaos-network', 'Toxiproxy network-level chaos')
+    .addTag('webhooks', 'Webhook receiver, replay and simulator')
+    .addTag('events', 'Event publishing — Kafka & RabbitMQ')
+    .addTag('protocols', 'Multi-protocol mocks — GraphQL & gRPC')
     .addTag('status', 'System status')
     .addServer('http://localhost:9090', 'Development server')
     .addServer('https://api.stubrix.com', 'Production server')
@@ -90,6 +96,9 @@ export function setupSwagger(app: any) {
     ChaosModule,
     ContractsModule,
     ChaosNetworkModule,
+    WebhooksModule,
+    EventsModule,
+    ProtocolsModule,
   ],
 })
 export class AppModule {}
