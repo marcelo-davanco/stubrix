@@ -31,6 +31,7 @@ import { CloudModule } from './cloud/cloud.module';
 import { StorageModule } from './storage/storage.module';
 import { IamModule } from './iam/iam.module';
 import { SettingsModule } from './settings/settings.module';
+import { JobsModule } from './jobs/jobs.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -63,6 +64,7 @@ export function setupSwagger(app: any) {
     .addTag('cloud', 'AWS Cloud mocking — LocalStack (S3, SQS, SNS, DynamoDB)')
     .addTag('storage', 'Object storage — MinIO (S3-compatible)')
     .addTag('iam', 'Identity & Access Management — Keycloak & Zitadel')
+    .addTag('jobs', 'Async job queue — status, progress, SSE streaming')
     .addTag('status', 'System status')
     .addServer('http://localhost:9090', 'Development server')
     .addServer('https://api.stubrix.com', 'Production server')
@@ -126,6 +128,7 @@ export function setupSwagger(app: any) {
     StorageModule,
     IamModule,
     SettingsModule,
+    JobsModule,
   ],
 })
 export class AppModule {}
