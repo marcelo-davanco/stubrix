@@ -153,6 +153,53 @@ interface DatabaseInfo {
 }
 ```
 
+### Import IR
+
+Intermediate representation used by the universal importer (HAR, Postman, OpenAPI):
+
+```typescript
+type ImportIRFormat = 'har' | 'postman' | 'openapi' | 'swagger' | 'unknown'
+
+interface ImportIRHeader      { name: string; value: string }
+interface ImportIRQueryParam  { name: string; value: string }
+
+interface ImportIRRequest {
+  method: string; url: string; path: string
+  headers: ImportIRHeader[]; queryParams: ImportIRQueryParam[]
+  body?: string; bodyMimeType?: string
+}
+
+interface ImportIRResponse {
+  status: number; statusText?: string
+  headers: ImportIRHeader[]; body?: string; bodyMimeType?: string
+}
+
+interface ImportIREntry {
+  id: string; name?: string; description?: string
+  request: ImportIRRequest; response: ImportIRResponse; tags?: string[]
+}
+
+interface ImportIR {
+  format: ImportIRFormat; source?: string; title?: string; version?: string
+  entries: ImportIREntry[]; deduplicated?: boolean
+}
+
+interface ImportOptions {
+  projectId: string; deduplicate?: boolean; overwrite?: boolean
+  filterMethods?: string[]; filterStatusCodes?: number[]; baseUrl?: string
+}
+
+interface ImportPreview {
+  format: ImportIRFormat; title?: string; totalEntries: number
+  entries: Array<{ id: string; name?: string; method: string; path: string; responseStatus: number }>
+}
+
+interface ImportResult {
+  created: number; skipped: number; errors: string[]
+  summary: string; format?: ImportIRFormat
+}
+```
+
 ### Log
 
 ```typescript

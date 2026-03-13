@@ -154,7 +154,9 @@ stubrix/
 │   ├── entrypoint.sh        Smart Docker entrypoint
 │   └── localstack/          LocalStack init scripts
 ├── dumps/                   Snapshot files + metadata
-├── docker-compose.yml       20+ Docker profiles
+├── Dockerfile               Mock engine image (WireMock + Mockoon)
+├── Dockerfile.api           Control plane image (NestJS API + React UI)
+├── docker-compose.yml       20+ Docker profiles (incl. control-plane)
 ├── Makefile                 All CLI shortcuts
 └── .env.example             Full environment reference
 ```
@@ -174,13 +176,22 @@ npm install
 
 ### 2. Start the control plane
 
+**Option A — Docker (recommended):**
+
 ```bash
-npm run build
-npm run dev:api   # API on :9090
-npm run dev:ui    # Dashboard on :5173
+make stubrix-build         # Build the control plane image (first time)
+make stack-up              # Stubrix API + UI + WireMock + PostgreSQL
+# Open http://localhost:9090
 ```
 
-### 3. Start a mock engine
+**Option B — Local development:**
+
+```bash
+npm run build
+npm run dev                # API :9090 + UI :5173 (with HMR)
+```
+
+### 3. Start a mock engine (local dev only)
 
 ```bash
 make wiremock     # WireMock on :8081
@@ -204,6 +215,21 @@ make down
 ## 🐳 Infrastructure Services
 
 All services start via Docker Compose profiles. Use Makefile shortcuts or `docker compose --profile <name> up -d` directly.
+
+### Control Plane
+
+| Profile | Service | Port | Command |
+|---------|---------|------|---------|
+| `control-plane` | Stubrix API + React UI | :9090 | `make stubrix-up` |
+
+```bash
+make stubrix-build     # Build image (Dockerfile.api)
+make stubrix-up        # Start detached
+make stubrix-logs      # Tail logs
+make stubrix-restart   # Rebuild + restart
+make stack-up          # Full stack: Stubrix + WireMock + PostgreSQL
+make stack-down        # Stop full stack
+```
 
 ### Mock Engines
 
@@ -257,8 +283,9 @@ All services start via Docker Compose profiles. Use Makefile shortcuts or `docke
 | `hoppscotch` | Hoppscotch | :3100 | `make hoppscotch` |
 
 ```bash
-# Stop everything
-make all-down
+make stack-up    # Stubrix + WireMock + PostgreSQL
+make stack-down  # Stop stack
+make all-down    # Stop every service
 ```
 
 ---
@@ -514,12 +541,48 @@ All 27 modules are documented with request/response schemas, organized by tag:
 
 ---
 
+## 🧩 IDE Extension (VS Code / Windsurf)
+
+The `stubrix-vscode` extension adds a sidebar with Mocks, Status, and Scenarios views, plus commands for engine control, scenario capture, and health check.
+
+### One-time setup — add Windsurf CLI to PATH
+
+The Windsurf CLI binary is **not** added to `PATH` automatically on macOS:
+
+```bash
+echo 'export PATH="$PATH:/Applications/Windsurf.app/Contents/Resources/app/bin"' >> ~/.zshrc
+source ~/.zshrc
+windsurf --version   # → 1.108.x
+```
+
+### Install
+
+```bash
+make windsurf-install   # package .vsix + install in Windsurf
+make vscode-install     # package .vsix + install in VS Code
+```
+
+Or via UI: `Cmd+Shift+P → Extensions: Install from VSIX...` → select `packages/vscode-extension/stubrix-vscode-X.Y.Z.vsix`.
+
+### Configuration
+
+```json
+{
+  "stubrix.apiUrl": "http://localhost:9090"
+}
+```
+
+> Full reference: [`packages/vscode-extension/README.md`](packages/vscode-extension/README.md)
+
+---
+
 ## 📚 Guides
 
 | Guide | Description |
 |-------|-------------|
 | [Recording with PokéAPI](docs/guide-pokeapi-recording.md) | Record PokéAPI mocks, serve offline, use via Postman |
 | [`packages/api/API.md`](packages/api/API.md) | Full NestJS API module reference |
+| [`packages/vscode-extension/README.md`](packages/vscode-extension/README.md) | Extension install + Windsurf CLI PATH setup |
 
 ---
 
