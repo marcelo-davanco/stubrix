@@ -1290,6 +1290,137 @@ server.tool(
 );
 
 // ===========================================================================
+// Auth — JWT, API Keys, RBAC & Multi-Tenancy (F20)
+// ===========================================================================
+
+server.tool(
+  "auth_list_users",
+  "List all users (optionally filtered by workspace).",
+  {
+    workspaceId: z.string().optional().describe("Filter by workspace ID"),
+  },
+  async ({ workspaceId }) => {
+    const params = workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : "";
+    return api(`/api/auth/users${params}`);
+  },
+);
+
+server.tool(
+  "auth_create_user",
+  "Create a new user with role and workspace assignment.",
+  {
+    username: z.string().describe("Username"),
+    email: z.string().describe("Email address"),
+    role: z.enum(["admin", "editor", "viewer"]).describe("User role"),
+    workspaceId: z.string().optional().describe("Workspace ID (default: 'default')"),
+  },
+  async ({ username, email, role, workspaceId }) =>
+    api("/api/auth/users", {
+      method: "POST",
+      body: JSON.stringify({ username, email, role, workspaceId }),
+    }),
+);
+
+server.tool(
+  "auth_rotate_key",
+  "Rotate the API key for a user.",
+  {
+    userId: z.string().describe("User ID"),
+  },
+  async ({ userId }) =>
+    api(`/api/auth/users/${userId}/rotate-key`, { method: "POST" }),
+);
+
+server.tool(
+  "auth_validate_key",
+  "Validate an API key and return user info.",
+  {
+    apiKey: z.string().describe("API key to validate"),
+  },
+  async ({ apiKey }) =>
+    api("/api/auth/validate", {
+      method: "POST",
+      body: JSON.stringify({ apiKey }),
+    }),
+);
+
+server.tool(
+  "auth_list_workspaces",
+  "List all workspace IDs in the system.",
+  {},
+  async () => api("/api/auth/workspaces"),
+);
+
+server.tool(
+  "auth_audit_log",
+  "List audit log entries.",
+  {
+    userId: z.string().optional().describe("Filter by user ID"),
+    limit: z.number().optional().describe("Max entries to return"),
+  },
+  async ({ userId, limit }) => {
+    const params = new URLSearchParams();
+    if (userId) params.set("userId", userId);
+    if (limit) params.set("limit", String(limit));
+    return api(`/api/auth/audit?${params}`);
+  },
+);
+
+// ===========================================================================
+// Environment Templates — Blueprints (F24)
+// ===========================================================================
+
+server.tool(
+  "template_list",
+  "List all environment templates (built-in + custom).",
+  {
+    builtIn: z.boolean().optional().describe("Include built-in templates (default true)"),
+  },
+  async ({ builtIn }) => {
+    const params = builtIn === false ? "?builtIn=false" : "";
+    return api(`/api/templates${params}`);
+  },
+);
+
+server.tool(
+  "template_apply",
+  "Apply an environment template to generate mock files.",
+  {
+    id: z.string().describe("Template ID"),
+    variables: z.record(z.string()).describe("Variable values to substitute in the template"),
+  },
+  async ({ id, variables }) =>
+    api(`/api/templates/${id}/apply`, {
+      method: "POST",
+      body: JSON.stringify({ variables }),
+    }),
+);
+
+server.tool(
+  "template_create",
+  "Create a custom environment template.",
+  {
+    name: z.string().describe("Template name"),
+    description: z.string().optional(),
+    variables: z.array(z.object({
+      name: z.string(),
+      description: z.string().optional(),
+      default: z.string().optional(),
+      required: z.boolean().optional(),
+    })).describe("Template variables"),
+    mocks: z.array(z.object({
+      filename: z.string().describe("Output filename (supports {{VAR}} substitution)"),
+      content: z.string().describe("WireMock JSON content (supports {{VAR}} substitution)"),
+    })).describe("Mock files to generate"),
+  },
+  async ({ name, description, variables, mocks }) =>
+    api("/api/templates", {
+      method: "POST",
+      body: JSON.stringify({ name, description, variables, mocks }),
+    }),
+);
+
+// ===========================================================================
 // Governance — Spectral Lint (F12)
 // ===========================================================================
 

@@ -22,6 +22,8 @@ import { ChaosNetworkModule } from './chaos-network/chaos-network.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { EventsModule } from './events/events.module';
 import { ProtocolsModule } from './protocols/protocols.module';
+import { AuthModule } from './auth/auth.module';
+import { TemplatesModule } from './templates/templates.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -46,6 +48,8 @@ export function setupSwagger(app: any) {
     .addTag('webhooks', 'Webhook receiver, replay and simulator')
     .addTag('events', 'Event publishing — Kafka & RabbitMQ')
     .addTag('protocols', 'Multi-protocol mocks — GraphQL & gRPC')
+    .addTag('auth', 'Authentication, API keys, RBAC & multi-tenancy')
+    .addTag('templates', 'Environment templates & blueprints')
     .addTag('status', 'System status')
     .addServer('http://localhost:9090', 'Development server')
     .addServer('https://api.stubrix.com', 'Production server')
@@ -99,6 +103,8 @@ export function setupSwagger(app: any) {
     WebhooksModule,
     EventsModule,
     ProtocolsModule,
+    AuthModule,
+    TemplatesModule,
   ],
 })
 export class AppModule {}
