@@ -28,4 +28,8 @@ export interface DatabaseDriverInterface {
     filepath: string,
     overrides?: ConnectionOverrides,
   ): Promise<void>;
+  executeQuery?(
+    query: string,
+    params?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>[]>;
 }
