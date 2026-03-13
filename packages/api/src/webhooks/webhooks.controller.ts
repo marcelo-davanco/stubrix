@@ -40,11 +40,11 @@ export class CreateSimulationDto {
 }
 
 @ApiTags('webhooks')
-@Controller('api/webhooks')
+@Controller('webhooks')
 export class WebhooksController {
   constructor(private readonly service: WebhooksService) {}
 
-  @Post('receive/:endpoint(*)')
+  @Post('receive/*endpoint')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Receive and store an incoming webhook event' })
   @ApiParam({ name: 'endpoint', description: 'Endpoint path (wildcarded)' })
