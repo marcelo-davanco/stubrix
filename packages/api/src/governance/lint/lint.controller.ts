@@ -31,7 +31,7 @@ export class LintSpecUrlDto {
 }
 
 @ApiTags('governance')
-@Controller('api/governance')
+@Controller('governance')
 export class LintController {
   constructor(private readonly lintService: LintService) {}
 

@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { TracingService } from './tracing.service';
 
 @ApiTags('tracing')
-@Controller('api/tracing')
+@Controller('tracing')
 export class TracingController {
   constructor(private readonly service: TracingService) {}
 

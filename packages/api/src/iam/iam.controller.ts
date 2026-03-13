@@ -17,7 +17,7 @@ export class IntrospectTokenDto {
 }
 
 @ApiTags('iam')
-@Controller('api/iam')
+@Controller('iam')
 export class IamController {
   constructor(private readonly service: IamService) {}
 

@@ -20,7 +20,7 @@ export class ArchiveSnapshotDto {
 }
 
 @ApiTags('storage')
-@Controller('api/storage')
+@Controller('storage')
 export class StorageController {
   constructor(private readonly service: StorageService) {}
 
@@ -50,7 +50,7 @@ export class StorageController {
     return this.service.archiveSnapshot(dto.snapshotPath, dto.projectId);
   }
 
-  @Get('url/:bucket/:key(*)')
+  @Get('url/:bucket/*key')
   @ApiOperation({ summary: 'Get public URL for a stored object' })
   @ApiParam({ name: 'bucket' })
   @ApiParam({ name: 'key' })

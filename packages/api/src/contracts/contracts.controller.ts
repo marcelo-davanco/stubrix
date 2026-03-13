@@ -12,7 +12,7 @@ export class CanIDeployDto {
 }
 
 @ApiTags('contracts')
-@Controller('api/contracts')
+@Controller('contracts')
 export class ContractsController {
   constructor(private readonly service: ContractsService) {}
 

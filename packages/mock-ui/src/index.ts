@@ -5,7 +5,32 @@
 
 // API Layer
 export { mockApi, configureMockApi } from './lib/mock-api.js';
-export type { CreateMockDto, UpdateMockDto } from './lib/mock-api.js';
+export type {
+  CreateMockDto,
+  UpdateMockDto,
+  ScenarioMeta,
+  ScenarioBundle,
+  ScenarioDiff,
+  StatefulMock,
+  CreateStatefulMockDto,
+  UpdateStatefulMockDto,
+  RagQueryResult,
+  MockSuggestion,
+  DataSuggestion,
+  FaultRule,
+  FaultProfile,
+  ChaosPreset,
+  CreateChaosProfileDto,
+  LintResult,
+  CoverageReport,
+  WebhookEvent,
+  WebhookSimulation,
+  CreateWebhookSimulationDto,
+  TemplateVariable,
+  MockTemplate,
+  CreateTemplateDto,
+  MetricsSummary,
+} from './lib/mock-api.js';
 
 // Shared Components
 export { StatCard } from './components/StatCard.js';
@@ -23,9 +48,19 @@ export { InlineAlert } from './components/InlineAlert.js';
 // Hooks
 export { useMockManager } from './hooks/useMockManager.js';
 
-// Pages
+// Pages — Core
 export { MockServersPage } from './pages/MockServersPage.js';
 export { ProjectDashboardPage } from './pages/ProjectDashboardPage.js';
 export { MocksListPage } from './pages/MocksListPage.js';
 export { MockEditorPage } from './pages/MockEditorPage.js';
 export { RecordingPanelPage } from './pages/RecordingPanelPage.js';
+
+// Pages — New Services
+export { ScenariosPage } from './pages/ScenariosPage.js';
+export { StatefulMocksPage } from './pages/StatefulMocksPage.js';
+export { WebhooksPage } from './pages/WebhooksPage.js';
+export { ChaosPanelPage } from './pages/ChaosPanelPage.js';
+export { CoveragePage } from './pages/CoveragePage.js';
+export { GovernancePage } from './pages/GovernancePage.js';
+export { IntelligencePage } from './pages/IntelligencePage.js';
+export { TemplatesPage } from './pages/TemplatesPage.js';

@@ -91,7 +91,7 @@ export class PreviewFromContentDto {
 }
 
 @ApiTags('import')
-@Controller('api/import')
+@Controller('import')
 export class UniversalImportController {
   constructor(private readonly service: UniversalImportService) {}
 

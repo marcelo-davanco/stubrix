@@ -72,7 +72,7 @@ export class ToggleDto {
 }
 
 @ApiTags('chaos')
-@Controller('api/chaos')
+@Controller('chaos')
 export class ChaosController {
   constructor(private readonly service: ChaosService) {}
 

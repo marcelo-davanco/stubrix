@@ -21,7 +21,7 @@ export class PublishSnsDto {
 }
 
 @ApiTags('cloud')
-@Controller('api/cloud')
+@Controller('cloud')
 export class CloudController {
   constructor(private readonly service: CloudService) {}
 

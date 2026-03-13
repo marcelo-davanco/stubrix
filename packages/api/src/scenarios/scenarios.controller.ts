@@ -31,7 +31,7 @@ export class CaptureScenarioDto {
 }
 
 @ApiTags('scenarios')
-@Controller('api/scenarios')
+@Controller('scenarios')
 export class ScenariosController {
   constructor(private readonly service: ScenariosService) {}
 

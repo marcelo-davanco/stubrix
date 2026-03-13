@@ -38,7 +38,7 @@ export class ParseSchemaDto {
 }
 
 @ApiTags('protocols')
-@Controller('api/protocols')
+@Controller('protocols')
 export class ProtocolsController {
   constructor(private readonly service: ProtocolsService) {}
 
