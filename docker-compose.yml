@@ -30,6 +30,12 @@
 ## gRPC (F15):
 ##   docker compose --profile gripmock up -d            # GripMock → :4770 / :4771
 ##
+## Observability (F21):
+##   docker compose --profile monitoring up -d           # Prometheus :9091 + Grafana :3000
+##
+## Tracing (F28):
+##   docker compose --profile jaeger up -d              # Jaeger → :16686 / :4318
+##
 ## Network Chaos (F26):
 ##   docker compose --profile toxiproxy up -d          # Toxiproxy → http://localhost:8474
 ##
@@ -194,6 +200,58 @@ services:
     volumes:
       - cloudbeaver_data:/opt/cloudbeaver/workspace
       - ./config/cloudbeaver:/opt/cloudbeaver/conf:ro
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Prometheus – Metrics scraping (F21.03)
+  # Access: http://localhost:9091
+  # --------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    profiles: ["prometheus", "monitoring"]
+    container_name: stubrix-prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9091}:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Grafana – Metrics dashboards (F21.04)
+  # Access: http://localhost:3000 (admin/admin)
+  # --------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana-oss:latest
+    profiles: ["grafana", "monitoring"]
+    container_name: stubrix-grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASS:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Jaeger – Distributed tracing (F28.01)
+  # UI: http://localhost:16686 | OTLP HTTP: :4318 | OTLP gRPC: :4317
+  # --------------------------------------------------------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    profiles: ["jaeger", "tracing"]
+    container_name: stubrix-jaeger
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
@@ -363,5 +421,7 @@ volumes:
   pg_data:
   mysql_data:
   cloudbeaver_data:
+  prometheus_data:
+  grafana_data:
   chromadb_data:
   pact_data:

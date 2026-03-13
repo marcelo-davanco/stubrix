@@ -8,7 +8,9 @@
         toxiproxy-up toxiproxy-down toxiproxy-logs \
         kafka-up kafka-down kafka-logs \
         rabbitmq-up rabbitmq-down rabbitmq-logs \
-        gripmock-up gripmock-down
+        gripmock-up gripmock-down \
+        monitoring-up monitoring-down \
+        jaeger-up jaeger-down
 
 # Load .env if it exists (values can still be overridden from CLI)
 -include .env
@@ -183,6 +185,18 @@ gripmock-up: ## Start GripMock gRPC mock engine (F15.06 — detached)
 gripmock-down: ## Stop GripMock
 	docker compose --profile gripmock down
 
+monitoring-up: ## Start Prometheus + Grafana (F21.03/04 — detached)
+	docker compose --profile monitoring up -d
+
+monitoring-down: ## Stop Prometheus + Grafana
+	docker compose --profile monitoring down
+
+jaeger-up: ## Start Jaeger distributed tracing (F28.01 — detached)
+	docker compose --profile jaeger up -d
+
+jaeger-down: ## Stop Jaeger
+	docker compose --profile jaeger down
+
 hoppscotch: ## Start Hoppscotch self-hosted API client (F8.01 — http://localhost:3100)
 	docker compose --profile hoppscotch up
 
@@ -201,7 +215,7 @@ bruno-test-collection: ## Run Bruno tests for a specific collection (e.g. make b
 	COLLECTION=$(COLLECTION) bash scripts/bruno-test.sh
 
 all-down: ## Stop all services
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock down
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger down
 
 # ---------------------------------------------------------------------------
 # Conversion
@@ -225,7 +239,7 @@ list-mappings: ## List current WireMock mappings
 	@ls -la mocks/__files/ 2>/dev/null || echo "No response files found"
 
 clean: ## Remove all generated mocks and stop containers
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock down -v 2>/dev/null || true
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger down -v 2>/dev/null || true
 	rm -f .mockoon-env.json
 
 clean-mocks: ## Remove all mock files (careful!)
