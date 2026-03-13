@@ -1553,6 +1553,143 @@ server.tool(
 );
 
 // ===========================================================================
+// Cloud — LocalStack AWS Mocking (F27)
+// ===========================================================================
+
+server.tool(
+  "cloud_health",
+  "Check LocalStack availability and list running AWS services.",
+  {},
+  async () => api("/api/cloud/health"),
+);
+
+server.tool(
+  "cloud_s3_list_buckets",
+  "List S3 buckets in LocalStack.",
+  {},
+  async () => api("/api/cloud/s3/buckets"),
+);
+
+server.tool(
+  "cloud_s3_create_bucket",
+  "Create an S3 bucket in LocalStack.",
+  {
+    bucket: z.string().describe("Bucket name"),
+  },
+  async ({ bucket }) =>
+    api("/api/cloud/s3/buckets", {
+      method: "POST",
+      body: JSON.stringify({ bucket }),
+    }),
+);
+
+server.tool(
+  "cloud_sns_publish",
+  "Publish a message to an SNS topic in LocalStack.",
+  {
+    topic: z.string().describe("SNS topic name"),
+    message: z.string().describe("Message body"),
+    subject: z.string().optional().describe("Message subject"),
+  },
+  async ({ topic, message, subject }) =>
+    api("/api/cloud/sns/publish", {
+      method: "POST",
+      body: JSON.stringify({ topic, message, subject }),
+    }),
+);
+
+// ===========================================================================
+// Storage — MinIO Object Storage (F32)
+// ===========================================================================
+
+server.tool(
+  "storage_health",
+  "Check MinIO availability.",
+  {},
+  async () => api("/api/storage/health"),
+);
+
+server.tool(
+  "storage_upload_mock_body",
+  "Upload a large mock response body to MinIO for external reference.",
+  {
+    filename: z.string().describe("Storage filename/key"),
+    content: z.string().describe("File content (JSON string or raw text)"),
+  },
+  async ({ filename, content }) =>
+    api("/api/storage/mock-bodies", {
+      method: "POST",
+      body: JSON.stringify({ filename, content }),
+    }),
+);
+
+server.tool(
+  "storage_archive_snapshot",
+  "Archive a database snapshot file to MinIO.",
+  {
+    snapshotPath: z.string().describe("Local path to the snapshot file"),
+    projectId: z.string().describe("Project ID for storage path"),
+  },
+  async ({ snapshotPath, projectId }) =>
+    api("/api/storage/snapshots/archive", {
+      method: "POST",
+      body: JSON.stringify({ snapshotPath, projectId }),
+    }),
+);
+
+// ===========================================================================
+// IAM — Keycloak & Zitadel (F33)
+// ===========================================================================
+
+server.tool(
+  "iam_health",
+  "Check Keycloak and Zitadel availability.",
+  {},
+  async () => api("/api/iam/health"),
+);
+
+server.tool(
+  "iam_get_token",
+  "Get a Keycloak access token using password grant.",
+  {
+    username: z.string().describe("Keycloak username"),
+    password: z.string().describe("Keycloak password"),
+  },
+  async ({ username, password }) =>
+    api("/api/iam/token", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    }),
+);
+
+server.tool(
+  "iam_client_credentials",
+  "Get a Keycloak access token using client credentials grant.",
+  {},
+  async () => api("/api/iam/token/client-credentials", { method: "POST" }),
+);
+
+server.tool(
+  "iam_introspect_token",
+  "Introspect a Keycloak token to check validity and claims.",
+  {
+    token: z.string().describe("JWT access token to introspect"),
+  },
+  async ({ token }) =>
+    api("/api/iam/token/introspect", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
+);
+
+server.tool(
+  "iam_config",
+  "Get IAM configuration — Keycloak realm/issuer and Zitadel URL.",
+  {},
+  async () => api("/api/iam/config"),
+);
+
+// ===========================================================================
 // Governance — Spectral Lint (F12)
 // ===========================================================================
 

@@ -36,6 +36,16 @@
 ## Tracing (F28):
 ##   docker compose --profile jaeger up -d              # Jaeger → :16686 / :4318
 ##
+## Cloud Mocking (F27):
+##   docker compose --profile localstack up -d          # LocalStack → :4566
+##
+## Object Storage (F32):
+##   docker compose --profile minio up -d               # MinIO → :9000 / :9001
+##
+## IAM (F33):
+##   docker compose --profile keycloak up -d            # Keycloak → :8180
+##   docker compose --profile zitadel up -d             # Zitadel → :8080
+##
 ## Network Chaos (F26):
 ##   docker compose --profile toxiproxy up -d          # Toxiproxy → http://localhost:8474
 ##
@@ -200,6 +210,75 @@ services:
     volumes:
       - cloudbeaver_data:/opt/cloudbeaver/workspace
       - ./config/cloudbeaver:/opt/cloudbeaver/conf:ro
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # LocalStack – AWS Cloud service mocking (F27.01)
+  # Access: http://localhost:4566
+  # --------------------------------------------------------------------------
+  localstack:
+    image: localstack/localstack:latest
+    profiles: ["localstack", "cloud"]
+    container_name: stubrix-localstack
+    ports:
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    environment:
+      SERVICES: ${LOCALSTACK_SERVICES:-s3,sqs,sns,dynamodb,lambda,secretsmanager}
+      DEBUG: ${LOCALSTACK_DEBUG:-0}
+      PERSISTENCE: ${LOCALSTACK_PERSISTENCE:-0}
+      INIT_SCRIPTS_PATH: /etc/localstack/init/ready.d
+    volumes:
+      - ./scripts/localstack:/etc/localstack/init/ready.d:ro
+      - localstack_data:/var/lib/localstack
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # MinIO – S3-compatible object storage (F32.01)
+  # API: http://localhost:9000 | Console: http://localhost:9001 (minioadmin/minioadmin)
+  # --------------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    profiles: ["minio", "storage"]
+    container_name: stubrix-minio
+    command: server /data --console-address ':9001'
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Keycloak – Identity & Access Management (F33.01)
+  # Access: http://localhost:8180 (admin/admin)
+  # --------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    profiles: ["keycloak", "iam"]
+    container_name: stubrix-keycloak
+    command: start-dev
+    ports:
+      - "${KEYCLOAK_PORT:-8180}:8080"
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HTTP_PORT: 8080
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Zitadel – Lightweight IAM alternative (F33.02)
+  # Access: http://localhost:8085
+  # --------------------------------------------------------------------------
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:latest
+    profiles: ["zitadel"]
+    container_name: stubrix-zitadel
+    command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled
+    ports:
+      - "${ZITADEL_PORT:-8085}:8080"
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
@@ -423,5 +502,7 @@ volumes:
   cloudbeaver_data:
   prometheus_data:
   grafana_data:
+  localstack_data:
+  minio_data:
   chromadb_data:
   pact_data:
