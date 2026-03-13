@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -53,6 +53,23 @@ export class SqliteDriver implements DatabaseDriverInterface {
       totalSize: `${Math.round(stats.size / 1024)} KB`,
       tables: tables.map((row) => ({ name: row.name, size: 'n/a' })),
     });
+  }
+
+  executeQuery(
+    query: string,
+    params?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>[]> {
+    if (!this.isConfigured()) {
+      throw new BadRequestException('SQLite driver is not configured');
+    }
+    const db = new Database(this.dbPath, { readonly: true });
+    try {
+      const values = params ? Object.values(params) : [];
+      const rows = db.prepare(query).all(...values) as Record<string, unknown>[];
+      return Promise.resolve(rows);
+    } finally {
+      db.close();
+    }
   }
 
   async createSnapshot(

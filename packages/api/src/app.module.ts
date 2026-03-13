@@ -11,6 +11,7 @@ import { LogsModule } from './logs/logs.module';
 import { EngineModule } from './engine/engine.module';
 import { DatabasesModule } from './databases/databases.module';
 import { ImportModule } from './import/import.module';
+import { StatefulMocksModule } from './stateful-mocks/stateful-mocks.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -24,6 +25,7 @@ export function setupSwagger(app: any) {
     .addTag('databases', 'Database snapshots')
     .addTag('engine', 'Mock engine control')
     .addTag('logs', 'Real-time logs')
+    .addTag('stateful-mocks', 'Stateful mocking with DB sync')
     .addTag('status', 'System status')
     .addServer('http://localhost:9090', 'Development server')
     .addServer('https://api.stubrix.com', 'Production server')
@@ -66,6 +68,7 @@ export function setupSwagger(app: any) {
     LogsModule,
     EngineModule,
     DatabasesModule,
+    StatefulMocksModule,
   ],
 })
 export class AppModule {}

@@ -785,6 +785,142 @@ Ready to start the health check?`;
   },
 );
 
+// ===========================================================================
+// Stateful Mocks (F10)
+// ===========================================================================
+
+server.tool(
+  "stateful_mock_list",
+  "List all stateful mocks (Mock ↔ DB Sync).",
+  {},
+  async () => api("/api/stateful/mocks"),
+);
+
+server.tool(
+  "stateful_mock_get",
+  "Get a specific stateful mock by ID.",
+  {
+    id: z.string().describe("Stateful mock ID"),
+  },
+  async ({ id }) => api(`/api/stateful/mocks/${id}`),
+);
+
+server.tool(
+  "stateful_mock_create",
+  "Create a stateful mock that responds with live data from a database query rendered through a Handlebars template.",
+  {
+    name: z.string().describe("Human-readable name for the mock"),
+    description: z.string().optional().describe("Optional description"),
+    method: z.string().describe("HTTP method (GET, POST, etc.)"),
+    urlPath: z.string().optional().describe("Exact URL path to match, e.g. /api/users"),
+    urlPattern: z.string().optional().describe("Regex URL pattern to match"),
+    stateEngine: z.enum(["postgres", "mysql", "sqlite"]).describe("Database engine to query"),
+    stateDatabase: z.string().optional().describe("Database name (optional, uses default if omitted)"),
+    stateQuery: z.string().describe("READ-ONLY SQL query to execute, e.g. SELECT * FROM users"),
+    stateTemplate: z
+      .string()
+      .describe(
+        "Handlebars template for the response body. Available: {{json state.rows}}, {{state.rowCount}}, {{request.method}}, {{request.url}}. Helpers: {{json}}, {{pick state.rows 0}}, {{first state.rows}}, {{last state.rows}}",
+      ),
+    responseStatus: z.number().optional().describe("HTTP response status (default: 200)"),
+    fallbackBody: z.string().optional().describe("Static body returned if DB query fails"),
+    queryTimeoutMs: z.number().optional().describe("Query timeout in milliseconds (default: 5000)"),
+    cacheTtlSeconds: z.number().optional().describe("Cache TTL in seconds, 0 = disabled (default: 0)"),
+  },
+  async ({
+    name,
+    description,
+    method,
+    urlPath,
+    urlPattern,
+    stateEngine,
+    stateDatabase,
+    stateQuery,
+    stateTemplate,
+    responseStatus,
+    fallbackBody,
+    queryTimeoutMs,
+    cacheTtlSeconds,
+  }) =>
+    api("/api/stateful/mocks", {
+      method: "POST",
+      body: JSON.stringify({
+        name,
+        description,
+        request: { method, urlPath, urlPattern },
+        stateConfig: {
+          stateEngine,
+          stateDatabase,
+          stateQuery,
+          stateTemplate,
+          queryTimeoutMs,
+          cacheTtlSeconds,
+        },
+        response: {
+          status: responseStatus ?? 200,
+          headers: { "Content-Type": "application/json" },
+          fallbackBody,
+        },
+      }),
+    }),
+);
+
+server.tool(
+  "stateful_mock_update",
+  "Update an existing stateful mock.",
+  {
+    id: z.string().describe("Stateful mock ID"),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    stateQuery: z.string().optional().describe("New SQL query"),
+    stateTemplate: z.string().optional().describe("New Handlebars template"),
+    queryTimeoutMs: z.number().optional(),
+    cacheTtlSeconds: z.number().optional(),
+  },
+  async ({ id, name, description, stateQuery, stateTemplate, queryTimeoutMs, cacheTtlSeconds }) => {
+    const body = {};
+    if (name) body.name = name;
+    if (description) body.description = description;
+    if (stateQuery || stateTemplate || queryTimeoutMs !== undefined || cacheTtlSeconds !== undefined) {
+      body.stateConfig = { stateQuery, stateTemplate, queryTimeoutMs, cacheTtlSeconds };
+    }
+    return api(`/api/stateful/mocks/${id}`, { method: "PUT", body: JSON.stringify(body) });
+  },
+);
+
+server.tool(
+  "stateful_mock_delete",
+  "Delete a stateful mock by ID.",
+  {
+    id: z.string().describe("Stateful mock ID"),
+  },
+  async ({ id }) => api(`/api/stateful/mocks/${id}`, { method: "DELETE" }),
+);
+
+server.tool(
+  "stateful_mock_test",
+  "Test a stateful mock against the current database state and return the rendered response.",
+  {
+    id: z.string().describe("Stateful mock ID"),
+    method: z.string().optional().describe("Override request method for testing"),
+    url: z.string().optional().describe("Override URL for testing"),
+  },
+  async ({ id, method, url }) =>
+    api(`/api/stateful/mocks/${id}/test`, {
+      method: "POST",
+      body: JSON.stringify({ method: method ?? "GET", url: url ?? "/test" }),
+    }),
+);
+
+server.tool(
+  "stateful_mock_preview",
+  "Preview the rendered response of a stateful mock using sample data (no real DB query).",
+  {
+    id: z.string().describe("Stateful mock ID"),
+  },
+  async ({ id }) => api(`/api/stateful/mocks/${id}/preview`),
+);
+
 // ---------------------------------------------------------------------------
 // Start server
 // ---------------------------------------------------------------------------

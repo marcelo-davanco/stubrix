@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { execSync } from 'child_process';
+import { Client } from 'pg';
 import type {
   ConnectionOverrides,
   DatabaseDriverInterface,
@@ -58,6 +59,27 @@ export class PostgresDriver implements DatabaseDriverInterface {
       { env: this.getEnv(undefined, overrides), encoding: 'utf-8' },
     );
     return Promise.resolve(output.trim().split('\n').filter(Boolean));
+  }
+
+  async executeQuery(
+    query: string,
+    params?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>[]> {
+    const client = new Client({
+      host: this.host,
+      port: Number(this.port),
+      user: this.user,
+      password: this.password,
+      database: this.database,
+    });
+    await client.connect();
+    try {
+      const values = params ? Object.values(params) : [];
+      const result = await client.query(query, values);
+      return result.rows as Record<string, unknown>[];
+    } finally {
+      await client.end();
+    }
   }
 
   getDatabaseInfo(

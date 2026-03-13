@@ -89,6 +89,20 @@ export class MysqlDriver implements DatabaseDriverInterface {
     };
   }
 
+  async executeQuery(
+    query: string,
+    params?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>[]> {
+    const conn = await this.getConnection();
+    try {
+      const values = params ? Object.values(params) : [];
+      const [rows] = await conn.query(query, values);
+      return rows as Record<string, unknown>[];
+    } finally {
+      await conn.end();
+    }
+  }
+
   async createSnapshot(
     database: string,
     filepath: string,
