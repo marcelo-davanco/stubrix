@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+*.vsix
 packages/api/public/assets/
 packages/api/public/index.html
 build/
@@ -34,6 +35,7 @@ Thumbs.db
 # IDE / Editor
 .cursor/
 .vscode/
+.windsurf/
 .idea/
 *.swp
 *.swo
