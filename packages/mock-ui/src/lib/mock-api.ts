@@ -162,6 +162,128 @@ export type MetricsSummary = {
   histograms: Record<string, unknown>;
 };
 
+export type TraceSpan = {
+  traceId: string;
+  spanId: string;
+  operationName: string;
+  service: string;
+  duration: number;
+  startTime: string;
+  tags?: Record<string, unknown>;
+  logs?: Array<{ timestamp: string; fields: Record<string, unknown> }>;
+};
+
+export type Trace = {
+  traceId: string;
+  spans: TraceSpan[];
+  services: string[];
+  duration: number;
+  startTime: string;
+};
+
+export type PerformanceScript = {
+  id: string;
+  name: string;
+  description?: string;
+  script: string;
+  builtIn: boolean;
+  options?: { vus?: number; duration?: string; thresholds?: Record<string, string[]> };
+};
+
+export type PerformanceBaseline = {
+  id: string;
+  name: string;
+  scriptId: string;
+  createdAt: string;
+  metrics: { p95: number; p99: number; rps: number; errorRate: number };
+};
+
+export type ProtocolMock = {
+  id: string;
+  protocol: 'graphql' | 'grpc' | 'rest';
+  name: string;
+  schema?: string;
+  resolvers?: Record<string, unknown>;
+  protoFile?: string;
+  grpcService?: string;
+  endpoint?: string;
+  createdAt: string;
+};
+
+export type EventRecord = {
+  id: string;
+  broker: string;
+  topic: string;
+  payload: unknown;
+  headers?: Record<string, string>;
+  publishedAt: string;
+};
+
+export type EventTemplate = {
+  id: string;
+  name: string;
+  broker: string;
+  topic: string;
+  payload: unknown;
+  headers?: Record<string, string>;
+  scheduleMs?: number;
+};
+
+export type ToxiProxy = {
+  name: string;
+  listen: string;
+  upstream: string;
+  enabled: boolean;
+  toxics: Toxic[];
+};
+
+export type Toxic = {
+  name: string;
+  type: string;
+  stream: 'upstream' | 'downstream';
+  toxicity: number;
+  attributes: Record<string, unknown>;
+};
+
+export type AuthUser = {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  workspaceId: string;
+  active: boolean;
+  createdAt: string;
+};
+
+export type AuditEntry = {
+  id: string;
+  userId: string;
+  action: string;
+  resource: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type IamToken = {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope?: string;
+};
+
+export type PactContract = {
+  consumer: string;
+  provider: string;
+  version: string;
+  status: string;
+  createdAt: string;
+};
+
+export type S3Bucket = { name: string; createdAt?: string };
+export type SqsQueue = { url: string; name: string };
+
+export type StoredMockBody = { url: string; key: string; bucket: string };
+
 let _baseUrl = '/api';
 
 export function configureMockApi(baseUrl: string): void {
@@ -298,15 +420,6 @@ export const mockApi = {
       request<FaultProfile>('/chaos/presets/apply', { method: 'POST', body: JSON.stringify({ preset, urlPattern }) }),
   },
 
-  contracts: {
-    health: (): Promise<{ available: boolean }> =>
-      request<{ available: boolean }>('/contracts/health'),
-    list: (): Promise<unknown[]> =>
-      request<unknown[]>('/contracts/pacts'),
-    canIDeploy: (pacticipant: string, version: string): Promise<{ deployable: boolean; reason: string }> =>
-      request<{ deployable: boolean; reason: string }>(`/contracts/can-i-deploy?pacticipant=${encodeURIComponent(pacticipant)}&version=${encodeURIComponent(version)}`),
-  },
-
   coverage: {
     analyze: (content: string, specFile?: string): Promise<CoverageReport> =>
       request<CoverageReport>('/coverage/analyze', { method: 'POST', body: JSON.stringify({ content, specFile }) }),
@@ -362,5 +475,141 @@ export const mockApi = {
       request<MetricsSummary>('/metrics/summary'),
     health: (): Promise<unknown> =>
       request<unknown>('/metrics/health'),
+    prometheus: (): Promise<string> =>
+      fetch(`${_baseUrl}/metrics/prometheus`).then((r) => r.text()),
+  },
+
+  tracing: {
+    list: (service?: string, limit?: number): Promise<Trace[]> => {
+      const p = new URLSearchParams();
+      if (service) p.set('service', service);
+      if (limit) p.set('limit', String(limit));
+      return request<Trace[]>(`/tracing/traces${p.size ? `?${p}` : ''}`);
+    },
+    get: (traceId: string): Promise<Trace> =>
+      request<Trace>(`/tracing/traces/${traceId}`),
+    health: (): Promise<unknown> => request<unknown>('/tracing/health'),
+    config: (): Promise<unknown> => request<unknown>('/tracing/config'),
+  },
+
+  performance: {
+    listScripts: (): Promise<PerformanceScript[]> =>
+      request<PerformanceScript[]>('/performance/scripts'),
+    createScript: (dto: { name: string; script: string; description?: string; options?: Record<string, unknown> }): Promise<PerformanceScript> =>
+      request<PerformanceScript>('/performance/scripts', { method: 'POST', body: JSON.stringify(dto) }),
+    exportScriptUrl: (id: string): string => `${_baseUrl}/performance/scripts/${id}/export`,
+    listBaselines: (): Promise<PerformanceBaseline[]> =>
+      request<PerformanceBaseline[]>('/performance/baselines'),
+    saveBaseline: (dto: { name: string; scriptId: string; metrics: PerformanceBaseline['metrics'] }): Promise<PerformanceBaseline> =>
+      request<PerformanceBaseline>('/performance/baselines', { method: 'POST', body: JSON.stringify(dto) }),
+    compareBaseline: (id: string, current: PerformanceBaseline['metrics']): Promise<unknown> =>
+      request<unknown>(`/performance/baselines/${id}/compare`, { method: 'POST', body: JSON.stringify({ current }) }),
+  },
+
+  protocols: {
+    list: (protocol?: string): Promise<ProtocolMock[]> =>
+      request<ProtocolMock[]>(`/protocols/mocks${protocol ? `?protocol=${protocol}` : ''}`),
+    create: (dto: { protocol: string; name: string; schema?: string; resolvers?: Record<string, unknown>; protoFile?: string; grpcService?: string; endpoint?: string }): Promise<ProtocolMock> =>
+      request<ProtocolMock>('/protocols/mocks', { method: 'POST', body: JSON.stringify(dto) }),
+    delete: (id: string): Promise<void> =>
+      request<void>(`/protocols/mocks/${id}`, { method: 'DELETE' }),
+    parseGraphQL: (schema: string): Promise<unknown> =>
+      request<unknown>('/protocols/graphql/parse', { method: 'POST', body: JSON.stringify({ schema }) }),
+    grpcHealth: (): Promise<unknown> => request<unknown>('/protocols/grpc/health'),
+  },
+
+  events: {
+    health: (): Promise<unknown> => request<unknown>('/events/health'),
+    publish: (dto: { broker: string; topic: string; payload: unknown; headers?: Record<string, string> }): Promise<unknown> =>
+      request<unknown>('/events/publish', { method: 'POST', body: JSON.stringify(dto) }),
+    listPublished: (limit?: number): Promise<EventRecord[]> =>
+      request<EventRecord[]>(`/events/published${limit ? `?limit=${limit}` : ''}`),
+    listTemplates: (): Promise<EventTemplate[]> =>
+      request<EventTemplate[]>('/events/templates'),
+    createTemplate: (dto: { name: string; broker: string; topic: string; payload: unknown; headers?: Record<string, string>; scheduleMs?: number }): Promise<EventTemplate> =>
+      request<EventTemplate>('/events/templates', { method: 'POST', body: JSON.stringify(dto) }),
+    fireTemplate: (id: string): Promise<unknown> =>
+      request<unknown>(`/events/templates/${id}/fire`, { method: 'POST' }),
+  },
+
+  chaosNetwork: {
+    health: (): Promise<unknown> => request<unknown>('/chaos-network/health'),
+    listProxies: (): Promise<ToxiProxy[]> => request<ToxiProxy[]>('/chaos-network/proxies'),
+    createProxy: (dto: { name: string; listen: string; upstream: string }): Promise<ToxiProxy> =>
+      request<ToxiProxy>('/chaos-network/proxies', { method: 'POST', body: JSON.stringify(dto) }),
+    deleteProxy: (name: string): Promise<void> =>
+      request<void>(`/chaos-network/proxies/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+    addToxic: (proxyName: string, dto: { type: string; stream: string; name?: string; toxicity?: number; attributes?: Record<string, unknown> }): Promise<Toxic> =>
+      request<Toxic>(`/chaos-network/proxies/${encodeURIComponent(proxyName)}/toxics`, { method: 'POST', body: JSON.stringify(dto) }),
+    removeToxic: (proxyName: string, toxicName: string): Promise<void> =>
+      request<void>(`/chaos-network/proxies/${encodeURIComponent(proxyName)}/toxics/${encodeURIComponent(toxicName)}`, { method: 'DELETE' }),
+    listPresets: (): Promise<{ id: string; name: string; description: string }[]> =>
+      request<{ id: string; name: string; description: string }[]>('/chaos-network/presets'),
+    applyPreset: (proxyName: string, preset: string): Promise<Toxic[]> =>
+      request<Toxic[]>(`/chaos-network/proxies/${encodeURIComponent(proxyName)}/presets`, { method: 'POST', body: JSON.stringify({ preset }) }),
+  },
+
+  auth: {
+    listUsers: (workspaceId?: string): Promise<AuthUser[]> =>
+      request<AuthUser[]>(`/auth/users${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ''}`),
+    createUser: (dto: { username: string; email: string; role: string; workspaceId?: string }): Promise<AuthUser> =>
+      request<AuthUser>('/auth/users', { method: 'POST', body: JSON.stringify(dto) }),
+    rotateKey: (id: string): Promise<{ apiKey: string }> =>
+      request<{ apiKey: string }>(`/auth/users/${id}/rotate-key`, { method: 'POST' }),
+    deactivate: (id: string): Promise<void> =>
+      request<void>(`/auth/users/${id}`, { method: 'DELETE' }),
+    validate: (apiKey: string): Promise<{ valid: boolean; user?: AuthUser }> =>
+      request<{ valid: boolean; user?: AuthUser }>('/auth/validate', { method: 'POST', body: JSON.stringify({ apiKey }) }),
+    listWorkspaces: (): Promise<string[]> =>
+      request<string[]>('/auth/workspaces'),
+    audit: (userId?: string, limit?: number): Promise<AuditEntry[]> => {
+      const p = new URLSearchParams();
+      if (userId) p.set('userId', userId);
+      if (limit) p.set('limit', String(limit));
+      return request<AuditEntry[]>(`/auth/audit${p.size ? `?${p}` : ''}`);
+    },
+  },
+
+  iam: {
+    health: (): Promise<{ keycloak: unknown; zitadel: unknown }> =>
+      request<{ keycloak: unknown; zitadel: unknown }>('/iam/health'),
+    config: (): Promise<unknown> => request<unknown>('/iam/config'),
+    getToken: (username: string, password: string): Promise<IamToken> =>
+      request<IamToken>('/iam/token', { method: 'POST', body: JSON.stringify({ username, password }) }),
+    clientCredentials: (): Promise<IamToken> =>
+      request<IamToken>('/iam/token/client-credentials', { method: 'POST' }),
+    introspect: (token: string): Promise<unknown> =>
+      request<unknown>('/iam/token/introspect', { method: 'POST', body: JSON.stringify({ token }) }),
+  },
+
+  contracts: {
+    health: (): Promise<{ available: boolean }> =>
+      request<{ available: boolean }>('/contracts/health'),
+    list: (): Promise<PactContract[]> =>
+      request<PactContract[]>('/contracts/pacts'),
+    canIDeploy: (pacticipant: string, version: string): Promise<{ deployable: boolean; reason: string }> =>
+      request<{ deployable: boolean; reason: string }>(`/contracts/can-i-deploy?pacticipant=${encodeURIComponent(pacticipant)}&version=${encodeURIComponent(version)}`),
+  },
+
+  cloud: {
+    health: (): Promise<unknown> => request<unknown>('/cloud/health'),
+    config: (): Promise<unknown> => request<unknown>('/cloud/config'),
+    listBuckets: (): Promise<S3Bucket[]> => request<S3Bucket[]>('/cloud/s3/buckets'),
+    createBucket: (bucket: string): Promise<unknown> =>
+      request<unknown>('/cloud/s3/buckets', { method: 'POST', body: JSON.stringify({ bucket }) }),
+    listQueues: (): Promise<SqsQueue[]> => request<SqsQueue[]>('/cloud/sqs/queues'),
+    publishSns: (topic: string, message: string, subject?: string): Promise<unknown> =>
+      request<unknown>('/cloud/sns/publish', { method: 'POST', body: JSON.stringify({ topic, message, subject }) }),
+  },
+
+  storage: {
+    health: (): Promise<unknown> => request<unknown>('/storage/health'),
+    config: (): Promise<unknown> => request<unknown>('/storage/config'),
+    uploadBody: (filename: string, content: string): Promise<StoredMockBody> =>
+      request<StoredMockBody>('/storage/mock-bodies', { method: 'POST', body: JSON.stringify({ filename, content }) }),
+    archive: (snapshotPath: string, projectId: string): Promise<unknown> =>
+      request<unknown>('/storage/snapshots/archive', { method: 'POST', body: JSON.stringify({ snapshotPath, projectId }) }),
+    getUrl: (bucket: string, key: string): Promise<{ url: string }> =>
+      request<{ url: string }>(`/storage/url/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`),
   },
 };
