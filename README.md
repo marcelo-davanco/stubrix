@@ -2,98 +2,102 @@
 
 ![Stubrix Logo](assets/logo.png)
 
-## One mock structure, two engines, one control panel
+## Advanced API Engineering, Mocking & Developer Productivity Platform
 
 [![GitHub](https://img.shields.io/github/stars/marcelo-davanco/stubrix?style=social)](https://github.com/marcelo-davanco/stubrix)
+[![Latest Release](https://img.shields.io/github/v/release/marcelo-davanco/stubrix)](https://github.com/marcelo-davanco/stubrix/releases)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![WireMock](https://img.shields.io/badge/WireMock-3.9.1-6DB33F?logo=java&logoColor=white)](https://wiremock.org/)
-[![Mockoon](https://img.shields.io/badge/Mockoon-CLI-FF6B35?logo=node.js&logoColor=white)](https://mockoon.com/)
 [![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Unified container for running **WireMock** or **Mockoon CLI**, both sharing the same mock structure.
-Includes a **control panel** (API + Dashboard) for managing mocks, projects, recordings, logs, and database snapshots visually.
+**Stubrix** is a unified hub for simulation, testing, and observability of APIs and microservices throughout the entire development lifecycle. From basic mocking to distributed tracing, contract testing, chaos engineering, event-driven simulation, and cloud service mocking — all in a single platform, running locally with Docker.
+
+> **"Eliminates the 'works on my machine' problem"** — simulate AWS, Kafka, PostgreSQL, gRPC, GraphQL, Keycloak and any REST API locally with full fidelity.
 
 ---
 
-## 🏆 Key Differentials
+## 🏆 What makes Stubrix different
 
-| Differential | Description |
+Stubrix covers the full API development lifecycle in a single tool — no stitching together five different platforms:
+
+| Capability | What it does |
 |---|---|
-| **Dual-Engine, Zero Lock-in** | Same mocks run on WireMock (Java) or Mockoon (Node.js) — switch with one command |
-| **Database Snapshot Control** | Project-scoped snapshot/restore for PostgreSQL (real `pg_dump`/`psql`), MySQL, SQLite — manage state alongside mocks |
-| **AI-Ready (MCP Servers)** | 3 custom [Model Context Protocol](https://modelcontextprotocol.io/) servers with **55+ tools** for AI-assisted mock management from your IDE |
-| **4 Recording Modes** | Auto, API, Snapshot, Dashboard UI — create mocks from real API traffic effortlessly |
-| **Micro Frontend Architecture** | Modular UI with `@stubrix/db-ui` and `@stubrix/mock-ui` micro frontends — fully decoupled from the host app |
-| **Full Visual Control** | NestJS 11 API + React 19 Dashboard — no CLI-only workflow required |
-| **Project-Scoped Everything** | Mocks, recordings, database configs, and snapshots are all scoped to projects |
+| **Dual Mock Engine** | WireMock (Java) or Mockoon (Node.js) — same mocks, zero lock-in, one command to switch |
+| **Multi-Protocol** | REST, GraphQL, gRPC, WebSockets, Kafka, RabbitMQ — all mockable in one place |
+| **Contract Testing** | Pact Broker integration — verify that producer and consumer contracts match before deploying |
+| **Chaos & Resilience** | Fault injection (latency, errors, payload corruption) + Toxiproxy network-level chaos |
+| **Cloud Simulation** | LocalStack for AWS (S3, SQS, SNS, DynamoDB, Lambda) — zero cloud cost during development |
+| **Object Storage** | MinIO (S3-compatible) — store large mock bodies and database snapshot archives |
+| **Distributed Tracing** | Jaeger + OpenTelemetry — follow a request across services during local testing |
+| **Prometheus Metrics** | Built-in metrics exposition + Grafana dashboards — observe the mock server itself |
+| **Performance Testing** | k6 scripts (smoke, load, stress) with baseline regression CI gate |
+| **Identity & Access** | Keycloak and Zitadel — real OAuth2/OIDC token flows locally |
+| **AI-Native (MCP)** | 3 MCP servers with **100+ tools** — manage everything from your AI coding assistant |
+| **Database Snapshots** | PostgreSQL `pg_dump`/`psql`, MySQL, SQLite — snapshot and restore DB state alongside mocks |
+| **Visual Control Panel** | NestJS 11 API + React 19 Dashboard — no CLI-only workflows |
 
 ---
 
 ## Requirements
 
-- Node.js 24
-- npm 10+
-- Docker (optional, for mock engines and database containers)
-- PostgreSQL client tools (`pg_dump`, `psql`) if you want real PostgreSQL snapshot/restore
+- **Node.js 24** + npm 10+
+- **Docker** (required for mock engines, databases, and infrastructure services)
+- `pg_dump` / `psql` (optional, for real PostgreSQL snapshot/restore)
 
 ---
 
 ## 🏗️ Architecture Overview
 
-```mermaid
-graph LR
-    subgraph "📦 Monorepo (npm workspaces)"
-        Shared["@stubrix/shared\n(TypeScript types)"]
-        API["@stubrix/api\n(NestJS 11)"]
-        DBUI["@stubrix/db-ui\n(Database microfrontend)"]
-        MOCKUI["@stubrix/mock-ui\n(Mock UI microfrontend)"]
-        UI["@stubrix/ui\n(React 19 + Vite)"]
-    end
+Stubrix is a **monorepo** (npm workspaces) built on three core layers:
 
-    subgraph "🐳 Docker Container"
-        EP["Entrypoint"]
-        EP -->|"MOCK_ENGINE=wiremock"| WM["WireMock\n(Java)"]
-        EP -->|"MOCK_ENGINE=mockoon"| MK["Mockoon CLI\n(Node.js)"]
-        CV["Converter"] -.->|"auto-converts\non startup"| MK
-    end
-
-    subgraph "💾 Shared Mock Structure"
-        MP["mappings/*.json"]
-        FF["__files/*"]
-    end
-
-    UI -->|"consumes db-ui"| DBUI
-    UI -->|"consumes mock-ui"| MOCKUI
-    UI -->|"fetch /api/*"| API
-    UI -->|"WebSocket /ws/logs"| API
-    DBUI -->|"fetch /api/db + /api/projects/*/databases/configs"| API
-    MOCKUI -->|"fetch /api/projects/* + /api/status"| API
-    API -->|"HTTP /__admin/*"| WM
-    Shared -->|"types"| API
-    Shared -->|"types"| DBUI
-    Shared -->|"types"| MOCKUI
-    Shared -->|"types"| UI
-    API -->|"fs read/write"| MP
-    WM <-->|"reads/writes"| MP
-    CV <-->|"reads"| MP
-
-    style Shared fill:#6366f1,color:#fff,stroke:#4f46e5
-    style API fill:#e0234e,color:#fff,stroke:#be123c
-    style DBUI fill:#7c3aed,color:#fff,stroke:#6d28d9
-    style MOCKUI fill:#0ea5e9,color:#fff,stroke:#0284c7
-    style UI fill:#61dafb,color:#1a1a2e,stroke:#38bdf8
-    style WM fill:#2d6a4f,color:#fff,stroke:#40916c
-    style MK fill:#e76f51,color:#fff,stroke:#f4a261
-    style CV fill:#457b9d,color:#fff,stroke:#1d3557
-    style EP fill:#6c757d,color:#fff,stroke:#495057
-    style MP fill:#264653,color:#e6e6e6,stroke:#2a9d8f
-    style FF fill:#264653,color:#e6e6e6,stroke:#2a9d8f
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Developer Interfaces                                           │
+│  React 19 Dashboard │ CLI (@stubrix/cli) │ VS Code Extension   │
+│  AI Assistants via MCP (Windsurf, Cursor, Claude)              │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │ HTTP / WebSocket
+┌──────────────────────────▼──────────────────────────────────────┐
+│  @stubrix/api — NestJS 11 Control Plane (port 9090)            │
+│                                                                 │
+│  Core: projects · mocks · recording · logs · databases         │
+│  Quality: governance · coverage · contracts · chaos            │
+│  Intelligence: AI/RAG · stateful mocks · time machine         │
+│  Protocols: GraphQL · gRPC · webhooks · events (Kafka/MQ)     │
+│  Enterprise: auth/RBAC · templates · multi-tenancy            │
+│  Observability: metrics · tracing · performance testing       │
+│  Cloud: LocalStack · MinIO · Keycloak · Zitadel               │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │ Docker profiles
+┌──────────────────────────▼──────────────────────────────────────┐
+│  Infrastructure Layer (20+ Docker profiles)                    │
+│                                                                 │
+│  Mock Engines: WireMock · Mockoon                              │
+│  Databases: PostgreSQL · MySQL · SQLite                        │
+│  Messaging: Kafka (Redpanda) · RabbitMQ                        │
+│  Protocols: GripMock (gRPC)                                    │
+│  Cloud: LocalStack · MinIO · Keycloak · Zitadel               │
+│  Observability: Prometheus · Grafana · Jaeger                  │
+│  Chaos: Toxiproxy                                              │
+│  Contracts: Pact Broker                                        │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-> **Canonical format** is WireMock (`mappings/` + `__files/`) — the simplest and most universal.
-> When Mockoon is activated, the converter automatically generates the native format from mappings.
+### Monorepo packages
+
+| Package | Description |
+|---------|-------------|
+| `@stubrix/api` | NestJS 11 control plane — 27 modules, REST API + WebSockets |
+| `@stubrix/ui` | React 19 + Vite 7 dashboard host |
+| `@stubrix/mock-ui` | Mock server microfrontend |
+| `@stubrix/db-ui` | Database management microfrontend |
+| `@stubrix/shared` | TypeScript types shared across all packages |
+| `@stubrix/cli` | Standalone CLI (`stubrix` binary) |
+| `@stubrix/vscode-extension` | VS Code sidebar + commands |
+| `stubrix-mcp` | MCP server — full Stubrix API (100+ tools) |
+| `wiremock-mcp` | MCP server — WireMock Admin API (16 tools) |
+| `docker-mcp` | MCP server — Docker Compose management (12 tools) |
 
 ---
 
@@ -102,475 +106,296 @@ graph LR
 ```text
 stubrix/
 ├── packages/
-│   ├── shared/                    Shared TypeScript types (@stubrix/shared)
-│   │   └── src/types/               Project, Mock, Log, Recording, Status
-│   ├── api/                       NestJS control plane backend (@stubrix/api)
+│   ├── shared/              @stubrix/shared — TypeScript types
+│   ├── api/                 @stubrix/api — NestJS 11 (27 modules)
 │   │   └── src/
-│   │       ├── projects/            Project CRUD + JSON persistence
-│   │       ├── mocks/               Mock CRUD + WireMock integration
-│   │       ├── recording/           Start/stop/snapshot recording
-│   │       ├── logs/                REST + WebSocket (Socket.IO)
-│   │       ├── status/              Engine health + mock counts
-│   │       ├── engine/              WireMock reset + status
-│   │       └── databases/           Engines, database info, snapshots, project configs
-│   ├── db-ui/                     Database microfrontend (@stubrix/db-ui)
-│   │   └── src/
-│   │       ├── components/          Database widgets and forms
-│   │       ├── hooks/               useDbManager central state hook
-│   │       ├── lib/                 Database API client (db-api.ts)
-│   │       └── pages/               DatabasesPage
-│   ├── mock-ui/                   Mock server microfrontend (@stubrix/mock-ui)
-│   │   └── src/
-│   │       ├── components/          StatCard, ProjectCard, MockMethodBadge, ToastProvider, etc.
-│   │       ├── hooks/               useMockManager central state hook
-│   │       ├── lib/                 Mock API client (mock-api.ts)
-│   │       └── pages/               MockServersPage, ProjectDashboardPage, MocksListPage, etc.
-│   ├── ui/                        React dashboard host (@stubrix/ui)
-│   │   └── src/
-│   │       ├── pages/               Bridge wrappers + LogsPage
-│   │       ├── components/          Layout, Badge, shared UI
-│   │       └── lib/                 API client, WebSocket client, utils
-│   └── mcp/                       Custom MCP servers
-│       ├── stubrix-mcp/             Full Stubrix API control (30+ tools + prompts)
-│       ├── wiremock-mcp/            Direct WireMock Admin API (16 tools)
-│       └── docker-mcp/              Docker Compose management (12 tools)
+│   │       ├── projects/      Project CRUD
+│   │       ├── mocks/         Mock CRUD + WireMock integration
+│   │       ├── recording/     Traffic recording (4 modes)
+│   │       ├── logs/          REST + WebSocket (Socket.IO)
+│   │       ├── databases/     Snapshot/restore + project DB configs
+│   │       ├── stateful-mocks/ Stateful scenario machine
+│   │       ├── import/        HAR, Postman, Insomnia, OpenAPI import
+│   │       ├── governance/    Spectral OpenAPI linting
+│   │       ├── coverage/      Mock hit/miss coverage analysis
+│   │       ├── intelligence/  AI/RAG (ChromaDB + OpenAI)
+│   │       ├── scenarios/     Time machine: capture & restore state
+│   │       ├── contracts/     Pact Broker contract testing
+│   │       ├── chaos/         Fault injection (latency, errors)
+│   │       ├── chaos-network/ Toxiproxy network chaos
+│   │       ├── webhooks/      Webhook receiver, replay, simulator
+│   │       ├── events/        Kafka + RabbitMQ event publishing
+│   │       ├── protocols/     GraphQL SDL + gRPC via GripMock
+│   │       ├── auth/          API keys, RBAC, multi-tenancy
+│   │       ├── templates/     Environment templates with variable substitution
+│   │       ├── metrics/       Prometheus metrics exposition
+│   │       ├── performance/   k6 scripts + baseline regression gate
+│   │       ├── tracing/       Jaeger/OpenTelemetry distributed tracing
+│   │       ├── cloud/         LocalStack AWS mocking (S3, SQS, SNS...)
+│   │       ├── storage/       MinIO object storage
+│   │       └── iam/           Keycloak + Zitadel IAM integration
+│   ├── ui/                  @stubrix/ui — React 19 + Vite 7 dashboard
+│   ├── mock-ui/             @stubrix/mock-ui — Mock server microfrontend
+│   ├── db-ui/               @stubrix/db-ui — Database microfrontend
+│   ├── cli/                 @stubrix/cli — Standalone CLI binary
+│   ├── vscode-extension/    VS Code sidebar + commands
+│   └── mcp/
+│       ├── stubrix-mcp/     100+ MCP tools for full API control
+│       ├── wiremock-mcp/    16 WireMock Admin API tools
+│       └── docker-mcp/      12 Docker Compose management tools
 │
-├── mocks/                         Canonical mock structure
-│   ├── mappings/                    Route definitions (JSON)
-│   └── __files/                     Response body files
-
-├── dumps/                         Snapshot output and database metadata
-│   ├── postgres/
-│   ├── mysql/
-│   ├── sqlite/
-│   ├── .snapshot-metadata.json
-│   └── .project-databases.json
-│
+├── mocks/
+│   ├── mappings/            WireMock route definitions (JSON)
+│   └── __files/             Response body files
+├── config/
+│   └── prometheus/          prometheus.yml scrape config
 ├── scripts/
-│   ├── converter.js               WireMock <-> Mockoon converter
-│   ├── entrypoint.sh              Smart Docker entrypoint
-│   ├── record.sh                  Recording helper (Admin API)
-│   └── import-from-recording.sh   Import mocks from container
-│
-├── Dockerfile                     Multi-engine Docker image
-├── docker-compose.yml             4 profiles available
-├── Makefile                       CLI shortcuts for everything
-└── .env.example                   Environment variable reference
+│   ├── converter.js         WireMock <-> Mockoon converter
+│   ├── entrypoint.sh        Smart Docker entrypoint
+│   └── localstack/          LocalStack init scripts
+├── dumps/                   Snapshot files + metadata
+├── docker-compose.yml       20+ Docker profiles
+├── Makefile                 All CLI shortcuts
+└── .env.example             Full environment reference
 ```
-
----
-
-## 🖥️ Control Panel
-
-The control panel provides a **visual interface** for managing the entire mock lifecycle — no manual JSON editing or curl commands required.
-
-```mermaid
-graph TD
-    subgraph "🖥️ @stubrix/ui (host)"
-        LP["📜 Logs\n(real-time table)"]
-    end
-
-    subgraph "🔷 @stubrix/mock-ui"
-        PP["📁 MockServersPage\n(list + create)"]
-        DP["📊 ProjectDashboardPage\n(stats + quick actions)"]
-        MP["📄 MocksListPage\n(list + search + delete)"]
-        ME["✏️ MockEditorPage\n(create/edit form)"]
-        RP["🎥 RecordingPanelPage\n(start/stop controls)"]
-    end
-
-    subgraph "🟣 @stubrix/db-ui"
-        DBP["🗃️ DatabasesPage\n(project configs + snapshots)"]
-    end
-
-    subgraph "⚙️ API Endpoints"
-        P["/api/projects"]
-        M["/api/projects/:id/mocks"]
-        R["/api/projects/:id/recording"]
-        DBC["/api/projects/:id/databases/configs"]
-        DB["/api/db/*"]
-        L["/api/logs"]
-        S["/api/status"]
-        WS["/ws/logs (WebSocket)"]
-    end
-
-    PP -->|"click project"| DP
-    DP -->|"View Mocks"| MP
-    DP -->|"Record"| RP
-    DP -->|"Manage Databases"| DBP
-    MP -->|"New/Edit"| ME
-    LP -.->|"Socket.IO"| WS
-
-    PP --> P
-    PP --> S
-    MP --> M
-    ME --> M
-    RP --> R
-    DBP --> DBC
-    DBP --> DB
-    LP --> L
-
-    style PP fill:#0ea5e9,color:#fff,stroke:#0284c7
-    style DP fill:#0ea5e9,color:#fff,stroke:#0284c7
-    style MP fill:#0ea5e9,color:#fff,stroke:#0284c7
-    style ME fill:#0ea5e9,color:#fff,stroke:#0284c7
-    style RP fill:#0ea5e9,color:#fff,stroke:#0284c7
-    style DBP fill:#7c3aed,color:#fff,stroke:#6d28d9
-    style LP fill:#6366f1,color:#fff,stroke:#4f46e5
-```
-
-### Tech Stack
-
-| Layer | Technology |
-| ----- | ---------- |
-| **API** | NestJS 11 + Express, WebSockets (Socket.IO) |
-| **Mock UI** | React 19, TailwindCSS, Lucide — `@stubrix/mock-ui` microfrontend |
-| **Database UI** | React 19, TailwindCSS — `@stubrix/db-ui` microfrontend |
-| **Host UI** | React 19 + Vite 7, React Router 7 — `@stubrix/ui` |
-| **Shared** | TypeScript lib consumed by all packages — `@stubrix/shared` |
-| **Validation** | class-validator + class-transformer with nested DTOs |
-
-### Running the Control Panel
-
-```bash
-# Use the project Node version
-asdf install
-asdf current
-
-# Install dependencies (from project root)
-npm install
-
-# Build everything
-npm run build
-
-# Start API (port 9090)
-npm run dev:api
-
-# Start UI dev server (port 5173, proxies to API)
-npm run dev:ui
-```
-
-> The UI dev server proxies `/api/*` and `/ws/*` to the API at `localhost:9090`.
-> In production, the UI builds directly into `packages/api/public/` for single-container serving.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Configure `.env`
+### 1. Clone and configure
 
 ```bash
+git clone https://github.com/marcelo-davanco/stubrix.git
+cd stubrix
 cp .env.example .env
-```
-
-Edit as needed:
-
-```dotenv
-# Mock server port (host + container)
-MOCK_PORT=8081
-
-# Real API URL (for recording/proxy)
-PROXY_TARGET=https://api.example.com
-
-# CORS allowed origins (comma-separated, or * for all)
-CORS_ORIGIN=*
-
-# PostgreSQL
-PG_HOST=localhost
-PG_PORT=5442
-PG_USER=postgres
-PG_PASSWORD=postgres
-PG_DATABASE=postgres
-
-# MySQL
-MYSQL_HOST=localhost
-MYSQL_PORT=3307
-MYSQL_USER=stubrix
-MYSQL_PASSWORD=stubrix
-MYSQL_DATABASE=stubrix
-
-# SQLite (optional)
-SQLITE_DB_PATH=
-
-# Snapshot directory
-DUMPS_DIR=./dumps
-```
-
-> The `.env` file is automatically loaded by `Makefile`, `docker-compose`, and scripts.
-
-### 2. Build the image
-
-```bash
-make build
-```
-
-### 3. Choose an engine and start
-
-```bash
-make wiremock     # or
-make mockoon
-```
-
-### 4. Test
-
-```bash
-curl http://localhost:8081/api/health
-# → {"status": "ok", "engine": "mock-server"}
-```
-
-> To change the port without editing `.env`: `MOCK_PORT=9090 make wiremock`
-
----
-
-## 🗃️ Databases Module
-
-The Databases Module is now part of the main NestJS API and exposed in the dashboard through the `@stubrix/db-ui` microfrontend.
-
-```mermaid
-graph LR
-    User["👤 User"] --> UI["🖥️ Databases Page\n@stubrix/ui + @stubrix/db-ui"]
-
-    subgraph "Project Context"
-        Project["Active Project"]
-        Configs["Project DB Configs\n.project-databases.json"]
-        Meta["Snapshot Metadata\n.snapshot-metadata.json"]
-    end
-
-    subgraph "API"
-        ProjectRoutes["/api/projects/:projectId/databases/configs"]
-        DbRoutes["/api/db/*"]
-    end
-
-    subgraph "Engines"
-        PG["PostgreSQL"]
-        MY["MySQL"]
-        SQ["SQLite"]
-    end
-
-    UI --> Project
-    UI --> ProjectRoutes
-    UI --> DbRoutes
-    ProjectRoutes --> Configs
-    DbRoutes --> Meta
-    DbRoutes --> PG
-    DbRoutes --> MY
-    DbRoutes --> SQ
-
-    style UI fill:#7c3aed,color:#fff,stroke:#6d28d9
-    style Project fill:#0f766e,color:#fff,stroke:#115e59
-    style Configs fill:#1d4ed8,color:#fff,stroke:#1e40af
-    style Meta fill:#1d4ed8,color:#fff,stroke:#1e40af
-    style PG fill:#2563eb,color:#fff,stroke:#1d4ed8
-    style MY fill:#ea580c,color:#fff,stroke:#c2410c
-    style SQ fill:#475569,color:#fff,stroke:#334155
-```
-
-### What it supports today
-
-- Multi-engine discovery:
-  - PostgreSQL
-  - MySQL
-  - SQLite
-- Project-scoped database configurations
-- Project-scoped snapshot metadata
-- Database inspection by engine and project
-- Snapshot creation and restore
-
-### Current engine status
-
-| Engine | List / Info | Snapshot | Restore |
-| ------ | ----------- | -------- | ------- |
-| **PostgreSQL** | Real | Real (`pg_dump`) | Real (`psql`) |
-| **MySQL** | Real | Placeholder | Placeholder |
-| **SQLite** | Real | Placeholder | Placeholder |
-
-### Project-aware persistence
-
-Database state is persisted in the `dumps/` directory:
-
-- `dumps/.project-databases.json`
-  - project-scoped database configurations
-- `dumps/.snapshot-metadata.json`
-  - snapshot metadata including `projectId`
-- `dumps/postgres/`, `dumps/mysql/`, `dumps/sqlite/`
-  - generated snapshot files
-
-### Main API routes
-
-#### Project database configs
-
-- `GET /api/projects/:projectId/databases/configs`
-- `GET /api/projects/:projectId/databases/configs/:id`
-- `POST /api/projects/:projectId/databases/configs`
-- `DELETE /api/projects/:projectId/databases/configs/:id`
-
-#### Engines and databases
-
-- `GET /api/db/engines`
-- `GET /api/db/databases?projectId=...`
-- `GET /api/db/engines/:engine/databases?projectId=...`
-- `GET /api/db/databases/:name/info?projectId=...`
-- `GET /api/db/engines/:engine/databases/:name/info?projectId=...`
-
-#### Snapshots
-
-- `GET /api/db/snapshots?projectId=...`
-- `POST /api/db/snapshots`
-- `POST /api/db/engines/:engine/snapshots`
-- `PATCH /api/db/snapshots/:name`
-- `DELETE /api/db/snapshots/:name`
-- `POST /api/db/snapshots/:name/restore`
-- `POST /api/db/engines/:engine/snapshots/:name/restore`
-
-### How project context works
-
-- The dashboard selects an active project.
-- Project database configs are loaded from `/api/projects/:projectId/databases/configs`.
-- Database listing and inspection send `projectId` to `/api/db/*` routes.
-- Snapshot creation includes `projectId` in metadata.
-- Snapshot listing is filtered by `projectId`.
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Databases UI
-    participant API as NestJS API
-    participant CFG as Project Config Store
-    participant ENG as Database Engine
-
-    U->>UI: Select active project
-    UI->>API: GET /api/projects/:projectId/databases/configs
-    API->>CFG: Read project configs
-    CFG-->>API: Config list
-    API-->>UI: Preferred engine/database
-
-    U->>UI: Inspect databases
-    UI->>API: GET /api/db/engines/:engine/databases?projectId=...
-    API->>ENG: Resolve driver + project context
-    ENG-->>API: Databases / info
-    API-->>UI: Project-aware result
-```
-
-### Using the Databases panel
-
-1. Open the dashboard and go to `Databases`.
-2. Select the active project.
-3. Create a database config for that project.
-4. Inspect available databases for the selected engine.
-5. Create snapshots in the context of the active project.
-6. Restore PostgreSQL snapshots when needed.
-
-### PostgreSQL requirements for real snapshot/restore
-
-To use real PostgreSQL dump/restore, your environment must provide:
-
-- `pg_dump`
-- `psql`
-
-The module uses the following variables:
-
-- `PG_HOST`
-- `PG_PORT`
-- `PG_USER`
-- `PG_PASSWORD`
-- `PG_DATABASE`
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Databases UI
-    participant API as DbSnapshotsService
-    participant PGD as pg_dump
-    participant PSQL as psql
-    participant FS as dumps/postgres
-
-    U->>UI: Create snapshot
-    UI->>API: POST /api/db/engines/postgres/snapshots
-    API->>PGD: pg_dump --clean --if-exists --file <snapshot.sql> <database>
-    PGD-->>API: SQL dump generated
-    API->>FS: Persist snapshot file + metadata
-    API-->>UI: Snapshot created
-
-    U->>UI: Restore snapshot
-    UI->>API: POST /api/db/engines/postgres/snapshots/:name/restore
-    API->>PSQL: psql --file <snapshot.sql> <database>
-    PSQL-->>API: Restore completed
-    API-->>UI: Restore finished
-```
-
-### Example manual test flow
-
-```bash
-# 1. install dependencies
 npm install
-
-# 2. build all packages
-npm run build
-
-# 3. start the API
-npm run dev:api
-
-# 4. start the UI
-npm run dev:ui
 ```
 
-Then in the UI:
+### 2. Start the control plane
 
-1. Create or select a project.
-2. Open `Databases`.
-3. Add a PostgreSQL config for the project.
-4. Create a snapshot.
-5. Confirm the dump file exists in `dumps/postgres/`.
-6. Restore the snapshot to a valid PostgreSQL database.
+```bash
+npm run build
+npm run dev:api   # API on :9090
+npm run dev:ui    # Dashboard on :5173
+```
+
+### 3. Start a mock engine
+
+```bash
+make wiremock     # WireMock on :8081
+# or
+make mockoon      # Mockoon on :8081
+```
+
+### 4. Record your first mock
+
+```bash
+make wiremock-record PROXY_TARGET=https://api.example.com
+curl http://localhost:8081/api/users
+make down
+# Mocks saved in mocks/mappings/
+```
+
+> The full Swagger UI is available at `http://localhost:9090/api/docs`
 
 ---
 
-## 🤖 MCP Ecosystem (AI-Assisted Mock Management)
+## 🐳 Infrastructure Services
 
-Stubrix includes **3 custom Model Context Protocol (MCP) servers** with **55+ tools**, enabling AI coding assistants (Windsurf Cascade, Cursor, etc.) to manage mocks, databases, and infrastructure directly from your IDE.
+All services start via Docker Compose profiles. Use Makefile shortcuts or `docker compose --profile <name> up -d` directly.
 
-```mermaid
-graph LR
-    AI["🤖 AI Assistant\n(Windsurf / Cursor)"] --> S1["@stubrix/stubrix-mcp\n27 tools"]
-    AI --> S2["@stubrix/wiremock-mcp\n16 tools"]
-    AI --> S3["@stubrix/docker-mcp\n12 tools"]
+### Mock Engines
 
-    S1 --> API["Stubrix API\nlocalhost:9090"]
-    S2 --> WM["WireMock Admin\nlocalhost:8081"]
-    S3 --> DC["Docker Compose\nprofiles & containers"]
+| Profile | Service | Port | Command |
+|---------|---------|------|---------|
+| `wiremock` | WireMock | :8081 | `make wiremock` |
+| `mockoon` | Mockoon CLI | :8081 | `make mockoon` |
+| `wiremock-record` | WireMock (record mode) | :8081 | `make wiremock-record PROXY_TARGET=<url>` |
+| `mockoon-proxy` | Mockoon (hybrid proxy) | :8081 | `make mockoon-proxy PROXY_TARGET=<url>` |
 
-    style AI fill:#7c3aed,color:#fff,stroke:#6d28d9
-    style S1 fill:#e0234e,color:#fff,stroke:#be123c
-    style S2 fill:#2d6a4f,color:#fff,stroke:#40916c
-    style S3 fill:#2563eb,color:#fff,stroke:#1d4ed8
+### Databases
+
+| Profile | Service | Port | Command |
+|---------|---------|------|---------|
+| `postgres` | PostgreSQL 17 | :5442 | `make postgres` |
+| `mysql` | MySQL 8 | :3307 | `make mysql` |
+| `adminer` | Adminer UI | :8082 | `make adminer-up` |
+| `cloudbeaver` | CloudBeaver UI | :8083 | `make cloudbeaver-up` |
+
+### Messaging & Protocols
+
+| Profile | Service | Port | Command |
+|---------|---------|------|---------|
+| `kafka` | Redpanda (Kafka) | :9092 | `make kafka-up` |
+| `rabbitmq` | RabbitMQ + UI | :5672 / :15672 | `make rabbitmq-up` |
+| `gripmock` | GripMock (gRPC) | :4770 / :4771 | `make gripmock-up` |
+
+### Observability
+
+| Profile | Service | Port | Command |
+|---------|---------|------|---------|
+| `monitoring` | Prometheus | :9091 | `make monitoring-up` |
+| `monitoring` | Grafana | :3000 | `make monitoring-up` |
+| `jaeger` | Jaeger UI + OTLP | :16686 / :4318 | `make jaeger-up` |
+
+### Cloud & IAM
+
+| Profile | Service | Port | Command |
+|---------|---------|------|---------|
+| `localstack` | LocalStack (AWS) | :4566 | `make localstack-up` |
+| `minio` | MinIO + Console | :9000 / :9001 | `make minio-up` |
+| `keycloak` | Keycloak | :8180 | `make keycloak-up` |
+| `zitadel` | Zitadel | :8085 | `make zitadel-up` |
+
+### Testing & Chaos
+
+| Profile | Service | Port | Command |
+|---------|---------|------|---------|
+| `pact` | Pact Broker | :9292 | `make pact-up` |
+| `toxiproxy` | Toxiproxy | :8474 | `make toxiproxy-up` |
+| `hoppscotch` | Hoppscotch | :3100 | `make hoppscotch` |
+
+```bash
+# Stop everything
+make all-down
 ```
 
-### Available MCP Servers
+---
 
-| Server | Tools | Coverage |
-|--------|-------|----------|
-| **@stubrix/stubrix-mcp** | 27 | Projects, mocks, recording, databases, snapshots, configs |
-| **@stubrix/wiremock-mcp** | 16 | Mappings, recording, requests, server state |
-| **@stubrix/docker-mcp** | 12 | Compose up/down, logs, health, exec, volumes |
+## 🎯 Platform Capabilities
 
-### Example AI Interactions
+### API Mocking (Core)
 
+Record from real traffic, edit in the dashboard, serve offline:
+
+```bash
+# Record from a real API
+make wiremock-record PROXY_TARGET=https://api.github.com
+
+# Serve mocks offline
+make wiremock
+
+# Import from HAR or Postman collection
+curl -X POST http://localhost:9090/api/import/har \
+  -F "file=@recording.har"
 ```
-You: "Create a GET /api/users mock that returns 3 users"
-→ AI calls stubrix_create_mock(...)
 
-You: "Take a snapshot of the postgres database before I run migrations"
-→ AI calls stubrix_create_snapshot(...)
+### Contract Testing (F13 — Pact)
 
-You: "Start recording against the staging API"
-→ AI calls stubrix_start_recording(...)
+Ensure producer/consumer contracts never break:
 
-You: "Spin up WireMock and check if it's healthy"
-→ AI calls docker_compose_up(["wiremock"]) + docker_health()
+```bash
+make pact-up
+# POST /api/contracts/publish — publish consumer contracts
+# POST /api/contracts/verify — verify against provider
 ```
+
+### Chaos Engineering (F14/F26)
+
+Inject faults without changing application code:
+
+```bash
+make toxiproxy-up
+# POST /api/chaos/rules — add latency, error rate, payload corruption
+# POST /api/chaos-network/proxies — manage Toxiproxy proxies
+```
+
+### Event-Driven Mocking (F16 — Kafka/RabbitMQ)
+
+Simulate async event flows:
+
+```bash
+make kafka-up
+# POST /api/events/publish — publish to Kafka topic or RabbitMQ exchange
+# GET  /api/events/health  — check broker connectivity
+```
+
+### GraphQL & gRPC (F15)
+
+Mock non-REST protocols:
+
+```bash
+make gripmock-up
+# POST /api/protocols/graphql/parse   — parse SDL schema
+# POST /api/protocols/grpc/mocks      — register gRPC mock stub
+```
+
+### LocalStack — AWS Simulation (F27)
+
+Zero-cost cloud development:
+
+```bash
+make localstack-up
+# GET  /api/cloud/health          — check which AWS services are up
+# POST /api/cloud/s3/buckets      — create S3 bucket
+# POST /api/cloud/sns/publish     — publish SNS message
+# GET  /api/cloud/sqs/queues      — list SQS queues
+```
+
+### Distributed Tracing (F28 — Jaeger)
+
+Trace requests across services locally:
+
+```bash
+make jaeger-up
+# GET /api/tracing/traces   — list stored traces
+# GET /api/tracing/health   — check OTEL connectivity
+# Open http://localhost:16686 for Jaeger UI
+```
+
+### Prometheus Metrics (F21)
+
+Observe the platform itself:
+
+```bash
+make monitoring-up
+# GET /api/metrics/prometheus  — Prometheus scrape endpoint
+# GET /api/metrics/health      — per-service latency check
+# Open http://localhost:3000 for Grafana
+```
+
+### Performance Testing (F22 — k6)
+
+Run load tests with CI regression gates:
+
+```bash
+# GET  /api/performance/scripts         — list k6 scripts (smoke, load, stress)
+# POST /api/performance/baselines       — save a performance baseline
+# POST /api/performance/baselines/:id/compare — detect >20% regression
+```
+
+### Identity & Access (F33 — Keycloak/Zitadel)
+
+Real OAuth2/OIDC token flows locally:
+
+```bash
+make keycloak-up
+# POST /api/iam/token                    — get token (password grant)
+# POST /api/iam/token/client-credentials — service account token
+# POST /api/iam/token/introspect         — validate token claims
+```
+
+### Database Snapshots (F3/F29)
+
+Snapshot and restore database state alongside mocks:
+
+```bash
+make postgres
+# POST /api/db/engines/postgres/snapshots       — create snapshot (pg_dump)
+# POST /api/db/snapshots/:name/restore           — restore snapshot (psql)
+# GET  /api/db/snapshots?projectId=...           — list project snapshots
+```
+
+---
+
+## 🤖 MCP Ecosystem
+
+Stubrix ships **3 MCP servers** with **100+ tools**, enabling AI coding assistants (Windsurf, Cursor, Claude) to manage the entire platform from the IDE.
 
 ### Setup
 
-Add to your MCP configuration (e.g., `~/.codeium/windsurf/mcp_config.json`):
+Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ```json
 {
@@ -594,461 +419,107 @@ Add to your MCP configuration (e.g., `~/.codeium/windsurf/mcp_config.json`):
 }
 ```
 
-> Full documentation: [`packages/mcp/README.md`](packages/mcp/README.md)
+### What your AI can do
 
----
+```
+"Record mocks from the staging API for /api/users and /api/orders"
+→ docker_compose_up(["wiremock-record"]) + stubrix_start_recording(...)
 
-## 🎥 Mock Recording
+"Take a PostgreSQL snapshot before running migrations"
+→ stubrix_create_snapshot({ engine: "postgres", projectId: "..." })
 
-The most important feature. Allows **creating mocks automatically** from a real API.
+"Check if Kafka and gRPC are healthy"
+→ event_health() + protocol_grpc_health()
 
-### How recording works
+"Get a Keycloak token for user admin"
+→ iam_get_token({ username: "admin", password: "..." })
 
-```mermaid
-sequenceDiagram
-    participant App as Your App / Browser
-    participant WM as Mock Server<br/>(localhost:8081)
-    participant API as Real API<br/>(api.example.com)
+"Run a load test and compare with last baseline"
+→ perf_list_scripts() + perf_compare_baseline({ id: "..." })
 
-    Note over WM: RECORD mode active
+"Lint the OpenAPI spec for violations"
+→ lint_spec({ content: "..." })
 
-    App->>WM: GET /api/users
-    WM->>API: GET /api/users (proxy)
-    API-->>WM: 200 OK [{...}]
-    WM-->>App: 200 OK [{...}]
-
-    Note over WM: Auto-saves:<br/>mappings/api_users_get.json<br/>__files/body-api_users.json
-
-    App->>WM: POST /api/orders
-    WM->>API: POST /api/orders (proxy)
-    API-->>WM: 201 Created {...}
-    WM-->>App: 201 Created {...}
-
-    Note over WM: Auto-saves:<br/>mappings/api_orders_post.json
-
-    Note over App,API: After stopping recording,<br/>mocks work fully offline
+"Inject 500ms latency into the payments service"
+→ toxiproxy proxy + toxic setup via chaos_network_* tools
 ```
 
----
-
-### Option A — Automatic Recording (simplest)
-
-Everything passing through the proxy is recorded automatically.
-
-```bash
-# 1. Start in recording mode pointing to the real API
-make wiremock-record PROXY_TARGET=https://api.example.com
-
-# 2. Make requests normally
-curl http://localhost:8081/api/users
-curl http://localhost:8081/api/products/42
-curl -X POST http://localhost:8081/api/orders -d '{"item":"abc"}'
-
-# 3. Stop the container
-make down
-
-# 4. Done! Mocks saved in mocks/mappings/
-make list-mappings
-```
-
-### Option B — Recording via API (more control)
-
-Start/stop recording on demand without restarting the container.
-
-```bash
-# 1. Start WireMock normally
-make wiremock
-
-# 2. In another terminal, start recording
-./scripts/record.sh start https://api.example.com
-
-# 3. Make your calls
-curl http://localhost:8081/api/users
-curl http://localhost:8081/api/config
-
-# 4. Stop recording (mocks are persisted)
-./scripts/record.sh stop
-
-# 5. Check recorded mocks
-make list-mappings
-```
-
-### Option C — Snapshot (point-in-time capture)
-
-Captures the current state of all responses without continuous recording.
-
-```bash
-./scripts/record.sh snapshot
-```
-
-### Option D — Via Control Panel
-
-Use the dashboard UI to manage recordings visually:
-
-1. Open `http://localhost:5173` (dev) or `http://localhost:9090` (production)
-2. Navigate to a project → **Recording**
-3. Enter the proxy target URL and click **Start Recording**
-4. Make requests against `localhost:8081`
-5. Click **Stop** or **Snapshot** to persist mocks
-
----
-
-## 🔄 Complete Workflow
-
-```mermaid
-graph TD
-    A["1 - Start recording"] --> B["2 - Make requests<br/>against real API"]
-    B --> C["3 - Stop recording"]
-    C --> D["4 - Mocks saved<br/>in mappings/"]
-    D --> E{"Edit mocks?"}
-    E -->|"Yes"| F["5a - Edit via Dashboard"]
-    E -->|"Yes"| F2["5b - Edit JSON manually"]
-    E -->|"No"| G["6 - Use offline"]
-    F --> G
-    F2 --> G
-
-    G --> H{"Which engine?"}
-    H -->|"WireMock"| I["make wiremock"]
-    H -->|"Mockoon"| J["make mockoon"]
-
-    I --> K["Mocks served<br/>on localhost:8081"]
-    J --> K
-
-    style A fill:#e76f51,color:#fff,stroke:#f4a261
-    style B fill:#e9c46a,color:#1a1a2e,stroke:#f4a261
-    style C fill:#2a9d8f,color:#fff,stroke:#264653
-    style D fill:#264653,color:#e6e6e6,stroke:#2a9d8f
-    style F fill:#6366f1,color:#fff,stroke:#4f46e5
-    style F2 fill:#457b9d,color:#fff,stroke:#1d3557
-    style G fill:#6c757d,color:#fff,stroke:#495057
-    style I fill:#2d6a4f,color:#fff,stroke:#40916c
-    style J fill:#e76f51,color:#fff,stroke:#f4a261
-    style K fill:#1a1a2e,color:#e6e6e6,stroke:#16213e
-```
-
----
-
-## 🔀 Proxy Mode (Mockoon)
-
-Mockoon can work in **hybrid proxy mode**: routes with a defined mock return the mock, routes without one are forwarded to the real API.
-
-```mermaid
-graph LR
-    App["App / Browser"] --> MK["Mockoon<br/>localhost:8081"]
-
-    MK -->|"Route with mock"| Mock["Mock<br/>Response"]
-    MK -->|"Route without mock"| API["Real API<br/>(proxy)"]
-    API --> MK
-
-    style App fill:#264653,color:#e6e6e6,stroke:#2a9d8f
-    style MK fill:#e76f51,color:#fff,stroke:#f4a261
-    style Mock fill:#2d6a4f,color:#fff,stroke:#40916c
-    style API fill:#457b9d,color:#fff,stroke:#1d3557
-```
-
-```bash
-make mockoon-proxy PROXY_TARGET=https://api.example.com
-```
-
----
-
-## 📋 Mock Anatomy
-
-### Inline body
-
-```json
-{
-  "request": {
-    "method": "GET",
-    "url": "/api/health"
-  },
-  "response": {
-    "status": 200,
-    "headers": {
-      "Content-Type": "application/json"
-    },
-    "body": "{\"status\": \"ok\"}"
-  }
-}
-```
-
-> Saved at `mocks/mappings/api_health_get.json`
-
-### External body file
-
-```json
-{
-  "request": {
-    "method": "GET",
-    "url": "/api/users"
-  },
-  "response": {
-    "status": 200,
-    "headers": {
-      "Content-Type": "application/json"
-    },
-    "bodyFileName": "users.json"
-  }
-}
-```
-
-> Mapping at `mocks/mappings/api_users_get.json`
-> Body at `mocks/__files/users.json`
-
----
-
-## 🔄 Format Conversion
-
-```mermaid
-graph LR
-    WM["WireMock<br/>mappings/*.json<br/>+ __files/*"] -->|"converter.js<br/>to-mockoon"| MK["Mockoon<br/>.mockoon-env.json"]
-    MK -->|"converter.js<br/>to-wiremock"| WM
-
-    style WM fill:#2d6a4f,color:#fff,stroke:#40916c
-    style MK fill:#e76f51,color:#fff,stroke:#f4a261
-```
-
-```bash
-# WireMock → Mockoon
-make convert-to-mockoon
-
-# Mockoon → WireMock
-make convert-to-wiremock
-```
-
-> Conversion to Mockoon format happens **automatically** when the Mockoon engine starts. You only need to run it manually if you want to inspect or edit the generated file.
-
----
-
-## 📖 Command Reference
-
-### Serving Mocks
-
-| Command | Engine | Description |
-| ------- | ------ | ----------- |
-| `make wiremock` | WireMock | Serve existing mocks |
-| `make mockoon` | Mockoon | Serve existing mocks (auto-converts) |
-
-### Recording
-
-| Command | Description |
-| ------- | ----------- |
-| `make wiremock-record PROXY_TARGET=<url>` | Start WireMock recording all proxied requests |
-| `./scripts/record.sh start <url>` | Start recording via Admin API |
-| `./scripts/record.sh stop` | Stop recording and persist mocks |
-| `./scripts/record.sh snapshot` | Point-in-time capture of current state |
-| `./scripts/record.sh status` | Check if recording is active |
-
-### Proxy
-
-| Command | Description |
-| ------- | ----------- |
-| `make mockoon-proxy PROXY_TARGET=<url>` | Mockoon hybrid: mock + proxy |
-
-### Conversion
-
-| Command | Description |
-| ------- | ----------- |
-| `make convert-to-mockoon` | Generate `.mockoon-env.json` from mappings |
-| `make convert-to-wiremock` | Generate mappings from `.mockoon-env.json` |
-
-### Utilities
-
-| Command | Description |
-| ------- | ----------- |
-| `make build` | Build Docker image |
-| `make down` | Stop all containers |
-| `make list-mappings` | List mocks and body files |
-| `make clean` | Remove containers and generated files |
-| `make clean-mocks` | Remove **all** mocks (careful!) |
-| `make help` | List all available commands |
-
----
-
-## 🔄 Issue Management & Documentation
-
-Stubrix follows a structured issue management workflow to ensure proper documentation and project tracking.
-
-### Issue Closure Process
-
-After a PR is merged, all related issues must be properly closed with comprehensive documentation:
-
-```bash
-# Close a single issue with documentation
-npm run close-issue [PR_NUMBER] [ISSUE_NUMBER] [VERSION]
-
-# Example: Close issue #19 from PR #28 in version 1.1.0
-npm run close-issue 28 19 1.1.0
-
-# Close multiple issues at once
-npm run close-issues [PR_NUMBER] [VERSION] [ISSUE1] [ISSUE2] ...
-
-# Example: Batch close multiple issues from PR #28
-npm run close-issues 28 1.1.0 19 22
-```
-
-### Automated Issue Documentation
-
-The issue closure script automatically:
-
-- ✅ Verifies all acceptance criteria are met
-- ✅ Extracts implementation details from the PR
-- ✅ Generates comprehensive documentation
-- ✅ References PR number and version
-- ✅ Documents testing coverage
-- ✅ Closes the issue with proper status
-
-### Issue Closure Template
-
-Each closed issue follows this standardized format:
-
-```markdown
-## ✅ **COMPLETED** - [Feature Name]
-
-### **Delivered in PR #[PR_NUMBER]:** [PR Title](PR_URL)
-
----
-
-### 🎯 **What was implemented:**
-
-#### **✅ All Acceptance Criteria Met:**
-- [x] [Criterion 1]
-- [x] [Criterion 2]
-- [x] [Criterion 3]
-
-#### **🔧 Technical Implementation:**
-- **Implementation Detail 1**: Description
-- **Implementation Detail 2**: Description
-- **Implementation Detail 3**: Description
-
-#### **🧪 Testing Coverage:**
-- **X unit tests** covering functionality
-- **Edge cases** and error scenarios
-
----
-
-### 🚀 **Impact:**
-- **Benefit 1**: Description of user value
-- **Benefit 2**: Description of technical improvement
-- **Developer Experience**: How this improves DX
-
-**Issue #[ISSUE_NUMBER] has been successfully completed and merged into main v[VERSION]!** 🎯
-```
-
-### Workflow Integration
-
-This process integrates with:
-
-- **Version Management**: Run after version bump
-- **Release Process**: Part of release checklist  
-- **Project Management**: Ensures proper issue tracking
-- **Documentation**: Maintains project history
-
-> 📋 **Full workflow documentation**: [`.windsurf/workflows/issue-closure.md`](.windsurf/workflows/issue-closure.md)
+### Tool coverage by domain
+
+| Domain | Tools |
+|--------|-------|
+| Projects & Mocks | `stubrix_list_projects`, `stubrix_create_mock`, `stubrix_start_recording`, ... |
+| Database Snapshots | `stubrix_create_snapshot`, `stubrix_restore_snapshot`, ... |
+| Contracts | `contract_publish`, `contract_verify` |
+| Chaos | `chaos_list_rules`, `chaos_create_rule`, `chaos_network_*` |
+| Events | `event_publish`, `event_template_*`, `event_health` |
+| Protocols | `protocol_graphql_parse`, `protocol_grpc_mock`, ... |
+| Auth | `auth_create_user`, `auth_validate_key`, `auth_audit_log` |
+| Metrics | `metrics_health`, `metrics_summary` |
+| Performance | `perf_list_scripts`, `perf_save_baseline`, `perf_compare_baseline` |
+| Tracing | `tracing_list`, `tracing_health`, `tracing_config` |
+| Cloud (AWS) | `cloud_health`, `cloud_s3_*`, `cloud_sns_publish` |
+| Storage (MinIO) | `storage_health`, `storage_upload_mock_body`, `storage_archive_snapshot` |
+| IAM | `iam_health`, `iam_get_token`, `iam_introspect_token` |
+| Governance | `lint_spec` |
+| Docker | `docker_compose_up`, `docker_logs`, `docker_health`, ... |
 
 ---
 
 ## ⚙️ Environment Variables
 
+See `.env.example` for the full reference. Key variables:
+
 | Variable | Default | Description |
-| -------- | ------- | ----------- |
-| `MOCK_PORT` | `8081` | Port on host and inside container |
-| `PROXY_TARGET` | — | Real API URL for proxy/recording |
-| `MOCK_ENGINE` | `wiremock` | Engine: `wiremock` or `mockoon` |
-| `RECORD_MODE` | `false` | Enable automatic recording (WireMock) |
-| `CONTROL_PORT` | `9090` | Control panel API port |
-| `CORS_ORIGIN` | `*` | Allowed CORS origins (comma-separated) |
-
-> All variables can be set in `.env` (auto-loaded) or passed inline: `MOCK_PORT=9090 make wiremock`
-
----
-
-## 🐳 Docker Compose — Profiles
-
-```mermaid
-graph TD
-    DC["docker-compose.yml"] --> P1["wiremock"]
-    DC --> P2["wiremock-record"]
-    DC --> P3["mockoon"]
-    DC --> P4["mockoon-proxy"]
-
-    P1 --> S1["Serve mocks offline"]
-    P2 --> S2["Proxy + record mocks"]
-    P3 --> S3["Serve mocks offline"]
-    P4 --> S4["Mock + hybrid proxy"]
-
-    style DC fill:#1a1a2e,color:#e6e6e6,stroke:#16213e
-    style P1 fill:#2d6a4f,color:#fff,stroke:#40916c
-    style P2 fill:#e76f51,color:#fff,stroke:#f4a261
-    style P3 fill:#2d6a4f,color:#fff,stroke:#40916c
-    style P4 fill:#e76f51,color:#fff,stroke:#f4a261
-    style S1 fill:#264653,color:#e6e6e6,stroke:#2a9d8f
-    style S2 fill:#264653,color:#e6e6e6,stroke:#2a9d8f
-    style S3 fill:#264653,color:#e6e6e6,stroke:#2a9d8f
-    style S4 fill:#264653,color:#e6e6e6,stroke:#2a9d8f
-```
-
-```bash
-# Direct usage (without Makefile)
-docker compose --profile wiremock up
-docker compose --profile mockoon up
-PROXY_TARGET=https://api.example.com docker compose --profile wiremock-record up
-PROXY_TARGET=https://api.example.com docker compose --profile mockoon-proxy up
-```
+|----------|---------|-------------|
+| `MOCK_PORT` | `8081` | Mock server port |
+| `PROXY_TARGET` | — | Real API URL for recording/proxy |
+| `MOCK_ENGINE` | `wiremock` | `wiremock` or `mockoon` |
+| `CONTROL_PORT` | `9090` | NestJS API port |
+| `PG_HOST` / `PG_PORT` | `localhost:5442` | PostgreSQL connection |
+| `LOCALSTACK_URL` | `http://localhost:4566` | LocalStack endpoint |
+| `MINIO_URL` | `http://localhost:9000` | MinIO endpoint |
+| `KEYCLOAK_URL` | `http://localhost:8180` | Keycloak endpoint |
+| `PROMETHEUS_PORT` | `9091` | Prometheus port |
+| `JAEGER_UI_PORT` | `16686` | Jaeger UI port |
+| `OTEL_ENDPOINT` | `http://localhost:4318` | OpenTelemetry HTTP endpoint |
 
 ---
 
-## 💡 Use Cases
+## 📖 API Documentation
 
-### Offline Development
+The full OpenAPI spec is available at **`http://localhost:9090/api/docs`** (Swagger UI) when the API is running.
 
-> I need to work without internet but my app depends on 3 external APIs.
+All 27 modules are documented with request/response schemas, organized by tag:
 
-```bash
-# 1. With internet, record mocks for each API
-make wiremock-record PROXY_TARGET=https://api-users.example.com
-# use your app... then stop
-make down
+`projects` · `mocks` · `recording` · `import` · `databases` · `governance` · `coverage` · `stateful-mocks` · `intelligence` · `scenarios` · `contracts` · `chaos` · `chaos-network` · `webhooks` · `events` · `protocols` · `auth` · `templates` · `metrics` · `performance` · `tracing` · `cloud` · `storage` · `iam` · `status`
 
-# 2. Repeat for other APIs or use the Recording page in the dashboard
+---
 
-# 3. Without internet, serve the mocks
-make wiremock
-```
+## 🗺️ Roadmap (Releases)
 
-### Integration Tests in CI
-
-> I need stable mocks in my CI pipeline.
-
-```bash
-# Record once locally, commit the mocks
-make wiremock-record PROXY_TARGET=https://staging.api.com
-make down
-git add mocks/ && git commit -m "add API mocks"
-
-# In CI
-docker compose --profile wiremock up -d
-npm test
-docker compose --profile wiremock down
-```
-
-### Switch Engines Without Rework
-
-> The team decided to migrate from WireMock to Mockoon (or vice-versa).
-
-```bash
-# Same mocks, different engine
-make wiremock   # before
-make mockoon    # after — zero changes to mocks
-```
+| Version | Milestone | Key Features |
+|---------|-----------|-------------|
+| v1.3.1 | Foundation | WireMock/Mockoon dual engine, recording, dashboard, DB snapshots, MCP servers |
+| v1.4.0 | Stateful Mocking | Stateful mock scenarios, Adminer/CloudBeaver DB viewers |
+| v1.5.0 | API Clients | HAR/Postman/OpenAPI import, Bruno tests, Hoppscotch |
+| v1.6.0 | Governance | Spectral OpenAPI linting, mock coverage analysis |
+| v1.7.0 | Intelligence | AI/RAG mock generation (ChromaDB), Time Machine scenarios |
+| v1.8.0 | Contracts & Chaos | Pact Broker, fault injection, Toxiproxy network chaos |
+| v1.9.0 | CLI & Automation | `@stubrix/cli` standalone binary, Makefile automation |
+| v2.0.0 | Multi-Protocol | GraphQL/gRPC mocking, Kafka/RabbitMQ event simulation, webhooks |
+| v2.1.0 | Enterprise | Auth/RBAC/multi-tenancy, VS Code extension, environment templates |
+| v2.2.0 | Observability | Prometheus/Grafana metrics, k6 performance testing, Jaeger tracing |
+| **v2.3.0** | **Cloud & Storage** | **LocalStack AWS, MinIO object storage, Keycloak/Zitadel IAM** |
 
 ---
 
 ## 📚 Guides
 
 | Guide | Description |
-| ----- | ----------- |
-| [Recording with PokéAPI + Postman](docs/guide-pokeapi-recording.md) | Full walkthrough: record PokéAPI mocks, serve offline, and use via Postman Collection |
+|-------|-------------|
+| [Recording with PokéAPI](docs/guide-pokeapi-recording.md) | Record PokéAPI mocks, serve offline, use via Postman |
+| [`packages/api/API.md`](packages/api/API.md) | Full NestJS API module reference |
 
 ---
 
