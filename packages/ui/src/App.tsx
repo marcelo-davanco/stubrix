@@ -15,6 +15,17 @@ import { CoverageBridge } from './pages/CoverageBridge'
 import { GovernanceBridge } from './pages/GovernanceBridge'
 import { IntelligenceBridge } from './pages/IntelligenceBridge'
 import { TemplatesBridge } from './pages/TemplatesBridge'
+import MetricsBridge from './pages/MetricsBridge'
+import TracingBridge from './pages/TracingBridge'
+import PerformanceBridge from './pages/PerformanceBridge'
+import ProtocolsBridge from './pages/ProtocolsBridge'
+import EventsBridge from './pages/EventsBridge'
+import ChaosNetworkBridge from './pages/ChaosNetworkBridge'
+import AuthBridge from './pages/AuthBridge'
+import IamBridge from './pages/IamBridge'
+import ContractsBridge from './pages/ContractsBridge'
+import CloudBridge from './pages/CloudBridge'
+import StorageBridge from './pages/StorageBridge'
 
 function App() {
   return (
@@ -37,6 +48,17 @@ function App() {
           <Route path="governance" element={<GovernanceBridge />} />
           <Route path="intelligence" element={<IntelligenceBridge />} />
           <Route path="templates" element={<TemplatesBridge />} />
+          <Route path="metrics" element={<MetricsBridge />} />
+          <Route path="tracing" element={<TracingBridge />} />
+          <Route path="performance" element={<PerformanceBridge />} />
+          <Route path="protocols" element={<ProtocolsBridge />} />
+          <Route path="events" element={<EventsBridge />} />
+          <Route path="chaos-network" element={<ChaosNetworkBridge />} />
+          <Route path="auth" element={<AuthBridge />} />
+          <Route path="iam" element={<IamBridge />} />
+          <Route path="contracts" element={<ContractsBridge />} />
+          <Route path="cloud" element={<CloudBridge />} />
+          <Route path="storage" element={<StorageBridge />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

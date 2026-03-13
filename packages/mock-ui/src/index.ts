@@ -64,3 +64,22 @@ export { CoveragePage } from './pages/CoveragePage.js';
 export { GovernancePage } from './pages/GovernancePage.js';
 export { IntelligencePage } from './pages/IntelligencePage.js';
 export { TemplatesPage } from './pages/TemplatesPage.js';
+
+// Pages — Observability
+export { MetricsPage } from './pages/MetricsPage.js';
+export { TracingPage } from './pages/TracingPage.js';
+export { PerformancePage } from './pages/PerformancePage.js';
+
+// Pages — Protocols & Events
+export { ProtocolsPage } from './pages/ProtocolsPage.js';
+export { EventsPage } from './pages/EventsPage.js';
+export { ChaosNetworkPage } from './pages/ChaosNetworkPage.js';
+
+// Pages — Enterprise
+export { AuthPage } from './pages/AuthPage.js';
+export { IamPage } from './pages/IamPage.js';
+export { ContractsPage } from './pages/ContractsPage.js';
+
+// Pages — Cloud & Storage
+export { CloudPage } from './pages/CloudPage.js';
+export { StoragePage } from './pages/StoragePage.js';
