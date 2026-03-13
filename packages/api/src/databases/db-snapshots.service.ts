@@ -5,7 +5,8 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { execFileSync } from 'child_process';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ProjectsService } from '../projects/projects.service';
@@ -91,16 +92,14 @@ export class DbSnapshotsService {
       this.config.get<string>('PG_PASSWORD') ?? 'postgres';
     this.postgresDatabase =
       this.config.get<string>('PG_DATABASE') ?? 'postgres';
-    
+
     // MySQL environment variables
     this.mysqlHost = this.config.get<string>('MYSQL_HOST');
     this.mysqlPort = this.config.get<string>('MYSQL_PORT') ?? '3306';
     this.mysqlUser = this.config.get<string>('MYSQL_USER') ?? 'stubrix';
-    this.mysqlPassword =
-      this.config.get<string>('MYSQL_PASSWORD') ?? 'stubrix';
-    this.mysqlDatabase =
-      this.config.get<string>('MYSQL_DATABASE') ?? 'stubrix';
-      
+    this.mysqlPassword = this.config.get<string>('MYSQL_PASSWORD') ?? 'stubrix';
+    this.mysqlDatabase = this.config.get<string>('MYSQL_DATABASE') ?? 'stubrix';
+
     this.ensureDir(this.dumpsDir);
     this.ensureDir(path.join(this.dumpsDir, 'postgres'));
     this.ensureDir(path.join(this.dumpsDir, 'mysql'));
@@ -242,7 +241,9 @@ export class DbSnapshotsService {
     };
   }
 
-  private createPostgresSnapshot(
+  private readonly execFileAsync = promisify(execFile);
+
+  private async createPostgresSnapshot(
     database: string,
     filepath: string,
     envOverrides?: Partial<{
@@ -251,18 +252,17 @@ export class DbSnapshotsService {
       user: string;
       password: string;
     }>,
-  ): void {
-    execFileSync(
+  ): Promise<void> {
+    await this.execFileAsync(
       'pg_dump',
       ['--clean', '--if-exists', '--file', filepath, database],
       {
         env: this.getPostgresEnv(database, envOverrides),
-        stdio: 'pipe',
       },
     );
   }
 
-  private restorePostgresSnapshot(
+  private async restorePostgresSnapshot(
     database: string,
     filepath: string,
     envOverrides?: Partial<{
@@ -271,10 +271,9 @@ export class DbSnapshotsService {
       user: string;
       password: string;
     }>,
-  ): void {
-    execFileSync('psql', ['--file', filepath, database], {
+  ): Promise<void> {
+    await this.execFileAsync('psql', ['--file', filepath, database], {
       env: this.getPostgresEnv(database, envOverrides),
-      stdio: 'pipe',
     });
   }
 
@@ -361,7 +360,7 @@ export class DbSnapshotsService {
         dto.connectionId,
         driver.engine,
       );
-      this.createPostgresSnapshot(database, filepath, envOverrides);
+      await this.createPostgresSnapshot(database, filepath, envOverrides);
     } else if (driver.engine === 'mysql') {
       const envOverrides = this.resolveConnectionOverrides(
         projectId,
@@ -493,7 +492,11 @@ export class DbSnapshotsService {
         dto.connectionId,
         engine,
       );
-      this.restorePostgresSnapshot(database, snapshot.filepath, overrides);
+      await this.restorePostgresSnapshot(
+        database,
+        snapshot.filepath,
+        overrides,
+      );
       return {
         message: `Snapshot "${name}" restored to database "${database}"`,
         engine,
@@ -506,7 +509,11 @@ export class DbSnapshotsService {
       );
       const mysqlDriver = this.registry.get('mysql');
       if (mysqlDriver?.restoreSnapshot) {
-        await mysqlDriver.restoreSnapshot(database, snapshot.filepath, overrides);
+        await mysqlDriver.restoreSnapshot(
+          database,
+          snapshot.filepath,
+          overrides,
+        );
         return {
           message: `Snapshot "${name}" restored to database "${database}"`,
           engine,
