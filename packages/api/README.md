@@ -20,13 +20,33 @@ Provides the REST API and WebSocket server that powers the Stubrix dashboard. Ma
 
 ```
 src/
-├── projects/         Project CRUD — JSON persistence in data/projects.json
-├── mocks/            Mock CRUD — reads/writes WireMock mappings/*.json
-├── recording/        Start/stop/snapshot — calls WireMock /__admin/recording
+├── projects/         Project CRUD
+├── mocks/            Mock CRUD — WireMock mappings/*.json
+├── recording/        Start/stop/snapshot (4 modes) + pattern filters
 ├── logs/             REST + WebSocket — Socket.IO namespace /ws/logs
-├── status/           Engine health + mock counts by project
+├── status/           Engine health + mock counts
 ├── engine/           WireMock reset + engine info
-└── databases/        Engines, databases, snapshots, project DB configs
+├── databases/        Engines, databases, snapshots, project DB configs
+├── import/           HAR, Postman, OpenAPI universal importer
+├── governance/       Spectral OpenAPI linting
+├── coverage/         Mock hit/miss analysis
+├── intelligence/     AI/RAG (ChromaDB + OpenAI/Ollama)
+├── stateful-mocks/   Stateful scenario machine (Handlebars)
+├── scenarios/        Time machine: capture & restore state
+├── contracts/        Pact Broker contract testing
+├── chaos/            Fault injection (latency, errors, corruption)
+├── chaos-network/    Toxiproxy network-level chaos
+├── webhooks/         Webhook receiver, replay, simulator
+├── events/           Kafka (Redpanda) + RabbitMQ publishing
+├── protocols/        GraphQL SDL parse + gRPC via GripMock
+├── auth/             API keys, RBAC, multi-tenancy, audit
+├── templates/        Environment templates + variable substitution
+├── metrics/          Prometheus exposition endpoint
+├── performance/      k6 scripts + baseline regression gate
+├── tracing/          Jaeger/OpenTelemetry distributed tracing
+├── cloud/            LocalStack AWS (S3, SQS, SNS, DynamoDB, Lambda)
+├── storage/          MinIO object storage
+└── iam/              Keycloak + Zitadel IAM integration
 ```
 
 ## API Reference
@@ -93,7 +113,7 @@ src/
 ## Environment Variables
 
 ```dotenv
-PORT=9090
+CONTROL_PORT=9090          # API + UI port (env var read by main.ts)
 MOCK_ENGINE=wiremock       # wiremock | mockoon
 MOCK_PORT=8081
 WIREMOCK_URL=http://localhost:8081
@@ -120,12 +140,20 @@ SQLITE_DB_PATH=
 DUMPS_DIR=./dumps
 ```
 
+See root `.env.example` for the full reference (LocalStack, MinIO, Kafka, Keycloak, etc.).
+
 ## Development
 
 ```bash
 # From monorepo root
 npm run dev:api        # Watch mode on :9090
 npm run build:api      # Production build (nest build)
+
+# Docker (production)
+make stubrix-build     # Build Dockerfile.api image
+make stubrix-up        # Run containerized API + UI
+make stubrix-logs      # Tail logs
+make stack-up          # Full stack: API + WireMock + PostgreSQL
 
 # From packages/api
 npm run start:dev      # Watch mode

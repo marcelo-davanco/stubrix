@@ -4,6 +4,8 @@
   "description": "Stubrix mock server integration for VS Code and Windsurf",
   "version": "2.3.0",
   "publisher": "stubrix",
+  "icon": "resources/icon.png",
+  "repository": { "type": "git", "url": "https://github.com/marcelo-davanco/stubrix" },
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other", "Testing"],
   "activationEvents": ["onStartupFinished"],
@@ -51,11 +53,15 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsc -watch -p tsconfig.json"
+    "dev": "tsc -watch -p tsconfig.json",
+    "package": "npm run build && vsce package --no-dependencies",
+    "install:vscode": "npm run package && code --install-extension stubrix-vscode-$(node -p \"require('./package.json').version\").vsix",
+    "install:windsurf": "npm run package && (windsurf --install-extension stubrix-vscode-$(node -p \"require('./package.json').version\").vsix 2>/dev/null || /Applications/Windsurf.app/Contents/Resources/app/bin/windsurf --install-extension stubrix-vscode-$(node -p \"require('./package.json').version\").vsix)"
   },
   "devDependencies": {
     "@types/vscode": "^1.85.0",
     "@types/node": "^22.0.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "@vscode/vsce": "^3.0.0"
   }
 }
