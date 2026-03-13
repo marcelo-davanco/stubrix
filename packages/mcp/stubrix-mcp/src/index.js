@@ -849,6 +849,120 @@ server.tool(
 );
 
 // ===========================================================================
+// Time Machine — Scenario Capture & Restore (F11)
+// ===========================================================================
+
+server.tool(
+  "scenario_list",
+  "List all captured Time Machine scenarios.",
+  {},
+  async () => api("/api/scenarios"),
+);
+
+server.tool(
+  "scenario_capture",
+  "Capture current environment state (mocks + config) as a named scenario.",
+  {
+    name: z.string().describe("Scenario name"),
+    description: z.string().optional().describe("Optional description"),
+    tags: z.array(z.string()).optional().describe("Optional tags"),
+  },
+  async ({ name, description, tags }) =>
+    api("/api/scenarios/capture", {
+      method: "POST",
+      body: JSON.stringify({ name, description, tags }),
+    }),
+);
+
+server.tool(
+  "scenario_restore",
+  "Restore environment from a previously captured scenario.",
+  {
+    id: z.string().describe("Scenario UUID"),
+  },
+  async ({ id }) =>
+    api(`/api/scenarios/${id}/restore`, { method: "POST" }),
+);
+
+server.tool(
+  "scenario_diff",
+  "Compare two scenarios and show differences in mocks and configuration.",
+  {
+    idA: z.string().describe("First scenario UUID"),
+    idB: z.string().describe("Second scenario UUID"),
+  },
+  async ({ idA, idB }) => api(`/api/scenarios/${idA}/diff/${idB}`),
+);
+
+server.tool(
+  "scenario_delete",
+  "Delete a captured scenario by ID.",
+  {
+    id: z.string().describe("Scenario UUID to delete"),
+  },
+  async ({ id }) =>
+    api(`/api/scenarios/${id}`, { method: "DELETE" }),
+);
+
+// ===========================================================================
+// Intelligence — OpenRAG + MCP AI Layer (F9)
+// ===========================================================================
+
+server.tool(
+  "rag_query",
+  "Ask a natural language question about mocks, docs, or DB schemas using the RAG intelligence layer.",
+  {
+    question: z.string().describe("Natural language question"),
+  },
+  async ({ question }) =>
+    api("/api/intelligence/query", {
+      method: "POST",
+      body: JSON.stringify({ question }),
+    }),
+);
+
+server.tool(
+  "rag_suggest_mock",
+  "Generate a WireMock mapping suggestion from a natural language endpoint description.",
+  {
+    description: z.string().describe("Natural language description, e.g. 'GET /users returns list of users with 200'"),
+  },
+  async ({ description }) =>
+    api("/api/intelligence/suggest/mock", {
+      method: "POST",
+      body: JSON.stringify({ description }),
+    }),
+);
+
+server.tool(
+  "rag_suggest_data",
+  "Generate SQL seed data from a natural language description.",
+  {
+    description: z.string().describe("Natural language description, e.g. 'Insert 10 users into users table'"),
+  },
+  async ({ description }) =>
+    api("/api/intelligence/suggest/data", {
+      method: "POST",
+      body: JSON.stringify({ description }),
+    }),
+);
+
+server.tool(
+  "rag_index",
+  "Index all current mock mappings into the RAG vector store for AI queries.",
+  {},
+  async () =>
+    api("/api/intelligence/index", { method: "POST" }),
+);
+
+server.tool(
+  "rag_health",
+  "Check if the OpenRAG AI service is available.",
+  {},
+  async () => api("/api/intelligence/health"),
+);
+
+// ===========================================================================
 // Governance — Spectral Lint (F12)
 // ===========================================================================
 
