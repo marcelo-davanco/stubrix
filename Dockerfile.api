@@ -1,0 +1,82 @@
+## ==========================================================================
+## Stubrix — Control Plane (NestJS API + React UI)
+## Multi-stage build: deps → builder → production
+##
+## Everything is compiled inside Linux — never relies on host binaries.
+## .dockerignore excludes node_modules/, dist/, public/ from context.
+## ==========================================================================
+
+# ---------------------------------------------------------------------------
+# Stage 1: Install ALL dependencies + compile native addons for Linux
+# ---------------------------------------------------------------------------
+FROM node:24-slim AS deps
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  python3 make g++ && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json   ./packages/shared/
+COPY packages/api/package.json      ./packages/api/
+COPY packages/ui/package.json       ./packages/ui/
+COPY packages/db-ui/package.json    ./packages/db-ui/
+COPY packages/mock-ui/package.json  ./packages/mock-ui/
+COPY packages/cli/package.json      ./packages/cli/
+
+RUN npm ci && \
+  npm rebuild
+
+# ---------------------------------------------------------------------------
+# Stage 2: Build (shared → db-ui → mock-ui → ui → api)
+# ---------------------------------------------------------------------------
+FROM deps AS builder
+
+COPY . .
+
+RUN npm run build:shared && \
+  npm run build:db-ui && \
+  npm run build:mock-ui && \
+  npm run build:ui && \
+  npm run build:api
+
+# ---------------------------------------------------------------------------
+# Stage 3: Prune devDependencies (keep only production deps)
+# ---------------------------------------------------------------------------
+FROM deps AS pruner
+
+COPY --from=builder /app ./
+
+RUN npm prune --omit=dev && \
+  rm -rf packages/ui packages/db-ui packages/mock-ui packages/cli
+
+# ---------------------------------------------------------------------------
+# Stage 4: Production image (minimal — only runtime artifacts)
+# ---------------------------------------------------------------------------
+FROM node:24-slim AS production
+
+WORKDIR /app
+
+ENV NODE_ENV=production \
+  CONTROL_PORT=9090
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY --from=pruner  /app/node_modules                 ./node_modules
+COPY --from=builder /app/packages/shared/dist          ./packages/shared/dist
+COPY --from=builder /app/packages/shared/package.json  ./packages/shared/package.json
+COPY --from=builder /app/packages/api/dist             ./packages/api/dist
+COPY --from=builder /app/packages/api/public           ./packages/api/public
+COPY --from=builder /app/packages/api/package.json     ./packages/api/package.json
+COPY                package.json                       ./
+
+RUN mkdir -p mocks/mappings mocks/__files dumps
+
+EXPOSE 9090
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:${CONTROL_PORT}/api/status 2>/dev/null || exit 1
+
+CMD ["node", "packages/api/dist/main"]
