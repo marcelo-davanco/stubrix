@@ -1,0 +1,19 @@
+meta {
+  name: Create Snapshot
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{api_url}}/api/db/snapshots
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "engine": "postgres",
+    "database": "postgres",
+    "name": "before-release"
+  }
+}
