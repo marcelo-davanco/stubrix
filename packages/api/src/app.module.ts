@@ -16,6 +16,9 @@ import { LintModule } from './governance/lint/lint.module';
 import { CoverageModule } from './coverage/coverage.module';
 import { ScenariosModule } from './scenarios/scenarios.module';
 import { IntelligenceModule } from './intelligence/intelligence.module';
+import { ChaosModule } from './chaos/chaos.module';
+import { ContractsModule } from './contracts/contracts.module';
+import { ChaosNetworkModule } from './chaos-network/chaos-network.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -34,6 +37,9 @@ export function setupSwagger(app: any) {
     .addTag('coverage', 'Mock coverage analysis')
     .addTag('scenarios', 'Time Machine — scenario capture & restore')
     .addTag('intelligence', 'AI-powered mock generation and RAG queries')
+    .addTag('chaos', 'Fault injection and chaos engineering')
+    .addTag('contracts', 'Pact Broker contract testing')
+    .addTag('chaos-network', 'Toxiproxy network-level chaos')
     .addTag('status', 'System status')
     .addServer('http://localhost:9090', 'Development server')
     .addServer('https://api.stubrix.com', 'Production server')
@@ -81,6 +87,9 @@ export function setupSwagger(app: any) {
     CoverageModule,
     ScenariosModule,
     IntelligenceModule,
+    ChaosModule,
+    ContractsModule,
+    ChaosNetworkModule,
   ],
 })
 export class AppModule {}

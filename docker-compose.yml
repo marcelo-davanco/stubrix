@@ -20,6 +20,12 @@
 ## AI / RAG (F9):
 ##   docker compose --profile ai up -d                 # ChromaDB + OpenRAG (AI layer)
 ##
+## Contracts (F13):
+##   docker compose --profile pact up -d               # Pact Broker → http://localhost:9292
+##
+## Network Chaos (F26):
+##   docker compose --profile toxiproxy up -d          # Toxiproxy → http://localhost:8474
+##
 ## API Clients (F8):
 ##   docker compose --profile hoppscotch up -d        # Hoppscotch → http://localhost:3100
 ##
@@ -184,6 +190,39 @@ services:
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
+  # Pact Broker – Contract testing (F13.01)
+  # Access: http://localhost:9292
+  # --------------------------------------------------------------------------
+  pact-broker:
+    image: pactfoundation/pact-broker:latest
+    profiles: ["pact"]
+    container_name: stubrix-pact-broker
+    ports:
+      - "${PACT_BROKER_PORT:-9292}:9292"
+    environment:
+      PACT_BROKER_DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
+      PACT_BROKER_ALLOW_PUBLIC_READ: "true"
+      PACT_BROKER_DISABLE_SSL_VERIFICATION: "true"
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Toxiproxy – Network-level chaos engineering (F26.01)
+  # API: http://localhost:8474 | Proxy range: 8475-8485
+  # --------------------------------------------------------------------------
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:latest
+    profiles: ["toxiproxy", "chaos-network"]
+    container_name: stubrix-toxiproxy
+    ports:
+      - "${TOXIPROXY_PORT:-8474}:8474"
+      - "8475-8485:8475-8485"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
   # ChromaDB – Vector database for RAG (F9.01)
   # Access: http://localhost:8000
   # --------------------------------------------------------------------------
@@ -253,3 +292,4 @@ volumes:
   mysql_data:
   cloudbeaver_data:
   chromadb_data:
+  pact_data:

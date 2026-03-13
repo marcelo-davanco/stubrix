@@ -963,6 +963,157 @@ server.tool(
 );
 
 // ===========================================================================
+// Chaos Engineering — Fault Injection (F14)
+// ===========================================================================
+
+server.tool(
+  "chaos_list_profiles",
+  "List all active chaos fault injection profiles.",
+  {},
+  async () => api("/api/chaos/profiles"),
+);
+
+server.tool(
+  "chaos_create_profile",
+  "Create a fault injection profile (delay, error, timeout, etc.).",
+  {
+    name: z.string().describe("Profile name"),
+    faults: z.array(z.object({
+      type: z.string().describe("Fault type: delay | error | timeout | random_error | bandwidth_limit"),
+      probability: z.number().min(0).max(1).describe("Probability 0.0-1.0"),
+      delayMs: z.number().optional(),
+      errorStatus: z.number().optional(),
+      errorMessage: z.string().optional(),
+    })).describe("List of fault rules"),
+    urlPattern: z.string().optional().describe("Regex to match URLs"),
+    description: z.string().optional(),
+  },
+  async ({ name, faults, urlPattern, description }) =>
+    api("/api/chaos/profiles", {
+      method: "POST",
+      body: JSON.stringify({ name, faults, urlPattern, description }),
+    }),
+);
+
+server.tool(
+  "chaos_list_presets",
+  "List built-in chaos presets (slow-network, flaky-service, total-outage, timeout).",
+  {},
+  async () => api("/api/chaos/presets"),
+);
+
+server.tool(
+  "chaos_apply_preset",
+  "Apply a built-in chaos preset as a new fault profile.",
+  {
+    preset: z.string().describe("Preset name: slow-network | flaky-service | total-outage | timeout"),
+    urlPattern: z.string().optional().describe("Optional URL regex filter"),
+  },
+  async ({ preset, urlPattern }) =>
+    api("/api/chaos/presets/apply", {
+      method: "POST",
+      body: JSON.stringify({ preset, urlPattern }),
+    }),
+);
+
+server.tool(
+  "chaos_toggle_profile",
+  "Enable or disable a chaos fault profile.",
+  {
+    id: z.string().describe("Profile UUID"),
+    enabled: z.boolean().describe("true to enable, false to disable"),
+  },
+  async ({ id, enabled }) =>
+    api(`/api/chaos/profiles/${id}/toggle`, {
+      method: "PATCH",
+      body: JSON.stringify({ enabled }),
+    }),
+);
+
+// ===========================================================================
+// Contract Testing — Pact Broker (F13)
+// ===========================================================================
+
+server.tool(
+  "contract_list",
+  "List all latest pact contracts from Pact Broker.",
+  {},
+  async () => api("/api/contracts/pacts"),
+);
+
+server.tool(
+  "contract_can_i_deploy",
+  "Check if a pacticipant version can be safely deployed to production.",
+  {
+    pacticipant: z.string().describe("Consumer or provider name"),
+    version: z.string().describe("Version to check (e.g. '1.2.3' or git SHA)"),
+  },
+  async ({ pacticipant, version }) =>
+    api(`/api/contracts/can-i-deploy?pacticipant=${encodeURIComponent(pacticipant)}&version=${encodeURIComponent(version)}`),
+);
+
+server.tool(
+  "contract_broker_health",
+  "Check if the Pact Broker is available.",
+  {},
+  async () => api("/api/contracts/health"),
+);
+
+// ===========================================================================
+// Network Chaos — Toxiproxy (F26)
+// ===========================================================================
+
+server.tool(
+  "network_list_proxies",
+  "List all Toxiproxy network proxies.",
+  {},
+  async () => api("/api/chaos-network/proxies"),
+);
+
+server.tool(
+  "network_create_proxy",
+  "Create a Toxiproxy proxy to intercept a service.",
+  {
+    name: z.string().describe("Proxy name"),
+    listen: z.string().describe("Listen address e.g. '0.0.0.0:8475'"),
+    upstream: z.string().describe("Upstream address e.g. 'db-postgres:5432'"),
+  },
+  async ({ name, listen, upstream }) =>
+    api("/api/chaos-network/proxies", {
+      method: "POST",
+      body: JSON.stringify({ name, listen, upstream }),
+    }),
+);
+
+server.tool(
+  "network_apply_preset",
+  "Apply a network chaos preset to a proxy (latency, bandwidth, packet-loss, slow-close).",
+  {
+    proxyName: z.string().describe("Toxiproxy proxy name"),
+    preset: z.string().describe("Preset: latency | bandwidth | packet-loss | slow-close"),
+  },
+  async ({ proxyName, preset }) =>
+    api(`/api/chaos-network/proxies/${proxyName}/presets`, {
+      method: "POST",
+      body: JSON.stringify({ preset }),
+    }),
+);
+
+server.tool(
+  "network_list_presets",
+  "List available network chaos presets.",
+  {},
+  async () => api("/api/chaos-network/presets"),
+);
+
+server.tool(
+  "network_toxiproxy_health",
+  "Check if Toxiproxy is available.",
+  {},
+  async () => api("/api/chaos-network/health"),
+);
+
+// ===========================================================================
 // Governance — Spectral Lint (F12)
 // ===========================================================================
 
