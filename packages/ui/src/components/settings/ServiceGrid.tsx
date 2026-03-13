@@ -22,6 +22,7 @@ interface ServiceGridProps {
   services: ServiceStatus[]
   selectedCategory: string | null
   onToggle: (serviceId: string, enabled: boolean) => void
+  onToggleAutoStart: (serviceId: string, autoStart: boolean) => void
   onRestart: (serviceId: string) => void
   onViewLogs: (serviceId: string) => void
 }
@@ -30,6 +31,7 @@ export function ServiceGrid({
   services,
   selectedCategory,
   onToggle,
+  onToggleAutoStart,
   onRestart,
   onViewLogs,
 }: ServiceGridProps) {
@@ -65,6 +67,7 @@ export function ServiceGrid({
                 key={svc.serviceId}
                 service={svc}
                 onToggle={onToggle}
+                onToggleAutoStart={onToggleAutoStart}
                 onRestart={onRestart}
                 onViewLogs={onViewLogs}
               />

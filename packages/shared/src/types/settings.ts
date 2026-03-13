@@ -39,6 +39,7 @@ export interface ServiceDefinition {
   defaultPort?: number;
   externalUrl?: string;
   enabled: boolean;
+  autoStart: boolean;
   healthStatus: HealthStatus;
   lastHealthCheck?: string;
   dependsOn?: string[];
@@ -157,6 +158,7 @@ export interface ServiceRow {
   default_port?: number;
   external_url?: string;
   enabled: number;
+  auto_start: number;
   health_status: string;
   last_health_check?: string;
   created_at: string;

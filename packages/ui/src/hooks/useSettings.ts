@@ -5,6 +5,7 @@ export interface ServiceStatus {
   name: string
   category: string
   enabled: boolean
+  autoStart: boolean
   healthStatus: 'healthy' | 'unhealthy' | 'error' | 'unknown' | 'disabled'
   port?: number
   externalUrl?: string
@@ -62,6 +63,15 @@ export function useSettings() {
     await fetchServices()
   }
 
+  const toggleAutoStart = async (serviceId: string, autoStart: boolean) => {
+    await fetch(`${API}/services/${serviceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ autoStart }),
+    })
+    await fetchServices()
+  }
+
   const restartService = async (serviceId: string) => {
     await fetch(`${API}/services/${serviceId}/restart`, { method: 'POST' })
     await fetchServices()
@@ -107,6 +117,7 @@ export function useSettings() {
     loading,
     error,
     toggleService,
+    toggleAutoStart,
     restartService,
     getServiceLogs,
     setupMasterPassword,

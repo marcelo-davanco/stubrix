@@ -6,11 +6,12 @@ import { ServiceActions } from './ServiceActions'
 interface ServiceCardProps {
   service: ServiceStatus
   onToggle: (serviceId: string, enabled: boolean) => void
+  onToggleAutoStart: (serviceId: string, autoStart: boolean) => void
   onRestart: (serviceId: string) => void
   onViewLogs: (serviceId: string) => void
 }
 
-export function ServiceCard({ service, onToggle, onRestart, onViewLogs }: ServiceCardProps) {
+export function ServiceCard({ service, onToggle, onToggleAutoStart, onRestart, onViewLogs }: ServiceCardProps) {
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3 hover:border-white/20 transition-colors min-w-0">
       <div className="flex items-start justify-between gap-2">
@@ -27,6 +28,22 @@ export function ServiceCard({ service, onToggle, onRestart, onViewLogs }: Servic
           <span className="text-xs text-text-secondary font-mono">:{service.port}</span>
         )}
       </div>
+
+      {service.enabled && (
+        <button
+          type="button"
+          title={service.autoStart ? 'Auto-start on: click to disable' : 'Auto-start off: click to enable'}
+          onClick={() => onToggleAutoStart(service.serviceId, !service.autoStart)}
+          className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors w-fit ${
+            service.autoStart
+              ? 'bg-primary/20 text-primary hover:bg-primary/30'
+              : 'bg-white/5 text-text-secondary hover:bg-white/10'
+          }`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${service.autoStart ? 'bg-primary' : 'bg-white/30'}`} />
+          {service.autoStart ? 'Auto-start on' : 'Auto-start off'}
+        </button>
+      )}
 
       <ServiceActions
         serviceId={service.serviceId}

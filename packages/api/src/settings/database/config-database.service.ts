@@ -70,8 +70,8 @@ export class ConfigDatabaseService implements OnModuleInit, OnModuleDestroy {
   upsertService(service: Omit<ServiceRow, 'created_at' | 'updated_at'>): void {
     this.db
       .prepare(
-        `INSERT INTO services (id, name, category, docker_profile, docker_service, default_port, external_url, enabled, health_status, last_health_check)
-       VALUES (@id, @name, @category, @docker_profile, @docker_service, @default_port, @external_url, @enabled, @health_status, @last_health_check)
+        `INSERT INTO services (id, name, category, docker_profile, docker_service, default_port, external_url, enabled, auto_start, health_status, last_health_check)
+       VALUES (@id, @name, @category, @docker_profile, @docker_service, @default_port, @external_url, @enabled, @auto_start, @health_status, @last_health_check)
        ON CONFLICT(id) DO UPDATE SET
          name = excluded.name,
          category = excluded.category,
@@ -79,9 +79,6 @@ export class ConfigDatabaseService implements OnModuleInit, OnModuleDestroy {
          docker_service = excluded.docker_service,
          default_port = excluded.default_port,
          external_url = excluded.external_url,
-         enabled = excluded.enabled,
-         health_status = excluded.health_status,
-         last_health_check = excluded.last_health_check,
          updated_at = datetime('now')`,
       )
       .run(service);
@@ -105,6 +102,22 @@ export class ConfigDatabaseService implements OnModuleInit, OnModuleDestroy {
         "UPDATE services SET enabled = ?, updated_at = datetime('now') WHERE id = ?",
       )
       .run(enabled ? 1 : 0, id);
+  }
+
+  updateAutoStart(id: string, autoStart: boolean): void {
+    this.db
+      .prepare(
+        "UPDATE services SET auto_start = ?, updated_at = datetime('now') WHERE id = ?",
+      )
+      .run(autoStart ? 1 : 0, id);
+  }
+
+  getAutoStartServices(): ServiceRow[] {
+    return this.db
+      .prepare(
+        'SELECT * FROM services WHERE enabled = 1 AND auto_start = 1 ORDER BY category, name',
+      )
+      .all() as ServiceRow[];
   }
 
   updateHealthStatus(id: string, status: HealthStatus): void {

@@ -21,6 +21,11 @@ export const migrations: Migration[] = [
       'Initial schema — services, configs, history, backups, master_key',
     up: INITIAL_SCHEMA_SQL,
   },
+  {
+    version: 2,
+    description: 'Add auto_start column to services table',
+    up: `ALTER TABLE services ADD COLUMN auto_start INTEGER NOT NULL DEFAULT 0;`,
+  },
 ];
 
 export function getSchemaVersion(db: Database.Database): number {

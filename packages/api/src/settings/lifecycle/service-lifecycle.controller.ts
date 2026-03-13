@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Param, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Param,
+  Body,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ServiceLifecycleService } from './service-lifecycle.service';
 import { HealthCheckService } from './health-check.service';
@@ -36,6 +44,12 @@ export class ServiceLifecycleController {
   @ApiOperation({ summary: 'Disable and stop a service' })
   disableService(@Param('id') id: string, @Body() dto: DisableServiceDto) {
     return this.lifecycle.disableService(id, dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update service settings (autoStart)' })
+  updateService(@Param('id') id: string, @Body() dto: { autoStart?: boolean }) {
+    return this.lifecycle.updateServiceSettings(id, dto);
   }
 
   @Post(':id/restart')

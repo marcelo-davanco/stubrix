@@ -35,6 +35,7 @@ export function SettingsPage() {
     loading,
     error,
     toggleService,
+    toggleAutoStart,
     restartService,
     getServiceLogs,
     setupMasterPassword,
@@ -140,6 +141,7 @@ export function SettingsPage() {
           services={services}
           selectedCategory={selectedCategory}
           onToggle={(id, en) => void handleToggle(id, en)}
+          onToggleAutoStart={(id, val) => void toggleAutoStart(id, val)}
           onRestart={(id) => void handleRestart(id)}
           onViewLogs={handleViewLogs}
         />

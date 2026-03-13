@@ -53,6 +53,7 @@ export class ServiceRegistryService implements OnModuleInit {
           default_port: def.defaultPort,
           external_url: def.externalUrl,
           enabled: 0,
+          auto_start: 0,
           health_status: 'unknown',
           last_health_check: undefined,
         });
@@ -73,6 +74,7 @@ export class ServiceRegistryService implements OnModuleInit {
             default_port: def.defaultPort,
             external_url: def.externalUrl,
             enabled: row.enabled,
+            auto_start: Number(row.auto_start ?? 0),
             health_status: row.health_status,
             last_health_check: row.last_health_check,
           });
@@ -308,6 +310,7 @@ export class ServiceRegistryService implements OnModuleInit {
       defaultPort: row.default_port,
       externalUrl: row.external_url,
       enabled: row.enabled === 1,
+      autoStart: (row.auto_start ?? 0) === 1,
       healthStatus: row.health_status as ServiceDefinition['healthStatus'],
       lastHealthCheck: row.last_health_check,
       dependsOn: def.dependsOn,

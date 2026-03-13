@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import type { HealthStatus, ServiceCategory } from '@stubrix/shared';
 import { ConfigDatabaseService } from '../database/config-database.service';
 import { ServiceRegistryService } from '../registry/service-registry.service';
@@ -31,7 +31,7 @@ export interface ServiceStatus {
 }
 
 @Injectable()
-export class ServiceLifecycleService {
+export class ServiceLifecycleService implements OnModuleInit {
   private readonly logger = new Logger(ServiceLifecycleService.name);
   private readonly inProgress = new Set<string>();
 
@@ -41,6 +41,21 @@ export class ServiceLifecycleService {
     private readonly docker: DockerComposeService,
     private readonly health: HealthCheckService,
   ) {}
+
+  onModuleInit(): void {
+    const autoStartServices = this.configDb.getAutoStartServices();
+    if (autoStartServices.length === 0) return;
+    this.logger.log(
+      `Auto-starting ${autoStartServices.length} service(s): ${autoStartServices.map((s) => s.id).join(', ')}`,
+    );
+    for (const row of autoStartServices) {
+      this.enableService(row.id, { skipHealthCheck: false }).catch(
+        (err: unknown) => {
+          this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
+        },
+      );
+    }
+  }
 
   async enableService(
     serviceId: string,
@@ -342,6 +357,23 @@ export class ServiceLifecycleService {
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  updateServiceSettings(
+    serviceId: string,
+    settings: { autoStart?: boolean },
+  ): { serviceId: string; autoStart?: boolean } {
+    const row = this.configDb.getService(serviceId);
+    if (!row) {
+      throw new Error(`Service "${serviceId}" not found`);
+    }
+    if (settings.autoStart !== undefined) {
+      this.configDb.updateAutoStart(serviceId, settings.autoStart);
+      this.logger.log(
+        `Service "${serviceId}" autoStart set to ${String(settings.autoStart)}`,
+      );
+    }
+    return { serviceId, ...settings };
   }
 
   private errorResult(
