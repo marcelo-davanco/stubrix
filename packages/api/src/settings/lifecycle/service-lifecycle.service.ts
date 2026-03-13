@@ -33,6 +33,7 @@ export interface ServiceStatus {
 @Injectable()
 export class ServiceLifecycleService {
   private readonly logger = new Logger(ServiceLifecycleService.name);
+  private readonly inProgress = new Set<string>();
 
   constructor(
     private readonly configDb: ConfigDatabaseService,
@@ -48,6 +49,14 @@ export class ServiceLifecycleService {
     const enableDeps = options?.enableDependencies !== false;
     const skipHealthCheck = options?.skipHealthCheck === true;
     const timeout = options?.timeout ?? 60000;
+
+    if (this.inProgress.has(serviceId)) {
+      return this.errorResult(
+        serviceId,
+        'enable',
+        `Service "${serviceId}" enable already in progress`,
+      );
+    }
 
     const row = this.configDb.getService(serviceId);
     if (!row) {
@@ -65,6 +74,8 @@ export class ServiceLifecycleService {
         `Service "${serviceId}" is already enabled`,
       );
     }
+
+    this.inProgress.add(serviceId);
 
     const affectedServices: string[] = [];
 
@@ -91,42 +102,55 @@ export class ServiceLifecycleService {
       }
     }
 
-    // Mark as enabled in SQLite
-    this.configDb.updateServiceStatus(serviceId, true);
-    this.configDb.updateHealthStatus(serviceId, 'unknown');
+    try {
+      // Mark as enabled in SQLite
+      this.configDb.updateServiceStatus(serviceId, true);
+      this.configDb.updateHealthStatus(serviceId, 'unknown');
 
-    // Start Docker container via profile
-    const def = this.registry.getService(serviceId);
-    if (def.dockerProfile) {
-      const result = await this.docker.startProfile(def.dockerProfile);
-      if (!result.success) {
-        this.configDb.updateServiceStatus(serviceId, false);
-        return this.errorResult(
-          serviceId,
-          'enable',
-          `Docker start failed: ${result.stderr || result.stdout}`,
-        );
+      // Start Docker container via profile
+      const def = this.registry.getService(serviceId);
+      if (def.dockerProfile) {
+        const result = await this.docker.startProfile(def.dockerProfile);
+        if (!result.success) {
+          this.configDb.updateServiceStatus(serviceId, false);
+          return this.errorResult(
+            serviceId,
+            'enable',
+            `Docker start failed: ${result.stderr || result.stdout}`,
+          );
+        }
+
+        // Health check is fire-and-forget — respond immediately
+        if (!skipHealthCheck) {
+          this.waitForHealthy(serviceId, timeout)
+            .then((healthStatus) => {
+              this.configDb.updateHealthStatus(serviceId, healthStatus);
+              this.logger.log(
+                `Health check resolved: ${serviceId} → ${healthStatus}`,
+              );
+            })
+            .catch((err: unknown) => {
+              this.logger.warn(
+                `Health check error for ${serviceId}: ${String(err)}`,
+              );
+            });
+        }
       }
+
+      this.logger.log(`Enabled service: ${serviceId}`);
+
+      return {
+        serviceId,
+        action: 'enable',
+        success: true,
+        message: `Service "${serviceId}" enabled successfully`,
+        affectedServices:
+          affectedServices.length > 0 ? affectedServices : undefined,
+        healthStatus: 'unknown',
+      };
+    } finally {
+      this.inProgress.delete(serviceId);
     }
-
-    // Wait for healthy
-    let healthStatus: HealthStatus = 'unknown';
-    if (!skipHealthCheck && def.dockerProfile) {
-      healthStatus = await this.waitForHealthy(serviceId, timeout);
-      this.configDb.updateHealthStatus(serviceId, healthStatus);
-    }
-
-    this.logger.log(`Enabled service: ${serviceId} (health: ${healthStatus})`);
-
-    return {
-      serviceId,
-      action: 'enable',
-      success: true,
-      message: `Service "${serviceId}" enabled successfully`,
-      affectedServices:
-        affectedServices.length > 0 ? affectedServices : undefined,
-      healthStatus,
-    };
   }
 
   async disableService(

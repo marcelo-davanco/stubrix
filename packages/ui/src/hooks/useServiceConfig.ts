@@ -51,13 +51,21 @@ export function useServiceConfig(serviceId: string) {
   const fetchConfig = useCallback(async () => {
     try {
       setError(null)
-      const [schemaRes, configRes, effectiveRes] = await Promise.all([
-        fetch(`${API}/services/${serviceId}/schema`),
+      const [configRes, effectiveRes] = await Promise.all([
         fetch(`${API}/services/${serviceId}/config`),
-        fetch(`${API}/services/${serviceId}/config/effective`),
+        fetch(`${API}/services/${serviceId}/config?effective=true`),
       ])
-      if (schemaRes.ok) setSchema((await schemaRes.json()) as ConfigField[])
-      if (configRes.ok) setConfigs((await configRes.json()) as Record<string, ConfigEntry>)
+      if (configRes.ok) {
+        const data = (await configRes.json()) as Record<string, unknown>
+        if (Array.isArray(data['schema'])) {
+          setSchema(data['schema'] as ConfigField[])
+        }
+        if (data['configs'] && typeof data['configs'] === 'object') {
+          setConfigs(data['configs'] as Record<string, ConfigEntry>)
+        } else if (!('configs' in data) && !('schema' in data)) {
+          setConfigs(data as unknown as Record<string, ConfigEntry>)
+        }
+      }
       if (effectiveRes.ok) setEffective((await effectiveRes.json()) as Record<string, EffectiveConfigValue>)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -129,7 +137,7 @@ export function useServiceConfig(serviceId: string) {
   }
 
   const rollback = async (historyId: number) => {
-    const res = await fetch(`${API}/services/${serviceId}/config/rollback/${historyId}`, {
+    const res = await fetch(`${API}/services/${serviceId}/history/${historyId}/rollback`, {
       method: 'POST',
     })
     if (!res.ok) throw new Error('Failed to rollback')
