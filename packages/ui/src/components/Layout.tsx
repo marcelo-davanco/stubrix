@@ -3,6 +3,9 @@ import {
   FolderOpen, ScrollText, FlaskConical, Database,
   Camera, Layers, Webhook, ShieldAlert,
   BarChart2, ShieldCheck, Brain, LayoutTemplate,
+  GitBranch, Gauge, Network, Radio, Wifi,
+  Users, ShieldCheck as IamIcon, FileCheck,
+  Cloud, HardDrive,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -32,13 +35,44 @@ const navGroups: NavGroup[] = [
     items: [
       { to: '/coverage', label: 'Coverage', icon: BarChart2 },
       { to: '/governance', label: 'Governance', icon: ShieldCheck },
-      { to: '/chaos', label: 'Chaos', icon: ShieldAlert },
+      { to: '/chaos', label: 'Chaos Panel', icon: ShieldAlert },
+      { to: '/contracts', label: 'Contracts', icon: FileCheck },
     ],
   },
   {
     label: 'Intelligence',
     items: [
       { to: '/intelligence', label: 'Intelligence', icon: Brain },
+    ],
+  },
+  {
+    label: 'Observability',
+    items: [
+      { to: '/metrics', label: 'Metrics', icon: BarChart2 },
+      { to: '/tracing', label: 'Tracing', icon: GitBranch },
+      { to: '/performance', label: 'Performance', icon: Gauge },
+    ],
+  },
+  {
+    label: 'Protocols',
+    items: [
+      { to: '/protocols', label: 'Protocols', icon: Network },
+      { to: '/events', label: 'Events', icon: Radio },
+      { to: '/chaos-network', label: 'Network Chaos', icon: Wifi },
+    ],
+  },
+  {
+    label: 'Enterprise',
+    items: [
+      { to: '/auth', label: 'Auth & Users', icon: Users },
+      { to: '/iam', label: 'IAM', icon: IamIcon },
+    ],
+  },
+  {
+    label: 'Cloud',
+    items: [
+      { to: '/cloud', label: 'Cloud (LocalStack)', icon: Cloud },
+      { to: '/storage', label: 'Storage (MinIO)', icon: HardDrive },
     ],
   },
 ];
