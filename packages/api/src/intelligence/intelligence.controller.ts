@@ -27,7 +27,7 @@ export class SuggestDataDto {
 }
 
 @ApiTags('intelligence')
-@Controller('api/intelligence')
+@Controller('intelligence')
 export class IntelligenceController {
   constructor(private readonly service: IntelligenceService) {}
 

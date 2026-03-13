@@ -40,7 +40,7 @@ export class CreateTemplateDto {
 }
 
 @ApiTags('events')
-@Controller('api/events')
+@Controller('events')
 export class EventsController {
   constructor(private readonly service: EventsService) {}
 

@@ -45,7 +45,7 @@ export class ApplyPresetDto {
 }
 
 @ApiTags('chaos-network')
-@Controller('api/chaos-network')
+@Controller('chaos-network')
 export class ChaosNetworkController {
   constructor(private readonly service: ChaosNetworkService) {}
 

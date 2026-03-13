@@ -16,7 +16,7 @@ import { UpdateStatefulMockDto } from './dto/update-stateful-mock.dto';
 import type { ProxyRequest } from './wiremock-transformer-proxy.service';
 
 @ApiTags('stateful-mocks')
-@Controller('api/stateful/mocks')
+@Controller('stateful/mocks')
 export class StatefulMocksController {
   constructor(private readonly service: StatefulMocksService) {}
 

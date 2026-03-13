@@ -48,7 +48,7 @@ export class CompareBaselineDto {
 }
 
 @ApiTags('performance')
-@Controller('api/performance')
+@Controller('performance')
 export class PerformanceController {
   constructor(private readonly service: PerformanceService) {}
 

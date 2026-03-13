@@ -26,7 +26,7 @@ export class AnalyzeCoverageDto {
 }
 
 @ApiTags('coverage')
-@Controller('api/coverage')
+@Controller('coverage')
 export class CoverageController {
   constructor(private readonly coverageService: CoverageService) {}
 

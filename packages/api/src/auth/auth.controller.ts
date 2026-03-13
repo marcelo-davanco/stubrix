@@ -37,7 +37,7 @@ export class ValidateKeyDto {
 }
 
 @ApiTags('auth')
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 

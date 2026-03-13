@@ -45,7 +45,7 @@ export class ApplyTemplateDto {
 }
 
 @ApiTags('templates')
-@Controller('api/templates')
+@Controller('templates')
 export class TemplatesController {
   constructor(
     private readonly service: TemplatesService,
