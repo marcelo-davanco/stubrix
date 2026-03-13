@@ -1,14 +1,44 @@
 {
   "name": "@stubrix/cli",
   "version": "2.3.0",
-  "description": "Stubrix CLI — control plane from the terminal",
+  "description": "Stubrix CLI — Advanced API Engineering & Mocking Platform control plane from the terminal",
   "bin": {
     "stubrix": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "ts-node src/index.ts"
+    "dev": "ts-node src/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "stubrix",
+    "mock",
+    "api-mocking",
+    "wiremock",
+    "mockoon",
+    "cli",
+    "testing",
+    "developer-tools",
+    "rest-api",
+    "contract-testing",
+    "chaos-engineering",
+    "graphql",
+    "grpc"
+  ],
+  "homepage": "https://github.com/marcelo-davanco/stubrix",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcelo-davanco/stubrix.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/marcelo-davanco/stubrix/issues"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
     "commander": "^12.1.0",
@@ -22,6 +52,12 @@
     "typescript": "^5.5.0",
     "ts-node": "^10.9.2"
   },
-  "files": ["dist/"],
-  "engines": { "node": ">=18" }
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }
