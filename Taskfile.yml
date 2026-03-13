@@ -1,0 +1,53 @@
+version: '3'
+
+includes:
+  mock: ./taskfiles/mock.yml
+  db: ./taskfiles/db.yml
+  chaos: ./taskfiles/chaos.yml
+  scenario: ./taskfiles/scenario.yml
+  ai: ./taskfiles/ai.yml
+  infra: ./taskfiles/infra.yml
+
+vars:
+  API_URL: '{{.API_URL | default "http://localhost:9090"}}'
+  MOCK_PORT: '{{.MOCK_PORT | default "8081"}}'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  up:
+    desc: Start WireMock + API (default engine)
+    cmds:
+      - docker compose --profile wiremock up -d
+
+  down:
+    desc: Stop all Stubrix services
+    cmds:
+      - docker compose --profile wiremock --profile mockoon --profile postgres --profile mysql down
+
+  status:
+    desc: Show API status
+    cmds:
+      - curl -s {{.API_URL}}/api/status | jq .
+
+  doctor:
+    desc: Health check all Stubrix services
+    cmds:
+      - echo "=== API ===" && curl -sf {{.API_URL}}/api/status > /dev/null && echo "✅ API OK" || echo "❌ API unreachable"
+      - echo "=== Intelligence ===" && curl -sf {{.API_URL}}/api/intelligence/health | jq -r '"✅ RAG: \(.available)"' 2>/dev/null || echo "⚠️  RAG offline"
+      - echo "=== Pact Broker ===" && curl -sf {{.API_URL}}/api/contracts/health | jq -r '"✅ Pact: \(.available)"' 2>/dev/null || echo "⚠️  Pact offline"
+      - echo "=== Toxiproxy ===" && curl -sf {{.API_URL}}/api/chaos-network/health | jq -r '"✅ Toxiproxy: \(.available)"' 2>/dev/null || echo "⚠️  Toxiproxy offline"
+
+  build:
+    desc: Build all packages
+    cmds:
+      - npm run build
+
+  clean:
+    desc: Stop all containers and clean volumes
+    cmds:
+      - docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy down -v 2>/dev/null || true
+      - rm -f .mockoon-env.json

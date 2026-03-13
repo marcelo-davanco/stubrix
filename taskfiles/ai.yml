@@ -1,0 +1,41 @@
+version: '3'
+
+vars:
+  API_URL: '{{.API_URL | default "http://localhost:9090"}}'
+
+tasks:
+  up:
+    desc: Start ChromaDB + OpenRAG AI layer
+    cmds:
+      - docker compose --profile ai up -d
+
+  down:
+    desc: Stop AI/RAG services
+    cmds:
+      - docker compose --profile ai down
+
+  health:
+    desc: Check OpenRAG availability
+    cmds:
+      - curl -s {{.API_URL}}/api/intelligence/health | jq .
+
+  query:
+    desc: Ask a question to RAG (Q="your question")
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/intelligence/query \
+          -H 'Content-Type: application/json' \
+          -d '{"question":"{{.Q}}"}' | jq .
+
+  suggest-mock:
+    desc: Generate a mock from natural language (DESC="GET /users returns users")
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/intelligence/suggest/mock \
+          -H 'Content-Type: application/json' \
+          -d '{"description":"{{.DESC}}"}' | jq .
+
+  index:
+    desc: Index all mocks into the RAG vector store
+    cmds:
+      - curl -s -X POST {{.API_URL}}/api/intelligence/index | jq .

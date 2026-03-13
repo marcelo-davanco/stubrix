@@ -1,0 +1,34 @@
+version: '3'
+
+vars:
+  API_URL: '{{.API_URL | default "http://localhost:9090"}}'
+
+tasks:
+  list:
+    desc: List all captured scenarios
+    cmds:
+      - curl -s {{.API_URL}}/api/scenarios | jq .
+
+  save:
+    desc: Capture current state as scenario (NAME=<name>)
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/scenarios/capture \
+          -H 'Content-Type: application/json' \
+          -d '{"name":"{{.NAME | default "snapshot"}}"}' | jq .
+
+  restore:
+    desc: Restore a scenario (ID=<uuid>)
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/scenarios/{{.ID}}/restore | jq .
+
+  diff:
+    desc: Compare two scenarios (A=<uuid> B=<uuid>)
+    cmds:
+      - curl -s {{.API_URL}}/api/scenarios/{{.A}}/diff/{{.B}} | jq .
+
+  delete:
+    desc: Delete a scenario (ID=<uuid>)
+    cmds:
+      - curl -s -X DELETE {{.API_URL}}/api/scenarios/{{.ID}}

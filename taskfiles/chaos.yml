@@ -1,0 +1,41 @@
+version: '3'
+
+vars:
+  API_URL: '{{.API_URL | default "http://localhost:9090"}}'
+
+tasks:
+  list:
+    desc: List chaos fault profiles
+    cmds:
+      - curl -s {{.API_URL}}/api/chaos/profiles | jq .
+
+  presets:
+    desc: List built-in chaos presets
+    cmds:
+      - curl -s {{.API_URL}}/api/chaos/presets | jq .
+
+  apply:
+    desc: Apply a chaos preset (PRESET=slow-network URL=<regex>)
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/chaos/presets/apply \
+          -H 'Content-Type: application/json' \
+          -d '{"preset":"{{.PRESET | default "slow-network"}}","urlPattern":"{{.URL}}"}' | jq .
+
+  disable:
+    desc: Disable a chaos profile (ID=<uuid>)
+    cmds:
+      - |
+        curl -s -X PATCH {{.API_URL}}/api/chaos/profiles/{{.ID}}/toggle \
+          -H 'Content-Type: application/json' \
+          -d '{"enabled":false}' | jq .
+
+  network-up:
+    desc: Start Toxiproxy
+    cmds:
+      - docker compose --profile toxiproxy up -d
+
+  network-down:
+    desc: Stop Toxiproxy
+    cmds:
+      - docker compose --profile toxiproxy down
