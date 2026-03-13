@@ -849,6 +849,93 @@ server.tool(
 );
 
 // ===========================================================================
+// Governance — Spectral Lint (F12)
+// ===========================================================================
+
+server.tool(
+  "lint_spec",
+  "Lint an OpenAPI specification against Spectral OAS rules. Returns violations grouped by severity.",
+  {
+    content: z.string().describe("OpenAPI spec content (JSON or YAML)"),
+  },
+  async ({ content }) =>
+    api("/api/governance/lint", {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    }),
+);
+
+server.tool(
+  "lint_rules",
+  "List all active Spectral lint rules and their severities.",
+  {},
+  async () => api("/api/governance/lint/rules"),
+);
+
+server.tool(
+  "lint_mock",
+  "Check if a mock mapping is compliant with OAS conventions by linting its inline spec representation.",
+  {
+    content: z.string().describe("OpenAPI fragment or full spec to validate"),
+  },
+  async ({ content }) =>
+    api("/api/governance/lint", {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    }),
+);
+
+// ===========================================================================
+// Coverage — Mock Coverage Report (F19)
+// ===========================================================================
+
+server.tool(
+  "coverage_report",
+  "Generate a mock coverage report by comparing an OpenAPI spec against existing WireMock mappings.",
+  {
+    content: z.string().describe("OpenAPI spec content (JSON or YAML)"),
+    specFile: z.string().optional().describe("Optional spec filename for display"),
+  },
+  async ({ content, specFile }) =>
+    api("/api/coverage/analyze", {
+      method: "POST",
+      body: JSON.stringify({ content, specFile }),
+    }),
+);
+
+server.tool(
+  "coverage_score",
+  "Get the current mock coverage percentage for an OpenAPI spec URL.",
+  {
+    specUrl: z.string().describe("URL of the OpenAPI spec (e.g. http://localhost:9090/api/docs-json)"),
+  },
+  async ({ specUrl }) => api(`/api/coverage/score?specUrl=${encodeURIComponent(specUrl)}`),
+);
+
+server.tool(
+  "coverage_missing",
+  "List all spec endpoints that are NOT fully covered by existing mocks.",
+  {
+    specContent: z.string().describe("OpenAPI spec content (JSON or YAML)"),
+  },
+  async ({ specContent }) =>
+    api(`/api/coverage/missing?specContent=${encodeURIComponent(specContent)}`),
+);
+
+server.tool(
+  "coverage_text_report",
+  "Generate a human-readable text coverage report with progress bars.",
+  {
+    content: z.string().describe("OpenAPI spec content (JSON or YAML)"),
+  },
+  async ({ content }) =>
+    api("/api/coverage/report/text", {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    }),
+);
+
+// ===========================================================================
 // Stateful Mocks (F10)
 // ===========================================================================
 

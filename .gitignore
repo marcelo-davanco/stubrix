@@ -25,6 +25,7 @@ features/
 executions/
 analysis/
 coverage/
+!packages/api/src/coverage/
 
 # OS files
 .DS_Store
