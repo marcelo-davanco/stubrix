@@ -1,4 +1,7 @@
 .PHONY: build wiremock mockoon record record-stop convert-to-mockoon convert-to-wiremock clean help \
+        stubrix-build stubrix-up stubrix-down stubrix-logs stubrix-restart \
+        stack-up stack-down \
+        vscode-build vscode-package vscode-install windsurf-install \
         adminer adminer-up adminer-down cloudbeaver cloudbeaver-up cloudbeaver-down db-viewer db-viewer-down \
         hoppscotch hoppscotch-down hoppscotch-logs \
         bruno-test bruno-test-collection \
@@ -122,7 +125,42 @@ db-viewer: ## Start both Adminer + CloudBeaver + PostgreSQL (detached)
 db-viewer-down: ## Stop all DB viewers
 	docker compose --profile db-viewer down
 
-all-up: ## Start WireMock + PostgreSQL
+vscode-build: ## Build Stubrix VS Code extension (TypeScript compile)
+	npm run build:vscode
+
+vscode-package: ## Package extension as .vsix (build + vsce package)
+	npm run package:vscode
+
+vscode-install: ## Package and install extension in VS Code
+	npm run install:vscode
+
+windsurf-install: ## Package and install extension in Windsurf
+	npm run package:vscode
+	windsurf --install-extension packages/vscode-extension/stubrix-vscode-$(shell node -p "require('./packages/vscode-extension/package.json').version").vsix 2>/dev/null || \
+	/Applications/Windsurf.app/Contents/Resources/app/bin/windsurf --install-extension packages/vscode-extension/stubrix-vscode-$(shell node -p "require('./packages/vscode-extension/package.json').version").vsix
+
+stubrix-build: ## Build Stubrix control plane Docker image
+	docker compose build stubrix
+
+stubrix-up: ## Start Stubrix control plane (API + UI) in Docker — http://localhost:9090
+	docker compose --profile control-plane up -d
+
+stubrix-down: ## Stop Stubrix control plane
+	docker compose --profile control-plane down
+
+stubrix-logs: ## Tail Stubrix API logs
+	docker compose --profile control-plane logs -f stubrix
+
+stubrix-restart: ## Rebuild and restart Stubrix control plane
+	docker compose --profile control-plane down && docker compose build stubrix && docker compose --profile control-plane up -d
+
+stack-up: ## Start full stack: Stubrix + WireMock + PostgreSQL (detached)
+	docker compose --profile control-plane --profile wiremock --profile postgres up -d
+
+stack-down: ## Stop full stack (Stubrix + WireMock + PostgreSQL)
+	docker compose --profile control-plane --profile wiremock --profile postgres down
+
+all-up: ## Start WireMock + PostgreSQL (legacy — use stack-up for full stack)
 	docker compose --profile wiremock --profile postgres up -d
 
 ai-up: ## Start ChromaDB + OpenRAG AI layer (F9.01 — detached)
