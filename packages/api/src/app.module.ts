@@ -94,7 +94,7 @@ export function setupSwagger(app: any) {
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
-      renderPath: '/*',
+      renderPath: '/{*path}',
       exclude: ['/api/{*any}'],
     }),
     CommonModule,
