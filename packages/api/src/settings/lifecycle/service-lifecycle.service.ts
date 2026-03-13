@@ -276,19 +276,25 @@ export class ServiceLifecycleService implements OnModuleInit {
       );
     }
 
-    const healthStatus = await this.waitForHealthy(serviceId, 60000);
-    this.configDb.updateHealthStatus(serviceId, healthStatus);
-
-    this.logger.log(
-      `Restarted service: ${serviceId} (health: ${healthStatus})`,
-    );
+    this.waitForHealthy(serviceId, 60000)
+      .then((healthStatus) => {
+        this.configDb.updateHealthStatus(serviceId, healthStatus);
+        this.logger.log(
+          `Restarted service: ${serviceId} (health: ${healthStatus})`,
+        );
+      })
+      .catch((err: unknown) => {
+        this.logger.warn(
+          `Health check error after restart for ${serviceId}: ${String(err)}`,
+        );
+      });
 
     return {
       serviceId,
       action: 'restart',
       success: true,
       message: `Service "${serviceId}" restarted successfully`,
-      healthStatus,
+      healthStatus: 'unknown',
     };
   }
 
