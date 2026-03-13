@@ -8,10 +8,18 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { IsString, IsOptional, IsArray } from 'class-validator';
 import { ScenariosService } from './scenarios.service';
-import type { ScenarioBundle, ScenarioMeta, ScenarioDiff, ScenarioConfig } from './scenario.types';
+import { JobsService } from '../jobs/jobs.service';
+import { QUEUE_NAMES } from '../jobs/queue.constants';
+import type {
+  ScenarioBundle,
+  ScenarioMeta,
+  ScenarioDiff,
+  ScenarioConfig,
+} from './scenario.types';
+import type { JobAcceptedResponse } from '@stubrix/shared';
 
 export class CaptureScenarioDto {
   @IsString()
@@ -33,7 +41,10 @@ export class CaptureScenarioDto {
 @ApiTags('scenarios')
 @Controller('scenarios')
 export class ScenariosController {
-  constructor(private readonly service: ScenariosService) {}
+  constructor(
+    private readonly service: ScenariosService,
+    private readonly jobsService: JobsService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List all captured scenarios' })
@@ -52,7 +63,12 @@ export class ScenariosController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Capture current environment state as a scenario' })
   capture(@Body() dto: CaptureScenarioDto): ScenarioBundle {
-    return this.service.capture(dto.name, dto.description, dto.tags, dto.config);
+    return this.service.capture(
+      dto.name,
+      dto.description,
+      dto.tags,
+      dto.config,
+    );
   }
 
   @Post(':id/restore')
@@ -77,5 +93,39 @@ export class ScenariosController {
   @ApiParam({ name: 'idB', description: 'Second scenario UUID' })
   diff(@Param('idA') idA: string, @Param('idB') idB: string): ScenarioDiff {
     return this.service.diff(idA, idB);
+  }
+
+  @Post('capture/async')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Capture scenario asynchronously via job queue' })
+  @ApiResponse({ status: 202, description: 'Capture job accepted' })
+  async captureAsync(
+    @Body() dto: CaptureScenarioDto,
+  ): Promise<JobAcceptedResponse> {
+    return this.jobsService.enqueue({
+      type: 'scenario:capture',
+      queueName: QUEUE_NAMES.SCENARIOS,
+      payload: {
+        name: dto.name,
+        description: dto.description,
+        tags: dto.tags,
+        config: dto.config,
+      },
+      priority: 'normal',
+    });
+  }
+
+  @Post(':id/restore/async')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Restore scenario asynchronously via job queue' })
+  @ApiParam({ name: 'id', description: 'Scenario UUID' })
+  @ApiResponse({ status: 202, description: 'Restore job accepted' })
+  async restoreAsync(@Param('id') id: string): Promise<JobAcceptedResponse> {
+    return this.jobsService.enqueue({
+      type: 'scenario:restore',
+      queueName: QUEUE_NAMES.SCENARIOS,
+      payload: { scenarioId: id },
+      priority: 'high',
+    });
   }
 }
