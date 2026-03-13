@@ -1114,6 +1114,182 @@ server.tool(
 );
 
 // ===========================================================================
+// Webhooks — Receiver, Replay & Simulator (F25)
+// ===========================================================================
+
+server.tool(
+  "webhook_list_events",
+  "List received webhook events.",
+  {
+    limit: z.number().optional().describe("Max events to return (default 50)"),
+    endpoint: z.string().optional().describe("Filter by endpoint path"),
+  },
+  async ({ limit, endpoint }) => {
+    const params = new URLSearchParams();
+    if (limit) params.set("limit", String(limit));
+    if (endpoint) params.set("endpoint", endpoint);
+    return api(`/api/webhooks/events?${params}`);
+  },
+);
+
+server.tool(
+  "webhook_replay",
+  "Replay a received webhook event to its original (or a new) target URL.",
+  {
+    id: z.string().describe("Webhook event ID"),
+    targetUrl: z.string().optional().describe("Override target URL"),
+  },
+  async ({ id, targetUrl }) => {
+    const params = targetUrl ? `?targetUrl=${encodeURIComponent(targetUrl)}` : "";
+    return api(`/api/webhooks/events/${id}/replay${params}`, { method: "POST" });
+  },
+);
+
+server.tool(
+  "webhook_clear",
+  "Clear all stored webhook events.",
+  {},
+  async () => api("/api/webhooks/events", { method: "DELETE" }),
+);
+
+server.tool(
+  "webhook_create_simulation",
+  "Create a fake webhook simulation to fire at a target URL.",
+  {
+    name: z.string().describe("Simulation name"),
+    targetUrl: z.string().describe("URL to send the webhook to"),
+    method: z.string().optional().describe("HTTP method (default POST)"),
+    payload: z.record(z.unknown()).optional().describe("Webhook payload"),
+  },
+  async ({ name, targetUrl, method, payload }) =>
+    api("/api/webhooks/simulations", {
+      method: "POST",
+      body: JSON.stringify({ name, targetUrl, method: method ?? "POST", payload: payload ?? {} }),
+    }),
+);
+
+server.tool(
+  "webhook_fire_simulation",
+  "Fire a webhook simulation to its configured target URL.",
+  {
+    id: z.string().describe("Simulation UUID"),
+  },
+  async ({ id }) => api(`/api/webhooks/simulations/${id}/fire`, { method: "POST" }),
+);
+
+// ===========================================================================
+// Events — Kafka & RabbitMQ (F16)
+// ===========================================================================
+
+server.tool(
+  "event_publish",
+  "Publish an event to Kafka (Redpanda) or RabbitMQ.",
+  {
+    broker: z.enum(["kafka", "rabbitmq"]).describe("Message broker"),
+    topic: z.string().describe("Kafka topic or RabbitMQ exchange name"),
+    payload: z.record(z.unknown()).describe("Event payload"),
+  },
+  async ({ broker, topic, payload }) =>
+    api("/api/events/publish", {
+      method: "POST",
+      body: JSON.stringify({ broker, topic, payload }),
+    }),
+);
+
+server.tool(
+  "event_list_templates",
+  "List saved event templates.",
+  {},
+  async () => api("/api/events/templates"),
+);
+
+server.tool(
+  "event_create_template",
+  "Create a reusable event template for Kafka or RabbitMQ.",
+  {
+    name: z.string().describe("Template name"),
+    broker: z.enum(["kafka", "rabbitmq"]),
+    topic: z.string().describe("Kafka topic or RabbitMQ exchange"),
+    payload: z.record(z.unknown()).describe("Event payload"),
+  },
+  async ({ name, broker, topic, payload }) =>
+    api("/api/events/templates", {
+      method: "POST",
+      body: JSON.stringify({ name, broker, topic, payload }),
+    }),
+);
+
+server.tool(
+  "event_fire_template",
+  "Fire a saved event template.",
+  {
+    id: z.string().describe("Template UUID"),
+  },
+  async ({ id }) => api(`/api/events/templates/${id}/fire`, { method: "POST" }),
+);
+
+server.tool(
+  "event_health",
+  "Check Kafka and RabbitMQ availability.",
+  {},
+  async () => api("/api/events/health"),
+);
+
+// ===========================================================================
+// Protocols — GraphQL & gRPC (F15)
+// ===========================================================================
+
+server.tool(
+  "protocol_list_mocks",
+  "List protocol mocks (graphql, grpc, rest).",
+  {
+    protocol: z.enum(["graphql", "grpc", "rest"]).optional().describe("Filter by protocol"),
+  },
+  async ({ protocol }) => {
+    const params = protocol ? `?protocol=${protocol}` : "";
+    return api(`/api/protocols/mocks${params}`);
+  },
+);
+
+server.tool(
+  "protocol_create_mock",
+  "Create a GraphQL or gRPC protocol mock.",
+  {
+    protocol: z.enum(["graphql", "grpc", "rest"]).describe("Protocol type"),
+    name: z.string().describe("Mock name"),
+    schema: z.string().optional().describe("GraphQL SDL schema string"),
+    protoFile: z.string().optional().describe("Protobuf file content (gRPC)"),
+    grpcService: z.string().optional().describe("gRPC service name"),
+    endpoint: z.string().optional().describe("Endpoint URL"),
+  },
+  async ({ protocol, name, schema, protoFile, grpcService, endpoint }) =>
+    api("/api/protocols/mocks", {
+      method: "POST",
+      body: JSON.stringify({ protocol, name, schema, protoFile, grpcService, endpoint }),
+    }),
+);
+
+server.tool(
+  "protocol_parse_graphql",
+  "Parse a GraphQL schema and return a summary of types, queries, mutations and subscriptions.",
+  {
+    schema: z.string().describe("GraphQL SDL schema"),
+  },
+  async ({ schema }) =>
+    api("/api/protocols/graphql/parse", {
+      method: "POST",
+      body: JSON.stringify({ schema }),
+    }),
+);
+
+server.tool(
+  "protocol_grpc_health",
+  "Check if GripMock (gRPC mock engine) is available.",
+  {},
+  async () => api("/api/protocols/grpc/health"),
+);
+
+// ===========================================================================
 // Governance — Spectral Lint (F12)
 // ===========================================================================
 
