@@ -3,7 +3,9 @@
         hoppscotch hoppscotch-down hoppscotch-logs \
         bruno-test bruno-test-collection \
         ai-up ai-down ai-logs \
-        scenario-save scenario-restore scenario-list
+        scenario-save scenario-restore scenario-list \
+        pact-up pact-down pact-logs \
+        toxiproxy-up toxiproxy-down toxiproxy-logs
 
 # Load .env if it exists (values can still be overridden from CLI)
 -include .env
@@ -136,6 +138,24 @@ scenario-restore: ## Restore environment from a scenario (F11.06) — ID=<uuid> 
 scenario-list: ## List all captured scenarios (F11.06)
 	curl -s http://localhost:9090/api/scenarios | jq .
 
+pact-up: ## Start Pact Broker + PostgreSQL (F13.01 — detached)
+	docker compose --profile postgres --profile pact up -d
+
+pact-down: ## Stop Pact Broker
+	docker compose --profile pact down
+
+pact-logs: ## Tail Pact Broker logs
+	docker compose --profile pact logs -f pact-broker
+
+toxiproxy-up: ## Start Toxiproxy network chaos (F26.01 — detached)
+	docker compose --profile toxiproxy up -d
+
+toxiproxy-down: ## Stop Toxiproxy
+	docker compose --profile toxiproxy down
+
+toxiproxy-logs: ## Tail Toxiproxy logs
+	docker compose --profile toxiproxy logs -f toxiproxy
+
 hoppscotch: ## Start Hoppscotch self-hosted API client (F8.01 — http://localhost:3100)
 	docker compose --profile hoppscotch up
 
@@ -154,7 +174,7 @@ bruno-test-collection: ## Run Bruno tests for a specific collection (e.g. make b
 	COLLECTION=$(COLLECTION) bash scripts/bruno-test.sh
 
 all-down: ## Stop all services
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai down
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy down
 
 # ---------------------------------------------------------------------------
 # Conversion
@@ -178,7 +198,7 @@ list-mappings: ## List current WireMock mappings
 	@ls -la mocks/__files/ 2>/dev/null || echo "No response files found"
 
 clean: ## Remove all generated mocks and stop containers
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai down -v 2>/dev/null || true
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy down -v 2>/dev/null || true
 	rm -f .mockoon-env.json
 
 clean-mocks: ## Remove all mock files (careful!)
