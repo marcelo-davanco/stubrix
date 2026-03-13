@@ -8,7 +8,8 @@
     "packages/ui",
     "packages/db-ui",
     "packages/mock-ui",
-    "packages/cli"
+    "packages/cli",
+    "packages/vscode-extension"
   ],
   "devDependencies": {
     "@usebruno/cli": "^1.4.0"
@@ -17,6 +18,10 @@
     "bruno-test": "bash scripts/bruno-test.sh",
     "build": "npm run build:shared && npm run build:api && npm run build:db-ui && npm run build:mock-ui && npm run build:ui && npm run build:cli",
     "build:cli": "npm run build -w @stubrix/cli",
+    "build:vscode": "npm run build -w stubrix-vscode",
+    "package:vscode": "npm run package -w stubrix-vscode",
+    "install:vscode": "npm run install:vscode -w stubrix-vscode",
+    "install:windsurf": "npm run install:windsurf -w stubrix-vscode",
     "build:shared": "npm run build -w @stubrix/shared",
     "build:api": "npm run build -w @stubrix/api",
     "build:db-ui": "npm run build -w @stubrix/db-ui",

@@ -72,6 +72,95 @@ x-common: &common
 
 services:
   # --------------------------------------------------------------------------
+  # Stubrix – Control Plane (NestJS API + React UI)
+  # Access: http://localhost:9090
+  # Docs:   http://localhost:9090/api/docs
+  # --------------------------------------------------------------------------
+  stubrix:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    profiles: ["control-plane", "stubrix"]
+    container_name: stubrix-api
+    ports:
+      - "${CONTROL_PORT:-9090}:9090"
+    environment:
+      NODE_ENV: production
+      CONTROL_PORT: 9090
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      # Mock engine
+      MOCK_ENGINE: ${MOCK_ENGINE:-wiremock}
+      MOCK_PORT: ${MOCK_PORT:-8081}
+      WIREMOCK_URL: ${WIREMOCK_URL:-http://wiremock:8081}
+      # PostgreSQL
+      PG_HOST: ${PG_HOST:-db-postgres}
+      PG_PORT: ${PG_PORT:-5432}
+      PG_USER: ${PG_USER:-postgres}
+      PG_PASSWORD: ${PG_PASSWORD:-postgres}
+      PG_DATABASE: ${PG_DATABASE:-postgres}
+      # MySQL
+      MYSQL_HOST: ${MYSQL_HOST:-db-mysql}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-stubrix}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-stubrix}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-stubrix}
+      # SQLite + Dumps
+      SQLITE_DB_PATH: ${SQLITE_DB_PATH:-}
+      DUMPS_DIR: /app/dumps
+      # Auth
+      AUTH_MASTER_KEY: ${AUTH_MASTER_KEY:-stubrix-dev-key}
+      # AWS / LocalStack
+      LOCALSTACK_URL: ${LOCALSTACK_URL:-http://localstack:4566}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      # MinIO
+      MINIO_URL: ${MINIO_URL:-http://minio:9000}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-stubrix}
+      # Kafka / Redpanda
+      KAFKA_REST_URL: ${KAFKA_REST_URL:-http://redpanda:8082}
+      # RabbitMQ
+      RABBITMQ_API_URL: ${RABBITMQ_API_URL:-http://rabbitmq:15672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-%2F}
+      # gRPC
+      GRIPMOCK_URL: ${GRIPMOCK_URL:-http://gripmock:4771}
+      # Pact
+      PACT_BROKER_URL: ${PACT_BROKER_URL:-http://pact-broker:9292}
+      # Chaos
+      TOXIPROXY_URL: ${TOXIPROXY_URL:-http://toxiproxy:8474}
+      # AI / RAG
+      OPENRAG_URL: ${OPENRAG_URL:-http://openrag:8888}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OLLAMA_HOST: ${OLLAMA_HOST:-}
+      # Observability
+      JAEGER_URL: ${JAEGER_URL:-http://jaeger:16686}
+      OTEL_EXPORTER_ENDPOINT: ${OTEL_EXPORTER_ENDPOINT:-http://jaeger:4318}
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-stubrix}
+      OTEL_SAMPLING_RATE: ${OTEL_SAMPLING_RATE:-1.0}
+      PROMETHEUS_URL: ${PROMETHEUS_URL:-http://prometheus:9090}
+      # IAM
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-stubrix}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-stubrix-api}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
+      ZITADEL_URL: ${ZITADEL_URL:-http://zitadel:8080}
+    volumes:
+      - ./mocks:/app/mocks
+      - ./dumps:/app/dumps
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
   # WireMock – Serve mocks
   # --------------------------------------------------------------------------
   wiremock:
