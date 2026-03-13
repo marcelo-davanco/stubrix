@@ -23,6 +23,7 @@ export interface ServiceStatus {
   name: string;
   category: ServiceCategory;
   enabled: boolean;
+  autoStart: boolean;
   containerStatus: 'running' | 'stopped' | 'unknown';
   healthStatus: HealthStatus;
   ports: string[];
@@ -323,6 +324,7 @@ export class ServiceLifecycleService implements OnModuleInit {
       name: svc.name,
       category: svc.category,
       enabled: row?.enabled === 1,
+      autoStart: (row?.auto_start ?? 0) === 1,
       containerStatus,
       healthStatus: (row?.health_status as HealthStatus) ?? 'unknown',
       ports,
