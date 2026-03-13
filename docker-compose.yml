@@ -17,6 +17,9 @@
 ##   docker compose --profile cloudbeaver up -d       # CloudBeaver → http://localhost:8083
 ##   docker compose --profile db-viewer up -d         # Both viewers (Adminer + CloudBeaver)
 ##
+## AI / RAG (F9):
+##   docker compose --profile ai up -d                 # ChromaDB + OpenRAG (AI layer)
+##
 ## API Clients (F8):
 ##   docker compose --profile hoppscotch up -d        # Hoppscotch → http://localhost:3100
 ##
@@ -181,6 +184,42 @@ services:
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
+  # ChromaDB – Vector database for RAG (F9.01)
+  # Access: http://localhost:8000
+  # --------------------------------------------------------------------------
+  chromadb:
+    image: chromadb/chroma:latest
+    profiles: ["ai", "openrag"]
+    container_name: stubrix-chromadb
+    ports:
+      - "${CHROMADB_PORT:-8000}:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # OpenRAG – RAG query service (F9.01)
+  # Access: http://localhost:8888
+  # --------------------------------------------------------------------------
+  openrag:
+    image: ghcr.io/openrag/openrag:latest
+    profiles: ["ai", "openrag"]
+    container_name: stubrix-openrag
+    ports:
+      - "${OPENRAG_PORT:-8888}:8888"
+    environment:
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OLLAMA_HOST: ${OLLAMA_HOST:-}
+    depends_on:
+      - chromadb
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
   # Hoppscotch – Self-Hosted API Client (F8.01)
   # Access: http://localhost:3100
   # --------------------------------------------------------------------------
@@ -213,3 +252,4 @@ volumes:
   pg_data:
   mysql_data:
   cloudbeaver_data:
+  chromadb_data:

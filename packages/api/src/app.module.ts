@@ -14,6 +14,8 @@ import { ImportModule } from './import/import.module';
 import { StatefulMocksModule } from './stateful-mocks/stateful-mocks.module';
 import { LintModule } from './governance/lint/lint.module';
 import { CoverageModule } from './coverage/coverage.module';
+import { ScenariosModule } from './scenarios/scenarios.module';
+import { IntelligenceModule } from './intelligence/intelligence.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -30,6 +32,8 @@ export function setupSwagger(app: any) {
     .addTag('stateful-mocks', 'Stateful mocking with DB sync')
     .addTag('governance', 'API linting and spec governance')
     .addTag('coverage', 'Mock coverage analysis')
+    .addTag('scenarios', 'Time Machine — scenario capture & restore')
+    .addTag('intelligence', 'AI-powered mock generation and RAG queries')
     .addTag('status', 'System status')
     .addServer('http://localhost:9090', 'Development server')
     .addServer('https://api.stubrix.com', 'Production server')
@@ -75,6 +79,8 @@ export function setupSwagger(app: any) {
     StatefulMocksModule,
     LintModule,
     CoverageModule,
+    ScenariosModule,
+    IntelligenceModule,
   ],
 })
 export class AppModule {}
