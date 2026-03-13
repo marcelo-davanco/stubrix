@@ -5,7 +5,7 @@ import {
   BarChart2, ShieldCheck, Brain, LayoutTemplate,
   GitBranch, Gauge, Network, Radio, Wifi,
   Users, ShieldCheck as IamIcon, FileCheck,
-  Cloud, HardDrive,
+  Cloud, HardDrive, Settings,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -73,6 +73,12 @@ const navGroups: NavGroup[] = [
     items: [
       { to: '/cloud', label: 'Cloud (LocalStack)', icon: Cloud },
       { to: '/storage', label: 'Storage (MinIO)', icon: HardDrive },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { to: '/settings', label: 'Settings', icon: Settings },
     ],
   },
 ];
