@@ -1,4 +1,5 @@
-.PHONY: build wiremock mockoon record record-stop convert-to-mockoon convert-to-wiremock clean help
+.PHONY: build wiremock mockoon record record-stop convert-to-mockoon convert-to-wiremock clean help \
+        adminer adminer-up adminer-down cloudbeaver cloudbeaver-up cloudbeaver-down db-viewer db-viewer-down
 
 # Load .env if it exists (values can still be overridden from CLI)
 -include .env
@@ -78,11 +79,39 @@ mysql-down: ## Stop MySQL services
 mysql-shell: ## Open mysql shell
 	docker compose exec db-mysql mysql -u $${MYSQL_USER:-stubrix} -p$${MYSQL_PASSWORD:-stubrix}
 
+# ---------------------------------------------------------------------------
+# Database Viewers (F29)
+# ---------------------------------------------------------------------------
+
+adminer: ## Start Adminer + PostgreSQL (lightweight DB web UI — http://localhost:8082)
+	docker compose --profile postgres --profile adminer up
+
+adminer-up: ## Start Adminer + PostgreSQL (detached)
+	docker compose --profile postgres --profile adminer up -d
+
+adminer-down: ## Stop Adminer
+	docker compose --profile adminer down
+
+cloudbeaver: ## Start CloudBeaver + PostgreSQL (full DB IDE — http://localhost:8083)
+	docker compose --profile postgres --profile cloudbeaver up
+
+cloudbeaver-up: ## Start CloudBeaver + PostgreSQL (detached)
+	docker compose --profile postgres --profile cloudbeaver up -d
+
+cloudbeaver-down: ## Stop CloudBeaver
+	docker compose --profile cloudbeaver down
+
+db-viewer: ## Start both Adminer + CloudBeaver + PostgreSQL (detached)
+	docker compose --profile postgres --profile db-viewer up -d
+
+db-viewer-down: ## Stop all DB viewers
+	docker compose --profile db-viewer down
+
 all-up: ## Start WireMock + PostgreSQL
 	docker compose --profile wiremock --profile postgres up -d
 
 all-down: ## Stop all services
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql down
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver down
 
 # ---------------------------------------------------------------------------
 # Conversion
@@ -106,7 +135,7 @@ list-mappings: ## List current WireMock mappings
 	@ls -la mocks/__files/ 2>/dev/null || echo "No response files found"
 
 clean: ## Remove all generated mocks and stop containers
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql down -v 2>/dev/null || true
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver down -v 2>/dev/null || true
 	rm -f .mockoon-env.json
 
 clean-mocks: ## Remove all mock files (careful!)

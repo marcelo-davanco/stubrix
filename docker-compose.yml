@@ -1,14 +1,26 @@
 ## ==========================================================================
 ## Stubrix – Docker Compose (WireMock / Mockoon)
 ##
-## Usage:
-##   docker compose --profile databases up -d         # PostgreSQL only (SQLite runs on host)
+## Mock Engines:
 ##   docker compose --profile wiremock up -d          # run with WireMock
 ##   docker compose --profile mockoon  up -d          # run with Mockoon
 ##   docker compose --profile wiremock-record up -d   # WireMock in record mode
 ##   docker compose --profile mockoon-proxy  up -d    # Mockoon with proxy
+##
+## Databases:
 ##   docker compose --profile postgres up -d          # PostgreSQL only
 ##   docker compose --profile mysql up -d             # MySQL only
+##   docker compose --profile databases up -d         # PostgreSQL only (legacy alias)
+##
+## Database Viewers (F29):
+##   docker compose --profile adminer up -d           # Adminer UI  → http://localhost:8082
+##   docker compose --profile cloudbeaver up -d       # CloudBeaver → http://localhost:8083
+##   docker compose --profile db-viewer up -d         # Both viewers (Adminer + CloudBeaver)
+##
+## Shortcuts (see Makefile):
+##   make adminer-up      # PostgreSQL + Adminer
+##   make cloudbeaver-up  # PostgreSQL + CloudBeaver
+##   make db-viewer       # PostgreSQL + both viewers
 ## ==========================================================================
 
 x-common: &common
@@ -128,6 +140,43 @@ services:
   # SQLite runs directly on the host via the API, no Docker container needed.
   # Database files are stored in: ./dumps/sqlite/
 
+  # --------------------------------------------------------------------------
+  # Adminer – Lightweight database web UI (F29.01)
+  # Supports: PostgreSQL, MySQL, SQLite
+  # Access: http://localhost:8082
+  # --------------------------------------------------------------------------
+  adminer:
+    image: adminer:4
+    profiles: ["adminer", "db-viewer"]
+    container_name: stubrix-adminer
+    ports:
+      - "${ADMINER_PORT:-8082}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: ${PG_HOST:-db-postgres}
+      ADMINER_DESIGN: pepa-linha-dark
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # CloudBeaver – Full-featured database web IDE (F29.02)
+  # Supports: PostgreSQL, MySQL, SQLite and 40+ databases
+  # Access: http://localhost:8083
+  # --------------------------------------------------------------------------
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    profiles: ["cloudbeaver", "db-viewer"]
+    container_name: stubrix-cloudbeaver
+    ports:
+      - "${CLOUDBEAVER_PORT:-8083}:8978"
+    volumes:
+      - cloudbeaver_data:/opt/cloudbeaver/workspace
+      - ./config/cloudbeaver:/opt/cloudbeaver/conf:ro
+    restart: unless-stopped
+
 volumes:
   pg_data:
   mysql_data:
+  cloudbeaver_data:
