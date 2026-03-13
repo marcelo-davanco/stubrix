@@ -152,3 +152,23 @@ npm run build         # Then build all
 ```bash
 git reset --hard HEAD~1  # Remove last version update
 ```
+
+---
+
+## Release History
+
+| Version | Date | Milestone | Key Deliverables |
+|---------|------|-----------|-----------------|
+| v1.3.1 | 2026-03 | Foundation | WireMock/Mockoon dual engine, recording, dashboard, DB snapshots, MCP servers |
+| v1.4.0 | 2026-03 | Stateful Mocking & DB Viewer | Stateful mock scenarios, Adminer, CloudBeaver |
+| v1.5.0 | 2026-03 | API Clients & Universal Import | HAR/Postman/OpenAPI import, Bruno, Hoppscotch |
+| v1.6.0 | 2026-03 | Governance & Coverage | Spectral linting, mock coverage analysis |
+| v1.7.0 | 2026-03 | Intelligence & Time Machine | AI/RAG (ChromaDB), Time Machine scenarios |
+| v1.8.0 | 2026-03 | Contracts & Chaos | Pact Broker, fault injection, Toxiproxy |
+| v1.9.0 | 2026-03 | CLI & Automation | @stubrix/cli standalone binary |
+| v2.0.0 | 2026-03 | Multi-Protocol & Events | GraphQL, gRPC, Kafka, RabbitMQ, webhooks |
+| v2.1.0 | 2026-03 | Enterprise & Auth | Auth/RBAC/multi-tenancy, VS Code extension, templates |
+| v2.2.0 | 2026-03 | Observability & Performance | Prometheus, Grafana, k6, Jaeger/OTEL |
+| **v2.3.0** | **2026-03** | **Cloud & Storage** | **LocalStack, MinIO, Keycloak, Zitadel** |
+
+> Current latest: **v2.3.0** — see [GitHub Releases](https://github.com/marcelo-davanco/stubrix/releases) for full changelogs.
