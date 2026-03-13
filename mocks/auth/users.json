@@ -1,0 +1,12 @@
+[
+  {
+    "id": "f751046d-ac2c-479d-9aef-2251955c7c15",
+    "username": "admin",
+    "email": "admin@stubrix.local",
+    "role": "admin",
+    "workspaceId": "default",
+    "apiKey": "sbx_dev_default_admin_key",
+    "createdAt": "2026-03-13T02:54:21.955Z",
+    "active": true
+  }
+]
