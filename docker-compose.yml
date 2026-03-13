@@ -602,6 +602,7 @@ services:
       VITE_BACKEND_API_URL: http://localhost:3100/backend/v1
       DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
       SECRET: ${HOPPSCOTCH_SECRET:-stubrix-hoppscotch-secret}
+      DATA_ENCRYPTION_KEY: ${HOPPSCOTCH_ENCRYPTION_KEY:-stubrix-hoppscotch-32byteenckey!}
       TOKEN_SALT_COMPLEXITY: 10
       MAGIC_LINK_TOKEN_VALIDITY: 3
       REFRESH_TOKEN_VALIDITY: 604800000
