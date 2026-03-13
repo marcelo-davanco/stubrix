@@ -423,6 +423,8 @@ export const mockApi = {
   coverage: {
     analyze: (content: string, specFile?: string): Promise<CoverageReport> =>
       request<CoverageReport>('/coverage/analyze', { method: 'POST', body: JSON.stringify({ content, specFile }) }),
+    analyzePostman: (content: string, specFile?: string): Promise<CoverageReport> =>
+      request<CoverageReport>('/coverage/analyze/postman-raw', { method: 'POST', body: JSON.stringify({ content, specFile }) }),
     score: (specUrl?: string): Promise<{ coverage: number; summary: string }> =>
       request<{ coverage: number; summary: string }>(`/coverage/score${specUrl ? `?specUrl=${encodeURIComponent(specUrl)}` : ''}`),
     textReport: (content: string, specFile?: string): Promise<{ report: string }> =>

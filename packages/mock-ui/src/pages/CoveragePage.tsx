@@ -10,12 +10,23 @@ type CoveragePageProps = {
 
 export function CoveragePage({ onNavigateBack }: CoveragePageProps) {
   const [specContent, setSpecContent] = useState('');
+  const [specFileName, setSpecFileName] = useState<string | undefined>(undefined);
   const [specUrl, setSpecUrl] = useState('');
   const [report, setReport] = useState<CoverageReport | null>(null);
   const [textReport, setTextReport] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'paste' | 'url'>('paste');
+
+  function isPostmanCollection(content: string): boolean {
+    try {
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      const info = parsed.info as Record<string, unknown> | undefined;
+      return !!info && (typeof info['_postman_id'] === 'string' || String(info['schema'] ?? '').includes('getpostman.com'));
+    } catch {
+      return false;
+    }
+  }
 
   async function analyze() {
     const content = tab === 'paste' ? specContent : '';
@@ -33,10 +44,13 @@ export function CoveragePage({ onNavigateBack }: CoveragePageProps) {
         setReport(res);
         const txt = await mockApi.coverage.textReport(content, specUrl);
         setTextReport(txt.report);
-      } else {
-        const res = await mockApi.coverage.analyze(content);
+      } else if (isPostmanCollection(content)) {
+        const res = await mockApi.coverage.analyzePostman(content, specFileName);
         setReport(res);
-        const txt = await mockApi.coverage.textReport(content);
+      } else {
+        const res = await mockApi.coverage.analyze(content, specFileName);
+        setReport(res);
+        const txt = await mockApi.coverage.textReport(content, specFileName);
         setTextReport(txt.report);
       }
     } catch (e) {
@@ -49,6 +63,7 @@ export function CoveragePage({ onNavigateBack }: CoveragePageProps) {
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setSpecFileName(file.name);
     const reader = new FileReader();
     reader.onload = (ev) => {
       setSpecContent(ev.target?.result as string);
@@ -71,7 +86,7 @@ export function CoveragePage({ onNavigateBack }: CoveragePageProps) {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <BarChart2 size={22} className="text-green-400" /> Mock Coverage
           </h1>
-          <p className="text-text-secondary text-sm">Analyze how well your mocks cover an OpenAPI spec</p>
+          <p className="text-text-secondary text-sm">Analyze how well your mocks cover an OpenAPI spec or Postman collection</p>
         </div>
       </div>
 
@@ -100,13 +115,17 @@ export function CoveragePage({ onNavigateBack }: CoveragePageProps) {
                 <Upload size={13} /> Upload file
                 <input type="file" accept=".yaml,.yml,.json" onChange={onFileChange} className="hidden" />
               </label>
-              {specContent && <span className="text-xs text-green-400">File loaded ({specContent.length} chars)</span>}
+              {specContent && (
+                <span className="text-xs text-green-400">
+                  File loaded ({specContent.length} chars){isPostmanCollection(specContent) ? ' — Postman collection detected' : ''}
+                </span>
+              )}
             </div>
             <textarea
               value={specContent}
               onChange={(e) => setSpecContent(e.target.value)}
               rows={10}
-              placeholder="Paste your OpenAPI spec here (YAML or JSON)…"
+              placeholder="Paste your OpenAPI spec (YAML or JSON) or Postman collection (JSON)…"
               className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-green-400 resize-none"
             />
           </>

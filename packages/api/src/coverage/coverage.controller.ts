@@ -32,7 +32,9 @@ export class CoverageController {
 
   @Post('analyze')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Run mock coverage analysis against an OpenAPI spec' })
+  @ApiOperation({
+    summary: 'Run mock coverage analysis against an OpenAPI spec',
+  })
   async analyze(@Body() dto: AnalyzeCoverageDto): Promise<CoverageReport> {
     if (!dto.content) {
       throw new BadRequestException('content is required');
@@ -44,8 +46,12 @@ export class CoverageController {
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Run coverage analysis from uploaded OpenAPI spec file' })
-  async analyzeFile(@UploadedFile() file: Express.Multer.File): Promise<CoverageReport> {
+  @ApiOperation({
+    summary: 'Run coverage analysis from uploaded OpenAPI spec file',
+  })
+  async analyzeFile(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<CoverageReport> {
     if (!file?.buffer) {
       throw new BadRequestException('No file provided');
     }
@@ -55,10 +61,49 @@ export class CoverageController {
     );
   }
 
+  @Post('analyze/postman')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Run mock coverage analysis against a Postman collection',
+  })
+  async analyzePostman(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<CoverageReport> {
+    if (!file?.buffer) {
+      throw new BadRequestException('No file provided');
+    }
+    return this.coverageService.analyzeFromPostman(
+      file.buffer.toString('utf-8'),
+      file.originalname,
+    );
+  }
+
+  @Post('analyze/postman-raw')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Run mock coverage analysis from Postman collection content',
+  })
+  async analyzePostmanRaw(
+    @Body() dto: AnalyzeCoverageDto,
+  ): Promise<CoverageReport> {
+    if (!dto.content) {
+      throw new BadRequestException('content is required');
+    }
+    return this.coverageService.analyzeFromPostman(dto.content, dto.specFile);
+  }
+
   @Get('score')
   @ApiOperation({ summary: 'Get current mock coverage percentage' })
-  @ApiQuery({ name: 'specUrl', required: false, description: 'URL to fetch OpenAPI spec from' })
-  async score(@Query('specUrl') specUrl?: string): Promise<{ coverage: number; summary: string }> {
+  @ApiQuery({
+    name: 'specUrl',
+    required: false,
+    description: 'URL to fetch OpenAPI spec from',
+  })
+  async score(
+    @Query('specUrl') specUrl?: string,
+  ): Promise<{ coverage: number; summary: string }> {
     if (!specUrl) {
       return { coverage: 0, summary: 'No spec provided — pass ?specUrl=<url>' };
     }
@@ -72,7 +117,9 @@ export class CoverageController {
         summary: `${report.coveredEndpoints}/${report.totalEndpoints} endpoints covered`,
       };
     } catch (err) {
-      throw new BadRequestException(`Failed to fetch spec: ${(err as Error).message}`);
+      throw new BadRequestException(
+        `Failed to fetch spec: ${(err as Error).message}`,
+      );
     }
   }
 
@@ -92,8 +139,13 @@ export class CoverageController {
   @Post('report/text')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Generate a text coverage report' })
-  async textReport(@Body() dto: AnalyzeCoverageDto): Promise<{ report: string }> {
-    const coverage = await this.coverageService.analyze(dto.content, dto.specFile);
+  async textReport(
+    @Body() dto: AnalyzeCoverageDto,
+  ): Promise<{ report: string }> {
+    const coverage = await this.coverageService.analyze(
+      dto.content,
+      dto.specFile,
+    );
     return { report: this.coverageService.generateTextReport(coverage) };
   }
 }
