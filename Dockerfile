@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 # Stage 1 – Download WireMock standalone JAR
 # ---------------------------------------------------------------------------
-FROM node:24-slim AS wiremock-download
+FROM node:25-slim AS wiremock-download
 
 ARG WIREMOCK_VERSION=3.9.1
 
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
 # ---------------------------------------------------------------------------
 # Stage 2 – Combined image (Debian-based for ARM64 + x86 compat)
 # ---------------------------------------------------------------------------
-FROM node:24-slim AS combined
+FROM node:25-slim AS combined
 
 # Install Java (headless), bash, curl, jq
 RUN apt-get update && \
