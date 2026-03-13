@@ -30,6 +30,7 @@ import { TracingModule } from './tracing/tracing.module';
 import { CloudModule } from './cloud/cloud.module';
 import { StorageModule } from './storage/storage.module';
 import { IamModule } from './iam/iam.module';
+import { SettingsModule } from './settings/settings.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -93,6 +94,7 @@ export function setupSwagger(app: any) {
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
+      renderPath: '/*',
       exclude: ['/api/{*any}'],
     }),
     CommonModule,
@@ -123,6 +125,7 @@ export function setupSwagger(app: any) {
     CloudModule,
     StorageModule,
     IamModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

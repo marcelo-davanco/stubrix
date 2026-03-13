@@ -5,3 +5,4 @@ export * from './types/recording';
 export * from './types/log';
 export * from './types/database';
 export * from './types/import-ir';
+export * from './types/settings';

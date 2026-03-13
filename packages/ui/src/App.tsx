@@ -26,6 +26,9 @@ import IamBridge from './pages/IamBridge'
 import ContractsBridge from './pages/ContractsBridge'
 import CloudBridge from './pages/CloudBridge'
 import StorageBridge from './pages/StorageBridge'
+import { SettingsPage } from './pages/SettingsPage'
+import { ServiceConfigPage } from './pages/ServiceConfigPage'
+import { BackupsPage } from './pages/BackupsPage'
 
 function App() {
   return (
@@ -59,6 +62,9 @@ function App() {
           <Route path="contracts" element={<ContractsBridge />} />
           <Route path="cloud" element={<CloudBridge />} />
           <Route path="storage" element={<StorageBridge />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="settings/services/:serviceId" element={<ServiceConfigPage />} />
+          <Route path="settings/backups" element={<BackupsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

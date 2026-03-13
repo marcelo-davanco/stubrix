@@ -149,9 +149,23 @@ services:
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-stubrix-api}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
       ZITADEL_URL: ${ZITADEL_URL:-http://zitadel:8080}
+      # Settings panel (F34)
+      COMPOSE_FILE_PATH: /app/docker-compose.yml
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-mocks-servers}
+      CONFIG_DB_PATH: ${CONFIG_DB_PATH:-/app/data/stubrix-config.db}
+      BACKUP_DIR: ${BACKUP_DIR:-/app/data/backups}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_MAX_COUNT: ${BACKUP_MAX_COUNT:-50}
+      CRYPTO_SESSION_TIMEOUT: ${CRYPTO_SESSION_TIMEOUT:-1800000}
+      PBKDF2_ITERATIONS: ${PBKDF2_ITERATIONS:-100000}
+      CRYPTO_BCRYPT_ROUNDS: ${CRYPTO_BCRYPT_ROUNDS:-12}
+      HEALTH_CHECK_INTERVAL: ${HEALTH_CHECK_INTERVAL:-30000}
     volumes:
       - ./mocks:/app/mocks
       - ./dumps:/app/dumps
+      - ./data:/app/data
+      - ./docker-compose.yml:/app/docker-compose.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       db-postgres:
         condition: service_healthy
@@ -560,6 +574,19 @@ services:
   # Hoppscotch – Self-Hosted API Client (F8.01)
   # Access: http://localhost:3100
   # --------------------------------------------------------------------------
+  hoppscotch-migrate:
+    image: hoppscotch/hoppscotch:latest
+    profiles: ["hoppscotch"]
+    container_name: stubrix-hoppscotch-migrate
+    command: ["sh", "-c", "cd /dist/backend && node_modules/.pnpm/node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma"]
+    environment:
+      DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+    restart: "no"
+
   hoppscotch:
     image: hoppscotch/hoppscotch:latest
     profiles: ["hoppscotch"]
@@ -579,10 +606,15 @@ services:
       MAGIC_LINK_TOKEN_VALIDITY: 3
       REFRESH_TOKEN_VALIDITY: 604800000
       ACCESS_TOKEN_VALIDITY: 86400000
+      WHITELISTED_ORIGINS: http://localhost:3100,http://localhost:3100/admin
+      MAILER_SMTP_ENABLE: "false"
+      MAILER_USE_CUSTOM_CONFIGS: "false"
     depends_on:
       db-postgres:
         condition: service_healthy
         required: false
+      hoppscotch-migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
 
 volumes:
