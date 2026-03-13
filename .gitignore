@@ -49,3 +49,4 @@ data/*.db-wal
 data/*.db-shm
 data/backups/
 # MCP node_modules are gitignored via packages/mcp/.gitignore
+.env.bck
