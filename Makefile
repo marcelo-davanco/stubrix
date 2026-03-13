@@ -10,7 +10,11 @@
         rabbitmq-up rabbitmq-down rabbitmq-logs \
         gripmock-up gripmock-down \
         monitoring-up monitoring-down \
-        jaeger-up jaeger-down
+        jaeger-up jaeger-down \
+        localstack-up localstack-down \
+        minio-up minio-down \
+        keycloak-up keycloak-down \
+        zitadel-up zitadel-down
 
 # Load .env if it exists (values can still be overridden from CLI)
 -include .env
@@ -197,6 +201,30 @@ jaeger-up: ## Start Jaeger distributed tracing (F28.01 — detached)
 jaeger-down: ## Stop Jaeger
 	docker compose --profile jaeger down
 
+localstack-up: ## Start LocalStack AWS cloud mocking (F27.01 — detached)
+	docker compose --profile localstack up -d
+
+localstack-down: ## Stop LocalStack
+	docker compose --profile localstack down
+
+minio-up: ## Start MinIO object storage (F32.01 — detached)
+	docker compose --profile minio up -d
+
+minio-down: ## Stop MinIO
+	docker compose --profile minio down
+
+keycloak-up: ## Start Keycloak IAM (F33.01 — detached)
+	docker compose --profile keycloak up -d
+
+keycloak-down: ## Stop Keycloak
+	docker compose --profile keycloak down
+
+zitadel-up: ## Start Zitadel IAM (F33.02 — detached)
+	docker compose --profile zitadel up -d
+
+zitadel-down: ## Stop Zitadel
+	docker compose --profile zitadel down
+
 hoppscotch: ## Start Hoppscotch self-hosted API client (F8.01 — http://localhost:3100)
 	docker compose --profile hoppscotch up
 
@@ -215,7 +243,7 @@ bruno-test-collection: ## Run Bruno tests for a specific collection (e.g. make b
 	COLLECTION=$(COLLECTION) bash scripts/bruno-test.sh
 
 all-down: ## Stop all services
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger down
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger --profile localstack --profile minio --profile keycloak --profile zitadel down
 
 # ---------------------------------------------------------------------------
 # Conversion
@@ -239,7 +267,7 @@ list-mappings: ## List current WireMock mappings
 	@ls -la mocks/__files/ 2>/dev/null || echo "No response files found"
 
 clean: ## Remove all generated mocks and stop containers
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger down -v 2>/dev/null || true
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger --profile localstack --profile minio --profile keycloak --profile zitadel down -v 2>/dev/null || true
 	rm -f .mockoon-env.json
 
 clean-mocks: ## Remove all mock files (careful!)

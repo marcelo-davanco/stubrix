@@ -27,6 +27,9 @@ import { TemplatesModule } from './templates/templates.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { PerformanceModule } from './performance/performance.module';
 import { TracingModule } from './tracing/tracing.module';
+import { CloudModule } from './cloud/cloud.module';
+import { StorageModule } from './storage/storage.module';
+import { IamModule } from './iam/iam.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -56,6 +59,9 @@ export function setupSwagger(app: any) {
     .addTag('metrics', 'Prometheus metrics & health checks')
     .addTag('performance', 'k6 performance testing & baselines')
     .addTag('tracing', 'Distributed tracing — Jaeger & OpenTelemetry')
+    .addTag('cloud', 'AWS Cloud mocking — LocalStack (S3, SQS, SNS, DynamoDB)')
+    .addTag('storage', 'Object storage — MinIO (S3-compatible)')
+    .addTag('iam', 'Identity & Access Management — Keycloak & Zitadel')
     .addTag('status', 'System status')
     .addServer('http://localhost:9090', 'Development server')
     .addServer('https://api.stubrix.com', 'Production server')
@@ -114,6 +120,9 @@ export function setupSwagger(app: any) {
     MetricsModule,
     PerformanceModule,
     TracingModule,
+    CloudModule,
+    StorageModule,
+    IamModule,
   ],
 })
 export class AppModule {}
