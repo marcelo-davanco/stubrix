@@ -1421,6 +1421,138 @@ server.tool(
 );
 
 // ===========================================================================
+// Metrics — Prometheus & Health (F21)
+// ===========================================================================
+
+server.tool(
+  "metrics_health",
+  "Get detailed health status of all Stubrix services with latencies.",
+  {},
+  async () => api("/api/metrics/health"),
+);
+
+server.tool(
+  "metrics_summary",
+  "Get metrics summary — counters, histograms, uptime.",
+  {},
+  async () => api("/api/metrics/summary"),
+);
+
+// ===========================================================================
+// Performance — k6 Testing & Baselines (F22)
+// ===========================================================================
+
+server.tool(
+  "perf_list_scripts",
+  "List k6 performance test scripts (built-in: smoke, load, stress).",
+  {},
+  async () => api("/api/performance/scripts"),
+);
+
+server.tool(
+  "perf_create_script",
+  "Create a custom k6 performance test script.",
+  {
+    name: z.string().describe("Script name"),
+    script: z.string().describe("k6 JavaScript script content"),
+    description: z.string().optional(),
+    options: z.object({
+      vus: z.number().optional(),
+      duration: z.string().optional(),
+    }).optional(),
+  },
+  async ({ name, script, description, options }) =>
+    api("/api/performance/scripts", {
+      method: "POST",
+      body: JSON.stringify({ name, script, description, options: options ?? {} }),
+    }),
+);
+
+server.tool(
+  "perf_list_baselines",
+  "List saved performance baselines.",
+  {},
+  async () => api("/api/performance/baselines"),
+);
+
+server.tool(
+  "perf_save_baseline",
+  "Save a performance baseline from k6 run results.",
+  {
+    name: z.string().describe("Baseline name"),
+    scriptId: z.string().describe("Script ID this baseline belongs to"),
+    p95ResponseMs: z.number().describe("p95 response time in ms"),
+    p99ResponseMs: z.number().describe("p99 response time in ms"),
+    errorRate: z.number().describe("Error rate 0.0-1.0"),
+    requestsPerSec: z.number().describe("Requests per second"),
+  },
+  async ({ name, scriptId, p95ResponseMs, p99ResponseMs, errorRate, requestsPerSec }) =>
+    api("/api/performance/baselines", {
+      method: "POST",
+      body: JSON.stringify({ name, scriptId, metrics: { p95ResponseMs, p99ResponseMs, errorRate, requestsPerSec } }),
+    }),
+);
+
+server.tool(
+  "perf_compare_baseline",
+  "Compare current metrics against a saved baseline — returns pass/fail with regressions (CI gate).",
+  {
+    baselineId: z.string().describe("Baseline UUID"),
+    p95ResponseMs: z.number(),
+    p99ResponseMs: z.number(),
+    errorRate: z.number(),
+    requestsPerSec: z.number(),
+  },
+  async ({ baselineId, p95ResponseMs, p99ResponseMs, errorRate, requestsPerSec }) =>
+    api(`/api/performance/baselines/${baselineId}/compare`, {
+      method: "POST",
+      body: JSON.stringify({ current: { p95ResponseMs, p99ResponseMs, errorRate, requestsPerSec } }),
+    }),
+);
+
+// ===========================================================================
+// Tracing — Jaeger & OpenTelemetry (F28)
+// ===========================================================================
+
+server.tool(
+  "tracing_list",
+  "List recent distributed traces.",
+  {
+    service: z.string().optional().describe("Filter by service name"),
+    limit: z.number().optional().describe("Max traces to return"),
+  },
+  async ({ service, limit }) => {
+    const params = new URLSearchParams();
+    if (service) params.set("service", service);
+    if (limit) params.set("limit", String(limit));
+    return api(`/api/tracing/traces?${params}`);
+  },
+);
+
+server.tool(
+  "tracing_get",
+  "Get a specific distributed trace by ID.",
+  {
+    traceId: z.string().describe("Trace ID"),
+  },
+  async ({ traceId }) => api(`/api/tracing/traces/${traceId}`),
+);
+
+server.tool(
+  "tracing_health",
+  "Check if Jaeger is available.",
+  {},
+  async () => api("/api/tracing/health"),
+);
+
+server.tool(
+  "tracing_config",
+  "Get OpenTelemetry configuration (endpoint, sampling rate, service name).",
+  {},
+  async () => api("/api/tracing/config"),
+);
+
+// ===========================================================================
 // Governance — Spectral Lint (F12)
 // ===========================================================================
 

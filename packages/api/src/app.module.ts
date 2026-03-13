@@ -24,6 +24,9 @@ import { EventsModule } from './events/events.module';
 import { ProtocolsModule } from './protocols/protocols.module';
 import { AuthModule } from './auth/auth.module';
 import { TemplatesModule } from './templates/templates.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { PerformanceModule } from './performance/performance.module';
+import { TracingModule } from './tracing/tracing.module';
 
 export function setupSwagger(app: any) {
   const config = new DocumentBuilder()
@@ -50,6 +53,9 @@ export function setupSwagger(app: any) {
     .addTag('protocols', 'Multi-protocol mocks — GraphQL & gRPC')
     .addTag('auth', 'Authentication, API keys, RBAC & multi-tenancy')
     .addTag('templates', 'Environment templates & blueprints')
+    .addTag('metrics', 'Prometheus metrics & health checks')
+    .addTag('performance', 'k6 performance testing & baselines')
+    .addTag('tracing', 'Distributed tracing — Jaeger & OpenTelemetry')
     .addTag('status', 'System status')
     .addServer('http://localhost:9090', 'Development server')
     .addServer('https://api.stubrix.com', 'Production server')
@@ -105,6 +111,9 @@ export function setupSwagger(app: any) {
     ProtocolsModule,
     AuthModule,
     TemplatesModule,
+    MetricsModule,
+    PerformanceModule,
+    TracingModule,
   ],
 })
 export class AppModule {}
