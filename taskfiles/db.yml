@@ -1,0 +1,31 @@
+version: '3'
+
+vars:
+  API_URL: '{{.API_URL | default "http://localhost:9090"}}'
+
+tasks:
+  engines:
+    desc: List available database engines
+    cmds:
+      - curl -s {{.API_URL}}/api/db/engines | jq .
+
+  snapshots:
+    desc: List snapshots for an engine (ENGINE=postgres)
+    cmds:
+      - curl -s {{.API_URL}}/api/db/{{.ENGINE | default "postgres"}}/snapshots | jq .
+
+  snapshot:
+    desc: Create a snapshot (ENGINE=postgres NAME=my-snapshot)
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/db/{{.ENGINE | default "postgres"}}/snapshots \
+          -H 'Content-Type: application/json' \
+          -d '{"name":"{{.NAME | default "snapshot"}}"}' | jq .
+
+  restore:
+    desc: Restore a snapshot (ENGINE=postgres SNAPSHOT=<name>)
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/db/{{.ENGINE | default "postgres"}}/snapshots/{{.SNAPSHOT}}/restore \
+          -H 'Content-Type: application/json' \
+          -d '{}' | jq .
