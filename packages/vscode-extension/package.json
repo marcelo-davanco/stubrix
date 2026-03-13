@@ -2,7 +2,7 @@
   "name": "stubrix-vscode",
   "displayName": "Stubrix",
   "description": "Stubrix mock server integration for VS Code and Windsurf",
-  "version": "1.3.1",
+  "version": "2.3.0",
   "publisher": "stubrix",
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other", "Testing"],

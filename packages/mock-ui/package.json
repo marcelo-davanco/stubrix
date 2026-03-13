@@ -1,7 +1,7 @@
 {
   "name": "@stubrix/mock-ui",
   "private": true,
-  "version": "1.3.1",
+  "version": "2.3.0",
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",

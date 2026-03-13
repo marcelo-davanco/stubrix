@@ -1,6 +1,6 @@
 {
   "name": "@stubrix/stubrix-mcp",
-  "version": "1.0.0",
+  "version": "2.3.0",
   "private": true,
   "description": "MCP server for the Stubrix Control Plane API — manage projects, mocks, recordings, databases, and snapshots",
   "type": "module",

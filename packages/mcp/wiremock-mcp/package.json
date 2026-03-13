@@ -1,6 +1,6 @@
 {
   "name": "@stubrix/wiremock-mcp",
-  "version": "1.0.0",
+  "version": "2.3.0",
   "private": true,
   "description": "MCP server for WireMock Admin API — manage mappings, recordings, and server state",
   "type": "module",
