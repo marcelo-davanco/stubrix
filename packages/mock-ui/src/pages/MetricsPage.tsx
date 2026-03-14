@@ -9,6 +9,12 @@ type MetricsPageProps = {
   onNavigateBack?: () => void;
 };
 
+const TAB_LABELS: Record<string, [string, string]> = {
+  summary: ['metrics.summary', 'Summary'],
+  health: ['metrics.health', 'Health'],
+  prometheus: ['metrics.prometheus', 'Prometheus'],
+};
+
 export function MetricsPage({ t, onNavigateBack }: MetricsPageProps) {
   const T = (key: string, fallback: string) => (t ? t(key) : fallback);
   const [summary, setSummary] = useState<MetricsSummary | null>(null);
@@ -72,7 +78,7 @@ export function MetricsPage({ t, onNavigateBack }: MetricsPageProps) {
           <button key={tabKey} onClick={() => setTab(tabKey)}
             className={['px-4 py-1.5 rounded-md text-sm capitalize transition-colors',
               tab === tabKey ? 'bg-orange-400/20 text-orange-400' : 'text-text-secondary hover:text-text-primary'].join(' ')}>
-            {tabKey === 'summary' ? T('metrics.summary', 'Summary') : tabKey === 'health' ? T('metrics.health', 'Health') : T('metrics.prometheus', 'Prometheus')}
+            {(() => { const [k, fb] = TAB_LABELS[tabKey] ?? [tabKey, tabKey]; return T(k, fb); })()}
           </button>
         ))}
       </div>
