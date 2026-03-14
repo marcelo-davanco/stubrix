@@ -277,6 +277,7 @@ export const SERVICE_DEFINITIONS: ServiceDefinitionSeed[] = [
     category: 'ai',
     dockerProfile: 'ai',
     dockerService: 'openrag',
+    dockerCompanions: ['openrag-langflow', 'openrag-opensearch'],
     defaultPort: 8888,
     externalUrl: 'http://localhost:8888',
     dependsOn: [],
