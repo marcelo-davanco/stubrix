@@ -10,6 +10,7 @@ export interface ConfigEntry {
 }
 
 export interface EffectiveConfigValue {
+  key: string
   value: string
   source: 'env' | 'database' | 'default'
 }
@@ -60,13 +61,24 @@ export function useServiceConfig(serviceId: string) {
         if (Array.isArray(data['schema'])) {
           setSchema(data['schema'] as ConfigField[])
         }
-        if (data['configs'] && typeof data['configs'] === 'object') {
-          setConfigs(data['configs'] as Record<string, ConfigEntry>)
-        } else if (!('configs' in data) && !('schema' in data)) {
-          setConfigs(data as unknown as Record<string, ConfigEntry>)
+        if (Array.isArray(data['configs'])) {
+          const configMap: Record<string, ConfigEntry> = {}
+          for (const entry of data['configs'] as ConfigEntry[]) {
+            configMap[entry.key] = entry
+          }
+          setConfigs(configMap)
         }
       }
-      if (effectiveRes.ok) setEffective((await effectiveRes.json()) as Record<string, EffectiveConfigValue>)
+      if (effectiveRes.ok) {
+        const effectiveData = (await effectiveRes.json()) as Record<string, unknown>
+        if (Array.isArray(effectiveData['configs'])) {
+          const effectiveMap: Record<string, EffectiveConfigValue> = {}
+          for (const entry of effectiveData['configs'] as EffectiveConfigValue[]) {
+            effectiveMap[entry.key] = entry
+          }
+          setEffective(effectiveMap)
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -76,8 +88,11 @@ export function useServiceConfig(serviceId: string) {
 
   const fetchHistory = useCallback(
     async (limit = 20) => {
-      const res = await fetch(`${API}/services/${serviceId}/config/history?limit=${limit}`)
-      if (res.ok) setHistory((await res.json()) as ConfigHistoryEntry[])
+      const res = await fetch(`${API}/services/${serviceId}/history?limit=${limit}`)
+      if (res.ok) {
+        const data = (await res.json()) as { entries?: ConfigHistoryEntry[] }
+        setHistory(data.entries ?? [])
+      }
     },
     [serviceId],
   )
