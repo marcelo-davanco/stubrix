@@ -43,7 +43,7 @@ const HEALTH_CHECK_MAP: Record<string, CheckConfig> = {
   zitadel: { type: 'http', url: 'http://localhost:8085/' },
   prometheus: { type: 'http', url: 'http://localhost:9091/-/ready' },
   grafana: { type: 'http', url: 'http://localhost:3000/api/health' },
-  jaeger: { type: 'http', url: 'http://localhost:16686/' },
+  jaeger: { type: 'http', url: 'http://localhost:16686/api/services' },
   redpanda: { type: 'http', url: 'http://localhost:8082/topics' },
   'redpanda-console': { type: 'http', url: 'http://localhost:8080/' },
   rabbitmq: {
