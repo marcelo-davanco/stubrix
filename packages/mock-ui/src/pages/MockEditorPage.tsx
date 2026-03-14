@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 

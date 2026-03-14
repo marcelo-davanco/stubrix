@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { ArrowLeft, Plus, Video, RefreshCw } from 'lucide-react';
 import { useMockManager } from '../hooks/useMockManager.js';
 import { StatCard } from '../components/StatCard.js';

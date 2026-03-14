@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { BarChart2, Upload, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 import type { CoverageReport } from '../lib/mock-api.js';

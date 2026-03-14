@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Plus, Search, Trash2, Pencil } from 'lucide-react';
 import type { MockListItem } from '@stubrix/shared';
 import { useMockManager } from '../hooks/useMockManager.js';

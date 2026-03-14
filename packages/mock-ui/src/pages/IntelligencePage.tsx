@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Brain, Sparkles, Database, Search, Loader } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 import type { RagQueryResult, MockSuggestion, DataSuggestion } from '../lib/mock-api.js';
