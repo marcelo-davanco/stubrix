@@ -408,6 +408,23 @@ services:
     command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled
     ports:
       - "${ZITADEL_PORT:-8085}:8080"
+    environment:
+      ZITADEL_DATABASE_POSTGRES_HOST: db-postgres
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: ${ZITADEL_DB:-zitadel}
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${PG_USER:-postgres}
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${PG_PASSWORD:-postgres}
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${PG_USER:-postgres}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${PG_PASSWORD:-postgres}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_EXTERNALDOMAIN: localhost
+      ZITADEL_EXTERNALPORT: ${ZITADEL_PORT:-8085}
+      ZITADEL_EXTERNALPROTOCOL: http
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
