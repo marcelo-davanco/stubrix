@@ -17,7 +17,7 @@ function interpolate(s: string, vars: Record<string, string | number>): string {
 const ROLES = ['admin', 'editor', 'viewer'];
 
 export function AuthPage({ t, onNavigateBack }: AuthPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);

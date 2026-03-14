@@ -11,7 +11,7 @@ type ContractsPageProps = {
 };
 
 export function ContractsPage({ t, onNavigateBack }: ContractsPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [contracts, setContracts] = useState<PactContract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

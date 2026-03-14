@@ -15,7 +15,7 @@ function interpolate(s: string, vars: Record<string, string | number>): string {
 }
 
 export function ChaosPanelPage({ t, onNavigateBack }: ChaosPanelPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [profiles, setProfiles] = useState<FaultProfile[]>([]);
   const [presets, setPresets] = useState<ChaosPreset[]>([]);

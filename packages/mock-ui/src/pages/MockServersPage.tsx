@@ -22,7 +22,7 @@ export function MockServersPage({
 }: MockServersPageProps) {
   const { projects, status, loading, deleteProject, refreshAll } = useMockManager();
   const [showCreate, setShowCreate] = useState(false);
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
 
   const handleDelete = async (id: string) => {
     const msg = T('projects.deleteConfirm', `Delete project "${id}"? Its simulations will be moved to the "Default" project.`);

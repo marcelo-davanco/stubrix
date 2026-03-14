@@ -11,7 +11,7 @@ type PerformancePageProps = {
 };
 
 export function PerformancePage({ t, onNavigateBack }: PerformancePageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [scripts, setScripts] = useState<PerformanceScript[]>([]);
   const [baselines, setBaselines] = useState<PerformanceBaseline[]>([]);
   const [loading, setLoading] = useState(true);

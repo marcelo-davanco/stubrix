@@ -20,7 +20,7 @@ export function MocksListPage({
   onNavigateToNewMock,
   onNavigateToEditMock,
 }: MocksListPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const { mocks, loading, deleteMock, loadMocks } = useMockManager(projectId);
   const [search, setSearch] = useState('');
 

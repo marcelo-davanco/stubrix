@@ -16,7 +16,7 @@ const TAB_LABELS: Record<string, [string, string]> = {
 };
 
 export function MetricsPage({ t, onNavigateBack }: MetricsPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [summary, setSummary] = useState<MetricsSummary | null>(null);
   const [health, setHealth] = useState<unknown>(null);
   const [prometheus, setPrometheus] = useState<string | null>(null);

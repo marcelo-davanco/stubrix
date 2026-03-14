@@ -16,7 +16,7 @@ function interpolate(s: string, vars: Record<string, string | number>): string {
 type Tab = 'query' | 'mock' | 'data';
 
 export function IntelligencePage({ t, onNavigateBack }: IntelligencePageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [tab, setTab] = useState<Tab>('query');
   const [available, setAvailable] = useState<boolean | null>(null);

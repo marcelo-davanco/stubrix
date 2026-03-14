@@ -20,7 +20,7 @@ export function ProjectDashboardPage({
   onNavigateToRecording,
   onNavigateToNewMock,
 }: ProjectDashboardPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const {
     currentProject,
     status,

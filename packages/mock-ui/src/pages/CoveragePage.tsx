@@ -14,7 +14,7 @@ function interpolate(s: string, vars: Record<string, string | number>): string {
 }
 
 export function CoveragePage({ t, onNavigateBack }: CoveragePageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [specContent, setSpecContent] = useState('');
   const [specFileName, setSpecFileName] = useState<string | undefined>(undefined);

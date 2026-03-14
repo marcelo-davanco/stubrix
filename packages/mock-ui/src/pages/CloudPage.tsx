@@ -15,7 +15,7 @@ function interpolate(s: string, vars: Record<string, string | number>): string {
 }
 
 export function CloudPage({ t, onNavigateBack }: CloudPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [buckets, setBuckets] = useState<S3Bucket[]>([]);
   const [queues, setQueues] = useState<SqsQueue[]>([]);

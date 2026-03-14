@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { ArrowLeft, Play, Square } from 'lucide-react';
 import { useMockManager } from '../hooks/useMockManager.js';
 
@@ -9,7 +9,7 @@ type RecordingPanelPageProps = {
 };
 
 export function RecordingPanelPage({ t, projectId, onBack }: RecordingPanelPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const {
     currentProject,
     recording,

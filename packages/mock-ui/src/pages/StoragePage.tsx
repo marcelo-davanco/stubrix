@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { HardDrive, Upload, Archive, Link, Info } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 import type { StoredMockBody } from '../lib/mock-api.js';
@@ -10,7 +10,7 @@ type StoragePageProps = {
 };
 
 export function StoragePage({ t, onNavigateBack }: StoragePageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [tab, setTab] = useState<'upload' | 'archive' | 'url' | 'config'>('upload');
   const [minioOk, setMinioOk] = useState<boolean | null>(null);
   const [config, setConfig] = useState<unknown>(null);

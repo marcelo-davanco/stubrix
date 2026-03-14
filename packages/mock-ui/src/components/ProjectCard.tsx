@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { LayoutDashboard, FolderOpen, Video, Trash2 } from 'lucide-react';
 import type { Project } from '@stubrix/shared';
 import { ActionBtn } from './ActionBtn.js';
@@ -21,7 +22,7 @@ export function ProjectCard({
   onRecording,
   onDelete,
 }: ProjectCardProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   return (
     <div className="bg-white/5 border border-white/10 rounded-lg p-4 hover:border-primary/30 transition-colors">
       <div className="flex items-start justify-between">

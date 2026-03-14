@@ -21,7 +21,7 @@ const PROTOCOL_COLORS: Record<string, string> = {
 };
 
 export function ProtocolsPage({ t, onNavigateBack }: ProtocolsPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [mocks, setMocks] = useState<ProtocolMock[]>([]);
   const [loading, setLoading] = useState(true);

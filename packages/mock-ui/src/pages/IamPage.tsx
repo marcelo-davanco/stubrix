@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Key, Info } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 import type { IamToken } from '../lib/mock-api.js';
@@ -10,7 +10,7 @@ type IamPageProps = {
 };
 
 export function IamPage({ t, onNavigateBack }: IamPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [tab, setTab] = useState<'token' | 'introspect' | 'config'>('token');
   const [keycloakOk, setKeycloakOk] = useState<boolean | null>(null);
   const [zitadelOk, setZitadelOk] = useState<boolean | null>(null);

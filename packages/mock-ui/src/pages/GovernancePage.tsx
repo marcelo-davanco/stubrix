@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Upload, AlertTriangle } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 import type { LintResult, LintRule } from '../lib/mock-api.js';
@@ -14,7 +14,7 @@ function interpolate(s: string, vars: Record<string, string | number>): string {
 }
 
 export function GovernancePage({ t, onNavigateBack }: GovernancePageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [specContent, setSpecContent] = useState('');
   const [result, setResult] = useState<LintResult | null>(null);

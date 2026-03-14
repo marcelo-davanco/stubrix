@@ -13,7 +13,7 @@ type MockEditorPageProps = {
 };
 
 export function MockEditorPage({ t, projectId, mockId, onBack, onSaved }: MockEditorPageProps) {
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const isNew = !mockId;
 
   const [method, setMethod] = useState('GET');

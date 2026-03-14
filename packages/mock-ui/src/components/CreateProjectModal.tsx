@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { mockApi } from '../lib/mock-api.js';
 import { Field } from './Field.js';
 
@@ -13,7 +13,7 @@ export function CreateProjectModal({ t, onClose, onCreate }: CreateProjectModalP
   const [proxyTarget, setProxyTarget] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
-  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
