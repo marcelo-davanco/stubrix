@@ -40,26 +40,6 @@ export class DockerComposeService {
   }
 
   async startProfile(profile: string): Promise<DockerResult> {
-    const running = await this.getRunningContainers();
-    if (running.some((c) => c.status === 'running')) {
-      const check = await this.run([
-        'compose',
-        '-f',
-        this.composePath,
-        '-p',
-        this.projectName,
-        '--profile',
-        profile,
-        'ps',
-        '--status',
-        'running',
-        '-q',
-      ]);
-      if (check.success && check.stdout.trim().length > 0) {
-        this.logger.log(`Profile "${profile}" already running — skipping up`);
-        return { success: true, stdout: '', stderr: '', exitCode: 0 };
-      }
-    }
     return this.run([
       'compose',
       '-f',
