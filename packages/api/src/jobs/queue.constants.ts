@@ -1,13 +1,13 @@
 /** BullMQ queue names */
 export const QUEUE_NAMES = {
-  SNAPSHOTS: 'stubrix:snapshots',
-  IMPORTS: 'stubrix:imports',
-  SCENARIOS: 'stubrix:scenarios',
-  RECORDING: 'stubrix:recording',
-  PERFORMANCE: 'stubrix:performance',
-  INTELLIGENCE: 'stubrix:intelligence',
-  CHAOS: 'stubrix:chaos',
-  BACKUPS: 'stubrix:backups',
+  SNAPSHOTS: 'stubrix-snapshots',
+  IMPORTS: 'stubrix-imports',
+  SCENARIOS: 'stubrix-scenarios',
+  RECORDING: 'stubrix-recording',
+  PERFORMANCE: 'stubrix-performance',
+  INTELLIGENCE: 'stubrix-intelligence',
+  CHAOS: 'stubrix-chaos',
+  BACKUPS: 'stubrix-backups',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
