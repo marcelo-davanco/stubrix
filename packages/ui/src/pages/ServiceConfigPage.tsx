@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, useBlocker } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, RotateCcw, AlertTriangle } from 'lucide-react'
 import { useServiceConfig } from '../hooks/useServiceConfig'
 import { useSettings } from '../hooks/useSettings'
@@ -37,18 +37,10 @@ export function ServiceConfigPage() {
   const service = services.find((s) => s.serviceId === serviceId)
   const sessionActive = cryptoStatus?.sessionActive ?? false
 
-  // Unsaved changes guard
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-    return hasChanges && currentLocation.pathname !== nextLocation.pathname
-  })
-
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      const confirmed = window.confirm('You have unsaved changes. Leave anyway?')
-      if (confirmed) blocker.proceed()
-      else blocker.reset()
-    }
-  }, [blocker])
+  const goBack = () => {
+    if (hasChanges && !window.confirm('You have unsaved changes. Leave anyway?')) return
+    navigate('/settings')
+  }
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -130,7 +122,7 @@ export function ServiceConfigPage() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="px-6 pt-6 pb-4 border-b border-white/10 flex-shrink-0">
-        <button type="button" onClick={() => navigate('/settings')} className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mb-4">
+        <button type="button" onClick={goBack} className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mb-4">
           <ArrowLeft size={14} />
           Back to Settings
         </button>

@@ -2,7 +2,10 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import type { HealthStatus, ServiceCategory } from '@stubrix/shared';
 import { ConfigDatabaseService } from '../database/config-database.service';
 import { ServiceRegistryService } from '../registry/service-registry.service';
-import { DockerComposeService } from './docker-compose.service';
+import {
+  DockerComposeService,
+  type ContainerInfo,
+} from './docker-compose.service';
 import { HealthCheckService } from './health-check.service';
 import type {
   EnableServiceDto,
@@ -44,16 +47,32 @@ export class ServiceLifecycleService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
+    this.health.startMonitoring();
+
     const autoStartServices = this.configDb.getAutoStartServices();
     if (autoStartServices.length === 0) return;
     this.logger.log(
       `Auto-starting ${autoStartServices.length} service(s): ${autoStartServices.map((s) => s.id).join(', ')}`,
     );
     for (const row of autoStartServices) {
-      this.enableService(row.id, { skipHealthCheck: false }).catch(
-        (err: unknown) => {
-          this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
-        },
+      this.ensureServiceRunning(row.id).catch((err: unknown) => {
+        this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
+      });
+    }
+  }
+
+  private async ensureServiceRunning(serviceId: string): Promise<void> {
+    const def = this.registry.getService(serviceId);
+    if (!def?.dockerService && !def?.dockerProfile) return;
+
+    const result = def.dockerService
+      ? await this.docker.startService(def.dockerService)
+      : await this.docker.startProfile(def.dockerProfile!);
+    if (result.success) {
+      this.logger.log(`Ensured service running: ${serviceId}`);
+    } else {
+      this.logger.warn(
+        `Could not ensure ${serviceId} is running: ${result.stderr || result.stdout}`,
       );
     }
   }
@@ -123,10 +142,12 @@ export class ServiceLifecycleService implements OnModuleInit {
       this.configDb.updateServiceStatus(serviceId, true);
       this.configDb.updateHealthStatus(serviceId, 'unknown');
 
-      // Start Docker container via profile
+      // Start Docker container — prefer by service name to avoid pulling unrelated co-profile services
       const def = this.registry.getService(serviceId);
-      if (def.dockerProfile) {
-        const result = await this.docker.startProfile(def.dockerProfile);
+      if (def.dockerService || def.dockerProfile) {
+        const result = def.dockerService
+          ? await this.docker.startService(def.dockerService)
+          : await this.docker.startProfile(def.dockerProfile!);
         if (!result.success) {
           this.configDb.updateServiceStatus(serviceId, false);
           return this.errorResult(
@@ -217,10 +238,12 @@ export class ServiceLifecycleService implements OnModuleInit {
       }
     }
 
-    // Stop Docker container
+    // Stop Docker container — prefer by service name to avoid stopping unrelated co-profile services
     const def = this.registry.getService(serviceId);
-    if (def.dockerProfile) {
-      const result = await this.docker.stopProfile(def.dockerProfile);
+    if (def.dockerService || def.dockerProfile) {
+      const result = def.dockerService
+        ? await this.docker.stopService(def.dockerService)
+        : await this.docker.stopProfile(def.dockerProfile!);
       if (!result.success) {
         this.logger.warn(
           `Docker stop failed for ${serviceId}: ${result.stderr}`,
@@ -298,7 +321,10 @@ export class ServiceLifecycleService implements OnModuleInit {
     };
   }
 
-  async getServiceStatus(serviceId: string): Promise<ServiceStatus> {
+  async getServiceStatus(
+    serviceId: string,
+    cachedContainers?: ContainerInfo[],
+  ): Promise<ServiceStatus> {
     const svc = this.registry.getService(serviceId);
     const row = this.configDb.getService(serviceId);
 
@@ -308,7 +334,8 @@ export class ServiceLifecycleService implements OnModuleInit {
 
     if (svc.dockerService) {
       try {
-        const containers = await this.docker.getRunningContainers();
+        const containers =
+          cachedContainers ?? (await this.docker.getRunningContainers());
         const container = containers.find(
           (c) => c.service === svc.dockerService,
         );
@@ -341,7 +368,10 @@ export class ServiceLifecycleService implements OnModuleInit {
 
   async getAllStatuses(): Promise<ServiceStatus[]> {
     const services = this.registry.getAllServices();
-    return Promise.all(services.map((s) => this.getServiceStatus(s.id)));
+    const containers = await this.docker.getRunningContainers();
+    return Promise.all(
+      services.map((s) => this.getServiceStatus(s.id, containers)),
+    );
   }
 
   private async waitForHealthy(

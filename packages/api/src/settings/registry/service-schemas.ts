@@ -510,21 +510,33 @@ export const OPENRAG_CONFIG_SCHEMA: ConfigField[] = [
     validation: { min: 1, max: 65535 },
   },
   {
-    key: 'OPENRAG_LLM_PROVIDER',
-    label: 'LLM Provider',
-    dataType: 'select',
-    defaultValue: 'openai',
-    options: [
-      { label: 'OpenAI', value: 'openai' },
-      { label: 'Ollama (local)', value: 'ollama' },
-    ],
-  },
-  {
-    key: 'OPENRAG_API_KEY',
-    label: 'LLM API Key',
+    key: 'OPENAI_API_KEY',
+    label: 'OpenAI API Key',
     dataType: 'string',
     sensitive: true,
-    description: 'API key for OpenAI or similar provider',
+    description: 'API key for OpenAI model provider',
+  },
+  {
+    key: 'OLLAMA_ENDPOINT',
+    label: 'Ollama Endpoint',
+    dataType: 'string',
+    defaultValue: '',
+    description: 'Ollama base URL (e.g. http://host.docker.internal:11434)',
+  },
+  {
+    key: 'OPENSEARCH_PASSWORD',
+    label: 'OpenSearch Password',
+    dataType: 'string',
+    sensitive: true,
+    defaultValue: 'changeme',
+    description: 'Admin password for the embedded OpenSearch instance',
+  },
+  {
+    key: 'LANGFLOW_SECRET_KEY',
+    label: 'Langflow Secret Key',
+    dataType: 'string',
+    sensitive: true,
+    description: 'Encryption key for Langflow internal operations',
   },
 ];
 

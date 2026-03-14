@@ -566,7 +566,7 @@ services:
   # --------------------------------------------------------------------------
   chromadb:
     image: chromadb/chroma:latest
-    profiles: ["ai", "openrag"]
+    profiles: ["ai"]
     container_name: stubrix-chromadb
     ports:
       - "${CHROMADB_PORT:-8000}:8000"
@@ -578,22 +578,66 @@ services:
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
+  # OpenRAG – OpenSearch vector store (companion for openrag-backend)
+  # --------------------------------------------------------------------------
+  openrag-opensearch:
+    image: langflowai/openrag-opensearch:latest
+    platform: linux/amd64
+    profiles: ["ai", "openrag"]
+    container_name: stubrix-openrag-opensearch
+    ports:
+      - "9201:9200"
+    environment:
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:-Stubrix@1234}
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      bootstrap.memory_lock: "true"
+      discovery.type: single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # OpenRAG – Langflow engine (companion for openrag-backend)
+  # --------------------------------------------------------------------------
+  openrag-langflow:
+    image: langflowai/openrag-langflow:latest
+    platform: linux/amd64
+    profiles: ["ai", "openrag"]
+    container_name: stubrix-openrag-langflow
+    ports:
+      - "${LANGFLOW_PORT:-7860}:7860"
+    environment:
+      LANGFLOW_SECRET_KEY: ${LANGFLOW_SECRET_KEY:-}
+      LANGFLOW_SUPERUSER_PASSWORD: ${LANGFLOW_SUPERUSER_PASSWORD:-admin}
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
   # OpenRAG – RAG query service (F9.01)
   # Access: http://localhost:8888
   # --------------------------------------------------------------------------
   openrag:
-    image: ghcr.io/openrag/openrag:latest
+    image: langflowai/openrag-backend:latest
+    platform: linux/amd64
     profiles: ["ai", "openrag"]
     container_name: stubrix-openrag
     ports:
-      - "${OPENRAG_PORT:-8888}:8888"
+      - "${OPENRAG_PORT:-8888}:8000"
     environment:
-      CHROMA_HOST: chromadb
-      CHROMA_PORT: 8000
+      LANGFLOW_URL: http://openrag-langflow:7860
+      OPENSEARCH_HOST: openrag-opensearch
+      OPENSEARCH_PORT: "9200"
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:-Stubrix@1234}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OLLAMA_HOST: ${OLLAMA_HOST:-}
+      OLLAMA_ENDPOINT: ${OLLAMA_HOST:-}
+      LANGFLOW_SECRET_KEY: ${LANGFLOW_SECRET_KEY:-}
     depends_on:
-      - chromadb
+      - openrag-langflow
+      - openrag-opensearch
     restart: unless-stopped
 
   # --------------------------------------------------------------------------

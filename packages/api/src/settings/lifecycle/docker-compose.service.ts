@@ -39,6 +39,20 @@ export class DockerComposeService {
     this.timeout = parseInt(process.env.DOCKER_TIMEOUT ?? '60000', 10);
   }
 
+  async startService(serviceName: string): Promise<DockerResult> {
+    return this.run([
+      'compose',
+      '-f',
+      this.composePath,
+      '-p',
+      this.projectName,
+      'up',
+      '-d',
+      '--no-recreate',
+      serviceName,
+    ]);
+  }
+
   async startProfile(profile: string): Promise<DockerResult> {
     return this.run([
       'compose',
@@ -51,6 +65,18 @@ export class DockerComposeService {
       'up',
       '-d',
       '--no-recreate',
+    ]);
+  }
+
+  async stopService(serviceName: string): Promise<DockerResult> {
+    return this.run([
+      'compose',
+      '-f',
+      this.composePath,
+      '-p',
+      this.projectName,
+      'stop',
+      serviceName,
     ]);
   }
 

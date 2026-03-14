@@ -55,6 +55,8 @@ export function useSettings() {
   useEffect(() => {
     void fetchServices()
     void fetchCryptoStatus()
+    const timer = setInterval(() => void fetchServices(), 15_000)
+    return () => clearInterval(timer)
   }, [fetchServices, fetchCryptoStatus])
 
   const toggleService = async (serviceId: string, enabled: boolean) => {

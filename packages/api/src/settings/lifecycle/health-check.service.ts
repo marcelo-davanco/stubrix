@@ -55,9 +55,9 @@ const HEALTH_CHECK_MAP: Record<string, CheckConfig> = {
     url: 'http://localhost:9292/diagnostic/status/heartbeat',
   },
   toxiproxy: { type: 'http', url: 'http://localhost:8474/version' },
-  chromadb: { type: 'http', url: 'http://localhost:8000/api/v1/heartbeat' },
-  openrag: { type: 'http', url: 'http://localhost:8888/' },
-  hoppscotch: { type: 'http', url: 'http://localhost:3100/' },
+  chromadb: { type: 'http', url: 'http://localhost:8000/api/v2/heartbeat' },
+  openrag: { type: 'http', url: 'http://localhost:8888/health' },
+  hoppscotch: { type: 'tcp', host: 'localhost', port: 3100 },
 };
 
 @Injectable()
@@ -130,6 +130,7 @@ export class HealthCheckService {
     }
 
     this.logger.log(`Starting health monitoring every ${interval}ms`);
+    void this.runMonitoringCycle();
     this.monitoringTimer = setInterval(() => {
       void this.runMonitoringCycle();
     }, interval);
