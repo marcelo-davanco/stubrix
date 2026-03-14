@@ -13,6 +13,7 @@ const ENGINE_ICON: Record<string, string> = {
   postgres: '🐘',
   mysql: '🐬',
   sqlite: '📁',
+  mongodb: '🍃',
 }
 
 const ENGINE_COLOR: Record<string, { ring: string; bg: string; text: string; glow: string }> = {
@@ -33,6 +34,12 @@ const ENGINE_COLOR: Record<string, { ring: string; bg: string; text: string; glo
     bg: 'bg-teal-500/10',
     text: 'text-teal-300',
     glow: 'shadow-teal-500/20',
+  },
+  mongodb: {
+    ring: 'ring-green-500/40',
+    bg: 'bg-green-500/10',
+    text: 'text-green-300',
+    glow: 'shadow-green-500/20',
   },
 }
 

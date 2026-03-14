@@ -45,6 +45,7 @@
     "ioredis": "^5.10.0",
     "js-yaml": "^4.1.1",
     "minimatch": "^3.1.5",
+    "mongodb": "^7.1.0",
     "mysql2": "^3.11.0",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",

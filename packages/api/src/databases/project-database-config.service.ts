@@ -9,7 +9,7 @@ import type { UpsertProjectDatabaseDto } from './dto/upsert-project-database.dto
 export interface ProjectDatabaseConfig {
   id: string;
   projectId: string;
-  engine: 'postgres' | 'mysql' | 'sqlite';
+  engine: 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
   name: string;
   database: string | null;
   host: string | null;

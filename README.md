@@ -34,7 +34,7 @@ Stubrix covers the full API development lifecycle in a single tool — no stitch
 | **Performance Testing** | k6 scripts (smoke, load, stress) with baseline regression CI gate |
 | **Identity & Access** | Keycloak and Zitadel — real OAuth2/OIDC token flows locally |
 | **AI-Native (MCP)** | 3 MCP servers with **100+ tools** — manage everything from your AI coding assistant |
-| **Database Snapshots** | PostgreSQL `pg_dump`/`psql`, MySQL, SQLite — snapshot and restore DB state alongside mocks |
+| **Database Snapshots** | PostgreSQL `pg_dump`/`psql`, MySQL `mysqldump`, SQLite, MongoDB `mongodump`/`mongorestore` — snapshot and restore DB state alongside mocks |
 | **Visual Control Panel** | NestJS 11 API + React 19 Dashboard — no CLI-only workflows |
 
 ---
@@ -74,7 +74,7 @@ Stubrix is a **monorepo** (npm workspaces) built on three core layers:
 │  Infrastructure Layer (20+ Docker profiles)                    │
 │                                                                 │
 │  Mock Engines: WireMock · Mockoon                              │
-│  Databases: PostgreSQL · MySQL · SQLite                        │
+│  Databases: PostgreSQL · MySQL · SQLite · MongoDB              │
 │  Messaging: Kafka (Redpanda) · RabbitMQ                        │
 │  Protocols: GripMock (gRPC)                                    │
 │  Cloud: LocalStack · MinIO · Keycloak · Zitadel               │

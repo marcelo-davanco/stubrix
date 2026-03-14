@@ -110,6 +110,12 @@ services:
       MYSQL_USER: ${MYSQL_USER:-stubrix}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-stubrix}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-stubrix}
+      # MongoDB
+      MONGO_HOST: ${MONGO_HOST:-db-mongodb}
+      MONGO_PORT: ${MONGO_PORT:-27017}
+      MONGO_USER: ${MONGO_USER:-stubrix}
+      MONGO_PASSWORD: ${MONGO_PASSWORD:-stubrix}
+      MONGO_DATABASE: ${MONGO_DATABASE:-stubrix}
       # SQLite + Dumps
       SQLITE_DB_PATH: ${SQLITE_DB_PATH:-}
       DUMPS_DIR: /app/dumps
@@ -174,6 +180,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       db-postgres:
+        condition: service_healthy
+        required: false
+      db-mongodb:
         condition: service_healthy
         required: false
     extra_hosts:
@@ -298,6 +307,28 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # MongoDB 7
+  # --------------------------------------------------------------------------
+  db-mongodb:
+    image: mongo:7
+    profiles: ["mongodb", "databases"]
+    container_name: stubrix-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-stubrix}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-stubrix}
+    ports:
+      - "${MONGO_EXTERNAL_PORT:-27017}:27017"
+    volumes:
+      - mongodb-data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # --------------------------------------------------------------------------
   # SQLite (file-based, no container needed - using host filesystem)
@@ -709,6 +740,7 @@ volumes:
   redis_data:
   pg_data:
   mysql_data:
+  mongodb-data:
   cloudbeaver_data:
   prometheus_data:
   grafana_data:

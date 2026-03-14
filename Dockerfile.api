@@ -63,6 +63,14 @@ ENV NODE_ENV=production \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   curl ca-certificates gnupg lsb-release && \
+  # MongoDB Database Tools (mongodump, mongorestore)
+  curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
+    gpg --dearmor -o /etc/apt/keyrings/mongodb-server-7.0.gpg && \
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" \
+    > /etc/apt/sources.list.d/mongodb-org-7.0.list && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends mongodb-database-tools && \
+  # Docker CLI
   install -m 0755 -d /etc/apt/keyrings && \
   curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
   chmod a+r /etc/apt/keyrings/docker.gpg && \
