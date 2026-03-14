@@ -7,10 +7,9 @@ import { EmptyState } from '../components/EmptyState.js';
 
 type ContractsPageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
-export function ContractsPage({ t, onNavigateBack }: ContractsPageProps) {
+export function ContractsPage({ t }: ContractsPageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [contracts, setContracts] = useState<PactContract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,9 +58,6 @@ export function ContractsPage({ t, onNavigateBack }: ContractsPageProps) {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileCheck size={22} className="text-lime-400" /> {T('contracts.title', 'Contracts')}

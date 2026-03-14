@@ -6,10 +6,9 @@ import { InlineAlert } from '../components/InlineAlert.js';
 
 type StoragePageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
-export function StoragePage({ t, onNavigateBack }: StoragePageProps) {
+export function StoragePage({ t }: StoragePageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [tab, setTab] = useState<'upload' | 'archive' | 'url' | 'config'>('upload');
   const [minioOk, setMinioOk] = useState<boolean | null>(null);
@@ -92,9 +91,6 @@ export function StoragePage({ t, onNavigateBack }: StoragePageProps) {
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <HardDrive size={22} className="text-amber-400" /> {T('storage.title', 'Storage (MinIO)')}

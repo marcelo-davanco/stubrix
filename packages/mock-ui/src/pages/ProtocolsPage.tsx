@@ -7,7 +7,6 @@ import { EmptyState } from '../components/EmptyState.js';
 
 type ProtocolsPageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
 function interpolate(s: string, vars: Record<string, string | number>): string {
@@ -20,7 +19,7 @@ const PROTOCOL_COLORS: Record<string, string> = {
   rest: 'text-green-400 bg-green-400/10',
 };
 
-export function ProtocolsPage({ t, onNavigateBack }: ProtocolsPageProps) {
+export function ProtocolsPage({ t }: ProtocolsPageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [mocks, setMocks] = useState<ProtocolMock[]>([]);
@@ -100,9 +99,6 @@ export function ProtocolsPage({ t, onNavigateBack }: ProtocolsPageProps) {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Network size={22} className="text-indigo-400" /> {T('protocols.title', 'Protocols')}

@@ -6,14 +6,13 @@ import { InlineAlert } from '../components/InlineAlert.js';
 
 type GovernancePageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
 function interpolate(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ''));
 }
 
-export function GovernancePage({ t, onNavigateBack }: GovernancePageProps) {
+export function GovernancePage({ t }: GovernancePageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [specContent, setSpecContent] = useState('');
@@ -62,9 +61,6 @@ export function GovernancePage({ t, onNavigateBack }: GovernancePageProps) {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        {onNavigateBack && (
-          <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-        )}
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <ShieldCheck size={22} className="text-blue-400" /> {T('governance.title', 'Governance & Linting')}

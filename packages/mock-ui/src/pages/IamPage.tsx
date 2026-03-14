@@ -6,10 +6,9 @@ import { InlineAlert } from '../components/InlineAlert.js';
 
 type IamPageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
-export function IamPage({ t, onNavigateBack }: IamPageProps) {
+export function IamPage({ t }: IamPageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [tab, setTab] = useState<'token' | 'introspect' | 'config'>('token');
   const [keycloakOk, setKeycloakOk] = useState<boolean | null>(null);
@@ -79,9 +78,6 @@ export function IamPage({ t, onNavigateBack }: IamPageProps) {
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <ShieldCheck size={22} className="text-emerald-400" /> {T('iam.title', 'IAM')}
