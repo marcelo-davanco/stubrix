@@ -7,7 +7,6 @@ import { EmptyState } from '../components/EmptyState.js';
 
 type StatefulMocksPageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
 function interpolate(s: string, vars: Record<string, string | number>): string {
@@ -22,7 +21,7 @@ const EMPTY_FORM: CreateStatefulMockDto = {
   responses: {},
 };
 
-export function StatefulMocksPage({ t, onNavigateBack }: StatefulMocksPageProps) {
+export function StatefulMocksPage({ t }: StatefulMocksPageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [mocks, setMocks] = useState<StatefulMock[]>([]);
@@ -129,9 +128,6 @@ export function StatefulMocksPage({ t, onNavigateBack }: StatefulMocksPageProps)
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Database size={22} className="text-primary" /> {T('stateful.title', 'Stateful Mocks')}

@@ -7,10 +7,9 @@ import { EmptyState } from '../components/EmptyState.js';
 
 type PerformancePageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
-export function PerformancePage({ t, onNavigateBack }: PerformancePageProps) {
+export function PerformancePage({ t }: PerformancePageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [scripts, setScripts] = useState<PerformanceScript[]>([]);
   const [baselines, setBaselines] = useState<PerformanceBaseline[]>([]);
@@ -74,9 +73,6 @@ export function PerformancePage({ t, onNavigateBack }: PerformancePageProps) {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Gauge size={22} className="text-pink-400" /> {T('performance.title', 'Performance')}

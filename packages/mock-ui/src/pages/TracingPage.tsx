@@ -7,10 +7,9 @@ import { EmptyState } from '../components/EmptyState.js';
 
 type TracingPageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
-export function TracingPage({ t, onNavigateBack }: TracingPageProps) {
+export function TracingPage({ t }: TracingPageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [traces, setTraces] = useState<Trace[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,9 +43,6 @@ export function TracingPage({ t, onNavigateBack }: TracingPageProps) {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <GitBranch size={22} className="text-cyan-400" /> {T('tracing.title', 'Distributed Tracing')}

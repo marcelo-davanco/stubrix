@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Brain, Sparkles, Database, Search, Loader } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 import type { RagQueryResult, MockSuggestion, DataSuggestion } from '../lib/mock-api.js';
@@ -6,7 +6,6 @@ import { InlineAlert } from '../components/InlineAlert.js';
 
 type IntelligencePageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
 function interpolate(s: string, vars: Record<string, string | number>): string {
@@ -15,7 +14,7 @@ function interpolate(s: string, vars: Record<string, string | number>): string {
 
 type Tab = 'query' | 'mock' | 'data';
 
-export function IntelligencePage({ t, onNavigateBack }: IntelligencePageProps) {
+export function IntelligencePage({ t }: IntelligencePageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [tab, setTab] = useState<Tab>('query');
@@ -105,9 +104,6 @@ export function IntelligencePage({ t, onNavigateBack }: IntelligencePageProps) {
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Brain size={22} className="text-purple-400" /> {T('intelligence.title', 'Intelligence')}

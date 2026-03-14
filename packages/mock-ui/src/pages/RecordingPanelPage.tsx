@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ArrowLeft, Play, Square } from 'lucide-react';
+import { ArrowLeft, Play, Square, CircleDot, StopCircle } from 'lucide-react';
 import { useMockManager } from '../hooks/useMockManager.js';
 
 type RecordingPanelPageProps = {
@@ -87,12 +87,12 @@ export function RecordingPanelPage({ t, projectId, onBack }: RecordingPanelPageP
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium">{T('recording.statusLabel', 'Recording Status')}</h3>
           {recording?.active ? (
-            <span className="text-xs font-semibold text-red-400 bg-red-400/10 px-2 py-0.5 rounded">
-              🔴 {T('recording.activeBadge', 'Recording')}
+            <span className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-red-400 bg-red-400/10">
+              <CircleDot size={14} />{' '}{T('recording.activeBadge', 'Recording')}
             </span>
           ) : (
-            <span className="text-xs text-text-secondary bg-white/10 px-2 py-0.5 rounded">
-              ⚪ {T('recording.inactiveBadge', 'Stopped')}
+            <span className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-text-secondary bg-white/10">
+              <StopCircle size={14} />{' '}{T('recording.inactiveBadge', 'Stopped')}
             </span>
           )}
         </div>

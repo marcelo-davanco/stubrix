@@ -7,14 +7,13 @@ import { EmptyState } from '../components/EmptyState.js';
 
 type ChaosPanelPageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
 function interpolate(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ''));
 }
 
-export function ChaosPanelPage({ t, onNavigateBack }: ChaosPanelPageProps) {
+export function ChaosPanelPage({ t }: ChaosPanelPageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [profiles, setProfiles] = useState<FaultProfile[]>([]);
@@ -107,9 +106,6 @@ export function ChaosPanelPage({ t, onNavigateBack }: ChaosPanelPageProps) {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <ShieldAlert size={22} className="text-yellow-400" /> {T('chaos.title', 'Chaos Engineering')}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { BarChart2, Upload, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 import type { CoverageReport } from '../lib/mock-api.js';
@@ -6,14 +6,13 @@ import { InlineAlert } from '../components/InlineAlert.js';
 
 type CoveragePageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
 function interpolate(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ''));
 }
 
-export function CoveragePage({ t, onNavigateBack }: CoveragePageProps) {
+export function CoveragePage({ t }: CoveragePageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [specContent, setSpecContent] = useState('');
@@ -86,9 +85,6 @@ export function CoveragePage({ t, onNavigateBack }: CoveragePageProps) {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        {onNavigateBack && (
-          <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-        )}
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <BarChart2 size={22} className="text-green-400" /> {T('coverage.title', 'Mock Coverage')}

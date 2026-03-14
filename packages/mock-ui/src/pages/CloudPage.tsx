@@ -7,14 +7,13 @@ import { EmptyState } from '../components/EmptyState.js';
 
 type CloudPageProps = {
   t?: (key: string) => string;
-  onNavigateBack?: () => void;
 };
 
 function interpolate(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ''));
 }
 
-export function CloudPage({ t, onNavigateBack }: CloudPageProps) {
+export function CloudPage({ t }: CloudPageProps) {
   const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [buckets, setBuckets] = useState<S3Bucket[]>([]);
@@ -86,9 +85,6 @@ export function CloudPage({ t, onNavigateBack }: CloudPageProps) {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
-          )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Cloud size={22} className="text-sky-400" /> {T('cloud.title', 'Cloud (LocalStack)')}
