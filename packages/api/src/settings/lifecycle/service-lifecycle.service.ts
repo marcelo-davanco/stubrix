@@ -52,10 +52,22 @@ export class ServiceLifecycleService implements OnModuleInit {
       `Auto-starting ${autoStartServices.length} service(s): ${autoStartServices.map((s) => s.id).join(', ')}`,
     );
     for (const row of autoStartServices) {
-      this.enableService(row.id, { skipHealthCheck: false }).catch(
-        (err: unknown) => {
-          this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
-        },
+      this.ensureServiceRunning(row.id).catch((err: unknown) => {
+        this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
+      });
+    }
+  }
+
+  private async ensureServiceRunning(serviceId: string): Promise<void> {
+    const def = this.registry.getService(serviceId);
+    if (!def?.dockerProfile) return;
+
+    const result = await this.docker.startProfile(def.dockerProfile);
+    if (result.success) {
+      this.logger.log(`Ensured service running: ${serviceId}`);
+    } else {
+      this.logger.warn(
+        `Could not ensure ${serviceId} is running: ${result.stderr || result.stdout}`,
       );
     }
   }
