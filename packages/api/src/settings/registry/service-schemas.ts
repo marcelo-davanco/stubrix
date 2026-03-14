@@ -308,6 +308,38 @@ export const ZITADEL_CONFIG_SCHEMA: ConfigField[] = [
     defaultValue: 'MasterkeyNeedsToHave32Characters',
     sensitive: true,
   },
+  {
+    key: 'ZITADEL_DATABASE_POSTGRES_HOST',
+    label: 'DB Host',
+    dataType: 'string',
+    defaultValue: 'db-postgres',
+  },
+  {
+    key: 'ZITADEL_DATABASE_POSTGRES_PORT',
+    label: 'DB Port',
+    dataType: 'number',
+    defaultValue: 5432,
+    validation: { min: 1, max: 65535 },
+  },
+  {
+    key: 'ZITADEL_DATABASE_POSTGRES_DATABASE',
+    label: 'Database',
+    dataType: 'string',
+    defaultValue: 'zitadel',
+  },
+  {
+    key: 'ZITADEL_DATABASE_POSTGRES_USER_USERNAME',
+    label: 'DB User',
+    dataType: 'string',
+    defaultValue: 'postgres',
+  },
+  {
+    key: 'ZITADEL_DATABASE_POSTGRES_USER_PASSWORD',
+    label: 'DB Password',
+    dataType: 'string',
+    defaultValue: 'postgres',
+    sensitive: true,
+  },
 ];
 
 // ─── Observability ───────────────────────────────────────────────

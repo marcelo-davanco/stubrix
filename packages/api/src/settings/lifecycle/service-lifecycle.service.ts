@@ -145,9 +145,10 @@ export class ServiceLifecycleService implements OnModuleInit {
       // Start Docker container — prefer by service name to avoid pulling unrelated co-profile services
       const def = this.registry.getService(serviceId);
       if (def.dockerService || def.dockerProfile) {
+        const envOverrides = this.buildEnvOverrides(serviceId);
         const result = def.dockerService
-          ? await this.docker.startService(def.dockerService)
-          : await this.docker.startProfile(def.dockerProfile!);
+          ? await this.docker.startService(def.dockerService, envOverrides)
+          : await this.docker.startProfile(def.dockerProfile!, envOverrides);
         if (!result.success) {
           this.configDb.updateServiceStatus(serviceId, false);
           return this.errorResult(
@@ -160,7 +161,7 @@ export class ServiceLifecycleService implements OnModuleInit {
         // Start companion services (e.g. openrag-langflow, openrag-opensearch)
         const companions = this.registry.getCompanions(serviceId);
         for (const companion of companions) {
-          const cr = await this.docker.startService(companion);
+          const cr = await this.docker.startService(companion, envOverrides);
           if (!cr.success) {
             this.logger.warn(
               `Failed to start companion ${companion} for ${serviceId}: ${cr.stderr}`,
@@ -434,6 +435,17 @@ export class ServiceLifecycleService implements OnModuleInit {
       );
     }
     return { serviceId, ...settings };
+  }
+
+  private buildEnvOverrides(serviceId: string): Record<string, string> {
+    const rows = this.configDb.getServiceConfigs(serviceId);
+    const overrides: Record<string, string> = {};
+    for (const row of rows) {
+      if (row.key && row.value !== null && row.value !== undefined) {
+        overrides[row.key] = String(row.value);
+      }
+    }
+    return overrides;
   }
 
   private errorResult(

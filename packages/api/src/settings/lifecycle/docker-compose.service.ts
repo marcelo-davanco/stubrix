@@ -39,33 +39,45 @@ export class DockerComposeService {
     this.timeout = parseInt(process.env.DOCKER_TIMEOUT ?? '60000', 10);
   }
 
-  async startService(serviceName: string): Promise<DockerResult> {
-    return this.run([
-      'compose',
-      '-f',
-      this.composePath,
-      '-p',
-      this.projectName,
-      'up',
-      '-d',
-      '--no-recreate',
-      serviceName,
-    ]);
+  async startService(
+    serviceName: string,
+    envOverrides?: Record<string, string>,
+  ): Promise<DockerResult> {
+    return this.run(
+      [
+        'compose',
+        '-f',
+        this.composePath,
+        '-p',
+        this.projectName,
+        'up',
+        '-d',
+        '--no-recreate',
+        serviceName,
+      ],
+      envOverrides,
+    );
   }
 
-  async startProfile(profile: string): Promise<DockerResult> {
-    return this.run([
-      'compose',
-      '-f',
-      this.composePath,
-      '-p',
-      this.projectName,
-      '--profile',
-      profile,
-      'up',
-      '-d',
-      '--no-recreate',
-    ]);
+  async startProfile(
+    profile: string,
+    envOverrides?: Record<string, string>,
+  ): Promise<DockerResult> {
+    return this.run(
+      [
+        'compose',
+        '-f',
+        this.composePath,
+        '-p',
+        this.projectName,
+        '--profile',
+        profile,
+        'up',
+        '-d',
+        '--no-recreate',
+      ],
+      envOverrides,
+    );
   }
 
   async stopService(serviceName: string): Promise<DockerResult> {
@@ -169,12 +181,21 @@ export class DockerComposeService {
     return container.status === 'running' && container.health !== 'unhealthy';
   }
 
-  private async run(args: string[]): Promise<DockerResult> {
+  private async run(
+    args: string[],
+    envOverrides?: Record<string, string>,
+  ): Promise<DockerResult> {
     this.logger.debug(`docker ${args.join(' ')}`);
+
+    const env =
+      envOverrides && Object.keys(envOverrides).length > 0
+        ? { ...process.env, ...envOverrides }
+        : undefined;
 
     try {
       const { stdout, stderr } = await execFileAsync('docker', args, {
         timeout: this.timeout,
+        ...(env ? { env } : {}),
       });
 
       return { success: true, stdout, stderr, exitCode: 0 };

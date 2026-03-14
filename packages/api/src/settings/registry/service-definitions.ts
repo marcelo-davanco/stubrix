@@ -155,7 +155,7 @@ export const SERVICE_DEFINITIONS: ServiceDefinitionSeed[] = [
     dockerService: 'zitadel',
     defaultPort: 8085,
     externalUrl: 'http://localhost:8085',
-    dependsOn: [],
+    dependsOn: ['postgres'],
     configSchema: ZITADEL_CONFIG_SCHEMA,
   },
   // ─── Observability ───────────────────────────────────────────
