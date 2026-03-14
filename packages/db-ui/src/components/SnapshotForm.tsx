@@ -46,6 +46,7 @@ function saveStoredCategories(cats: Array<string>): void {
 }
 
 function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useDbUiTranslation()
   const [customCategories, setCustomCategories] = useState<Array<string>>(loadStoredCategories)
   const [open, setOpen] = useState(false)
   const [newValue, setNewValue] = useState('')
@@ -98,7 +99,7 @@ function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: st
           value ? 'text-text-primary' : 'text-white/20'
         }`}
       >
-        <span className="truncate">{value || 'Selecionar ou adicionar...'}</span>
+        <span className="truncate">{value || t('db.categorySelectPlaceholder')}</span>
         <div className="flex shrink-0 items-center gap-1">
           {value && (
             <span
@@ -145,7 +146,7 @@ function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: st
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddNew()}
-                placeholder="Nova categoria..."
+                placeholder={t('db.categoryNewPlaceholder')}
                 className="flex-1 rounded-lg border border-white/10 bg-main-bg px-3 py-1.5 text-xs text-text-primary placeholder-white/20 outline-none focus:border-primary"
               />
               <button
@@ -154,7 +155,7 @@ function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: st
                 disabled={!newValue.trim()}
                 className="flex items-center gap-1 rounded-lg bg-primary/20 px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/30 disabled:opacity-40"
               >
-                <Plus size={11} /> Add
+                <Plus size={11} /> {t('db.add')}
               </button>
             </div>
           </div>
@@ -269,7 +270,7 @@ export function SnapshotForm({ databases, loadingDatabases = false, connections,
           {selectedConn && (
             <div className="mt-1.5 flex items-center gap-2 text-xs text-text-secondary/70">
               <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[selectedConn.connectionStatus]}`} />
-              {selectedConn.connectionStatus === 'ok' ? 'Conectado' : selectedConn.connectionStatus === 'error' ? 'Erro de conexão' : 'Status desconhecido'}
+              {selectedConn.connectionStatus === 'ok' ? t('db.statusConnected') : selectedConn.connectionStatus === 'error' ? t('db.statusError') : t('db.statusUnknown')}
               {selectedConn.host && <span className="font-mono opacity-60">{selectedConn.host}:{selectedConn.port ?? '?'}</span>}
             </div>
           )}

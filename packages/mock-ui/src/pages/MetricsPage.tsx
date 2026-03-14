@@ -4,9 +4,13 @@ import { mockApi } from '../lib/mock-api.js';
 import type { MetricsSummary } from '../lib/mock-api.js';
 import { InlineAlert } from '../components/InlineAlert.js';
 
-type MetricsPageProps = { onNavigateBack?: () => void };
+type MetricsPageProps = {
+  t?: (key: string) => string;
+  onNavigateBack?: () => void;
+};
 
-export function MetricsPage({ onNavigateBack }: MetricsPageProps) {
+export function MetricsPage({ t, onNavigateBack }: MetricsPageProps) {
+  const T = (key: string, fallback: string) => (t ? t(key) : fallback);
   const [summary, setSummary] = useState<MetricsSummary | null>(null);
   const [health, setHealth] = useState<unknown>(null);
   const [prometheus, setPrometheus] = useState<string | null>(null);
@@ -47,38 +51,38 @@ export function MetricsPage({ onNavigateBack }: MetricsPageProps) {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">← Back</button>
+            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
           )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <BarChart2 size={22} className="text-orange-400" /> Metrics
+              <BarChart2 size={22} className="text-orange-400" /> {T('metrics.title', 'Metrics')}
             </h1>
-            <p className="text-text-secondary text-sm">Prometheus counters, histograms and service health</p>
+            <p className="text-text-secondary text-sm">{T('metrics.subtitle', 'Prometheus counters, histograms and service health')}</p>
           </div>
         </div>
-        <button onClick={load} className="p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/5" title="Refresh">
+        <button onClick={load} className="p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/5" title={T('metrics.refresh', 'Refresh')}>
           <RefreshCw size={15} />
         </button>
       </div>
 
-      {error && <InlineAlert message={error} onRetry={load} />}
+      {error && <InlineAlert message={error} onRetry={load} retryLabel={T('common.retry', 'Retry')} />}
 
       <div className="flex gap-1 mb-6 bg-white/5 rounded-lg p-1 w-fit">
-        {(['summary', 'health', 'prometheus'] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)}
+        {(['summary', 'health', 'prometheus'] as const).map((tabKey) => (
+          <button key={tabKey} onClick={() => setTab(tabKey)}
             className={['px-4 py-1.5 rounded-md text-sm capitalize transition-colors',
-              tab === t ? 'bg-orange-400/20 text-orange-400' : 'text-text-secondary hover:text-text-primary'].join(' ')}>
-            {t}
+              tab === tabKey ? 'bg-orange-400/20 text-orange-400' : 'text-text-secondary hover:text-text-primary'].join(' ')}>
+            {tabKey === 'summary' ? T('metrics.summary', 'Summary') : tabKey === 'health' ? T('metrics.health', 'Health') : T('metrics.prometheus', 'Prometheus')}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="text-center text-text-secondary py-12">Loading…</div>
+        <div className="text-center text-text-secondary py-12">{T('metrics.loading', 'Loading…')}</div>
       ) : tab === 'summary' && summary ? (
         <div className="space-y-6">
           <div>
-            <h3 className="text-sm font-medium text-text-secondary mb-3 uppercase tracking-wide">Counters</h3>
+            <h3 className="text-sm font-medium text-text-secondary mb-3 uppercase tracking-wide">{T('metrics.counters', 'Counters')}</h3>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(summary.counters).map(([k, v]) => (
                 <div key={k} className="bg-white/5 border border-white/10 rounded-lg p-4 flex items-center justify-between">
@@ -90,7 +94,7 @@ export function MetricsPage({ onNavigateBack }: MetricsPageProps) {
           </div>
           {Object.keys(summary.histograms).length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-text-secondary mb-3 uppercase tracking-wide">Histograms</h3>
+              <h3 className="text-sm font-medium text-text-secondary mb-3 uppercase tracking-wide">{T('metrics.histograms', 'Histograms')}</h3>
               <pre className="bg-white/5 border border-white/10 rounded-lg p-4 text-xs text-text-secondary overflow-auto max-h-64">
                 {JSON.stringify(summary.histograms, null, 2)}
               </pre>
@@ -107,7 +111,7 @@ export function MetricsPage({ onNavigateBack }: MetricsPageProps) {
             {prometheus}
           </pre>
         ) : (
-          <div className="text-center text-text-secondary py-12">Loading Prometheus text…</div>
+          <div className="text-center text-text-secondary py-12">{T('metrics.loadingPrometheus', 'Loading Prometheus text…')}</div>
         )
       ) : null}
     </div>

@@ -1,5 +1,6 @@
 import { RotateCcw } from 'lucide-react'
 import type { ConfigHistoryEntry } from '../../hooks/useServiceConfig'
+import { useTranslation } from '../../lib/i18n'
 
 interface ConfigHistoryTimelineProps {
   entries: ConfigHistoryEntry[]
@@ -34,8 +35,9 @@ function maskValue(value: string | undefined, key: string): string {
 }
 
 export function ConfigHistoryTimeline({ entries, onLoadMore, onRollback, hasMore }: ConfigHistoryTimelineProps) {
+  const { t } = useTranslation()
   if (entries.length === 0) {
-    return <p className="text-xs text-text-secondary text-center py-6">No history yet.</p>
+    return <p className="text-xs text-text-secondary text-center py-6">{t('serviceConfig.noHistoryYet')}</p>
   }
 
   return (
@@ -52,7 +54,7 @@ export function ConfigHistoryTimeline({ entries, onLoadMore, onRollback, hasMore
                 <span>{maskValue(entry.new_value, entry.key)}</span>
               </p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-text-secondary/50">{timeAgo(entry.created_at)}</span>
+                <span className="text-xs text-text-secondary/50">{timeAgo(entry.created_at, t)}</span>
                 <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${SOURCE_BADGE[entry.source] ?? 'bg-white/10 text-text-secondary'}`}>
                   {entry.source}
                 </span>
@@ -60,7 +62,7 @@ export function ConfigHistoryTimeline({ entries, onLoadMore, onRollback, hasMore
             </div>
             <button
               type="button"
-              title="Rollback to before this change"
+              title={t('serviceConfig.rollbackTitle')}
               onClick={() => onRollback(entry.id)}
               className="p-1.5 rounded text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors flex-shrink-0"
             >
@@ -75,7 +77,7 @@ export function ConfigHistoryTimeline({ entries, onLoadMore, onRollback, hasMore
           onClick={onLoadMore}
           className="w-full text-center text-xs text-text-secondary hover:text-text-primary py-2 transition-colors"
         >
-          Load more
+          {t('serviceConfig.loadMore')}
         </button>
       )}
     </div>

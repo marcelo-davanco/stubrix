@@ -1,5 +1,6 @@
 import { Settings, RefreshCw, ScrollText, ExternalLink } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from '../../lib/i18n'
 import { cn } from '../../lib/utils'
 
 interface ServiceActionsProps {
@@ -15,21 +16,22 @@ const btnClass = cn(
 
 export function ServiceActions({ serviceId, externalUrl, onRestart, onViewLogs }: ServiceActionsProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   return (
     <div className="flex items-center gap-1">
       <button
         type="button"
-        title="Configure"
+        title={t('settings.configure')}
         className={btnClass}
         onClick={() => navigate(`/settings/services/${serviceId}`)}
       >
         <Settings size={13} />
       </button>
-      <button type="button" title="Restart" className={btnClass} onClick={onRestart}>
+      <button type="button" title={t('settings.restart')} className={btnClass} onClick={onRestart}>
         <RefreshCw size={13} />
       </button>
-      <button type="button" title="Logs" className={btnClass} onClick={onViewLogs}>
+      <button type="button" title={t('settings.logs')} className={btnClass} onClick={onViewLogs}>
         <ScrollText size={13} />
       </button>
       {externalUrl && (
@@ -37,7 +39,7 @@ export function ServiceActions({ serviceId, externalUrl, onRestart, onViewLogs }
           href={externalUrl}
           target="_blank"
           rel="noopener noreferrer"
-          title="Open UI"
+          title={t('settings.openUi')}
           className={btnClass}
         >
           <ExternalLink size={13} />

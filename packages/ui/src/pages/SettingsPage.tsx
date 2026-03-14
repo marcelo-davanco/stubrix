@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import { useTranslation } from '../lib/i18n'
 import { useSettings } from '../hooks/useSettings'
 import { SettingsHeader } from '../components/settings/SettingsHeader'
 import { CategorySidebar } from '../components/settings/CategorySidebar'
@@ -11,24 +12,25 @@ import { DependencyWarningDialog } from '../components/settings/DependencyWarnin
 import { ExportWizard } from '../components/settings/ExportWizard'
 import { ImportWizard } from '../components/settings/ImportWizard'
 
-const CATEGORY_LABELS: Record<string, string> = {
-  mock_engines: 'Mock Engines',
-  databases: 'Databases',
-  db_viewers: 'DB Viewers',
-  cloud: 'Cloud',
-  storage: 'Storage',
-  iam: 'IAM',
-  observability: 'Observability',
-  tracing: 'Tracing',
-  events: 'Events',
-  protocols: 'Protocols',
-  contracts: 'Contracts',
-  chaos: 'Chaos',
-  ai: 'AI / Intelligence',
-  api_clients: 'API Clients',
+const CATEGORY_KEY: Record<string, string> = {
+  mock_engines: 'settings.categoryMockEngines',
+  databases: 'settings.categoryDatabases',
+  db_viewers: 'settings.categoryDbViewers',
+  cloud: 'settings.categoryCloud',
+  storage: 'settings.categoryStorage',
+  iam: 'settings.categoryIam',
+  observability: 'settings.categoryObservability',
+  tracing: 'settings.categoryTracing',
+  events: 'settings.categoryEvents',
+  protocols: 'settings.categoryProtocols',
+  contracts: 'settings.categoryContracts',
+  chaos: 'settings.categoryChaos',
+  ai: 'settings.categoryAi',
+  api_clients: 'settings.categoryApiClients',
 }
 
 export function SettingsPage() {
+  const { t } = useTranslation()
   const {
     services,
     cryptoStatus,
@@ -55,9 +57,10 @@ export function SettingsPage() {
     for (const svc of services) {
       const cat = svc.category
       if (!map.has(cat)) {
+        const key = CATEGORY_KEY[cat]
         map.set(cat, {
           id: cat,
-          label: CATEGORY_LABELS[cat] ?? cat,
+          label: key ? t(key) : cat,
           count: 0,
           enabledCount: 0,
           healthyCount: 0,
@@ -69,7 +72,7 @@ export function SettingsPage() {
       if (svc.healthStatus === 'healthy') entry.healthyCount++
     }
     return Array.from(map.values())
-  }, [services])
+  }, [services, t])
 
   const handleToggle = async (serviceId: string, enabled: boolean) => {
     if (!enabled) {
@@ -99,7 +102,7 @@ export function SettingsPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-text-secondary">
-        <div className="text-sm animate-pulse">Loading services…</div>
+        <div className="text-sm animate-pulse">{t('settings.loadingServices')}</div>
       </div>
     )
   }
@@ -115,7 +118,7 @@ export function SettingsPage() {
             onClick={() => void refetch()}
             className="px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg transition-colors"
           >
-            Retry
+            {t('settings.retry')}
           </button>
         </div>
       </div>

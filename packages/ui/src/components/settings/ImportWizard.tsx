@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { X, Upload, CheckCircle, AlertTriangle } from 'lucide-react'
+import { useTranslation } from '../../lib/i18n'
 import { ConflictStrategySelector } from './ConflictStrategySelector'
 
 interface ImportWizardProps {
@@ -35,6 +36,7 @@ interface ImportResult {
 }
 
 export function ImportWizard({ open, onClose, onComplete }: ImportWizardProps) {
+  const { t } = useTranslation()
   const [step, setStep] = useState<Step>(1)
   const [file, setFile] = useState<File | null>(null)
   const [isEncrypted, setIsEncrypted] = useState(false)
@@ -128,8 +130,8 @@ export function ImportWizard({ open, onClose, onComplete }: ImportWizardProps) {
       <div className="bg-[#1e1e2e] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
           <div>
-            <h2 className="text-sm font-semibold">Import Configuration</h2>
-            <p className="text-xs text-text-secondary mt-0.5">Step {step} of 3</p>
+            <h2 className="text-sm font-semibold">{t('backups.importTitle')}</h2>
+            <p className="text-xs text-text-secondary mt-0.5">{t('backups.stepOf3', { step })}</p>
           </div>
           <button type="button" onClick={handleClose} className="text-text-secondary hover:text-text-primary transition-colors">
             <X size={16} />
@@ -174,11 +176,11 @@ export function ImportWizard({ open, onClose, onComplete }: ImportWizardProps) {
               <label className="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" checked={isEncrypted} onChange={(e) => setIsEncrypted(e.target.checked)} className="accent-primary mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm">File is encrypted</p>
+                  <p className="text-sm">{t('backups.fileEncrypted')}</p>
                   {isEncrypted && (
                     <input
                       type="password"
-                      placeholder="Master password"
+                      placeholder={t('backups.masterPassword')}
                       value={masterPassword}
                       onChange={(e) => setMasterPassword(e.target.value)}
                       className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
@@ -281,7 +283,7 @@ export function ImportWizard({ open, onClose, onComplete }: ImportWizardProps) {
               onClick={() => step === 1 ? handleClose() : setStep(1)}
               className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
             >
-              {step === 1 ? 'Cancel' : '← Back'}
+              {step === 1 ? t('common.cancel') : t('common.back')}
             </button>
           )}
 
@@ -292,7 +294,7 @@ export function ImportWizard({ open, onClose, onComplete }: ImportWizardProps) {
               disabled={!file || busy || (isEncrypted && !masterPassword)}
               className="px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg font-medium transition-colors disabled:opacity-40"
             >
-              {busy ? 'Loading…' : 'Preview →'}
+              {busy ? t('common.loading') : t('backups.previewNext')}
             </button>
           )}
 
@@ -303,7 +305,7 @@ export function ImportWizard({ open, onClose, onComplete }: ImportWizardProps) {
               disabled={busy || selectedServices.length === 0}
               className="px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg font-medium transition-colors disabled:opacity-40"
             >
-              {busy ? 'Importing…' : `Import (${preview?.totalChanges ?? 0} changes)`}
+              {busy ? t('backups.importing') : t('backups.importWithChanges', { count: preview?.totalChanges ?? 0 })}
             </button>
           )}
 
@@ -313,7 +315,7 @@ export function ImportWizard({ open, onClose, onComplete }: ImportWizardProps) {
               onClick={handleClose}
               className="px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg font-medium transition-colors"
             >
-              Done
+              {t('common.done')}
             </button>
           )}
         </div>
