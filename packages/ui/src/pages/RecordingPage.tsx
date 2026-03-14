@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Square } from 'lucide-react';
+import { ArrowLeft, Play, Square, CircleDot } from 'lucide-react';
 import type { Project, RecordingState } from '@stubrix/shared';
 import { api } from '../lib/api';
-import { Badge } from '../components/ui/Badge';
+import { useTranslation } from '../lib/i18n';
 
 export function RecordingPage() {
+  const { t } = useTranslation();
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
@@ -64,7 +65,9 @@ export function RecordingPage() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-full text-text-secondary">Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center h-full text-text-secondary">{t('common.loading')}</div>;
+
+  const displayProjectName = project?.id === 'default' ? t('projects.defaultProjectName') : project?.name ?? '';
 
   return (
     <div className="p-6 max-w-2xl">
@@ -73,35 +76,39 @@ export function RecordingPage() {
           <ArrowLeft size={18} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold">Recording</h1>
-          <p className="text-text-secondary text-sm">{project?.name}</p>
+          <h1 className="text-2xl font-bold">{t('recording.title')}</h1>
+          <p className="text-text-secondary text-sm">{displayProjectName}</p>
         </div>
       </div>
 
       <div className="bg-white/5 border border-white/10 rounded-lg p-5 mb-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium">Recording Status</h3>
+          <h3 className="font-medium">{t('recording.statusLabel')}</h3>
           {recording?.active ? (
-            <Badge variant="danger">🔴 Recording</Badge>
+            <span className="flex items-center gap-2 text-sm font-medium text-red-400">
+              <CircleDot size={18} aria-hidden />
+              {t('recording.activeBadge')}
+            </span>
           ) : (
-            <Badge variant="default">⚪ Inactive</Badge>
+            <span className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+              <Square size={18} aria-hidden />
+              {t('recording.inactiveBadge')}
+            </span>
           )}
         </div>
 
         {!recording?.active && (
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Proxy Target</label>
+              <label className="block text-xs text-text-secondary mb-1">{t('recording.proxyTargetLabel')}</label>
               <input
                 value={proxyTarget}
                 onChange={(e) => setProxyTarget(e.target.value)}
-                placeholder="https://api.example.com"
+                placeholder={t('recording.proxyTargetPlaceholder')}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary"
               />
               {project?.proxyTarget && (
-                <p className="text-xs text-text-secondary mt-1">
-                  Pre-filled from project settings
-                </p>
+                <p className="text-xs text-text-secondary mt-1">{t('recording.prefilledHint')}</p>
               )}
             </div>
             {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -110,7 +117,7 @@ export function RecordingPage() {
               disabled={acting || !proxyTarget}
               className="flex items-center gap-2 bg-primary hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium"
             >
-              <Play size={14} /> Start Recording
+              <Play size={14} /> {t('recording.startButton')}
             </button>
           </div>
         )}
@@ -118,9 +125,9 @@ export function RecordingPage() {
         {recording?.active && (
           <div className="space-y-3">
             <div className="text-sm text-text-secondary">
-              <p>Target: <span className="text-text-primary">{recording.proxyTarget}</span></p>
+              <p>{t('recording.targetLabel')}: <span className="text-text-primary">{recording.proxyTarget}</span></p>
               {recording.startedAt && (
-                <p>Started: <span className="text-text-primary">{new Date(recording.startedAt).toLocaleString()}</span></p>
+                <p>{t('recording.startedLabel')}: <span className="text-text-primary">{new Date(recording.startedAt).toLocaleString()}</span></p>
               )}
             </div>
             <div className="flex gap-3">
@@ -129,14 +136,14 @@ export function RecordingPage() {
                 disabled={acting}
                 className="flex items-center gap-2 bg-danger/20 hover:bg-danger/30 text-red-400 px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
               >
-                <Square size={14} /> Stop &amp; Save
+                <Square size={14} /> {t('recording.stopSave')}
               </button>
               <button
                 onClick={handleSnapshot}
                 disabled={acting}
                 className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-text-secondary px-4 py-2 rounded-md text-sm disabled:opacity-50"
               >
-                Snapshot
+                {t('recording.snapshot')}
               </button>
             </div>
           </div>
@@ -144,11 +151,11 @@ export function RecordingPage() {
       </div>
 
       <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-sm text-text-secondary">
-        <p className="font-medium text-text-primary mb-2">How it works</p>
+        <p className="font-medium text-text-primary mb-2">{t('recording.howItWorksTitle')}</p>
         <ul className="space-y-1 list-disc list-inside">
-          <li>Start recording — all requests are proxied to the target</li>
-          <li>Make requests against <code className="bg-white/10 px-1 rounded">localhost:{'{port}'}</code></li>
-          <li>Stop — mocks are saved with <code className="bg-white/10 px-1 rounded">metadata.project: "{projectId}"</code></li>
+          <li>{t('recording.howItWorks1')}</li>
+          <li>{t('recording.howItWorks2').replace('{port}', '8081')}</li>
+          <li>{t('recording.howItWorks3').replace('{projectId}', projectId ?? '')}</li>
         </ul>
       </div>
     </div>

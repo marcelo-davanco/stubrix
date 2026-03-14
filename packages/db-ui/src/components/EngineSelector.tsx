@@ -1,5 +1,6 @@
 import type { Engine } from '@stubrix/shared'
 import { Server } from 'lucide-react'
+import { useDbUiTranslation } from '../lib/i18n'
 import { EmptyState } from './EmptyState'
 
 type EngineSelectorProps = {
@@ -37,12 +38,13 @@ const ENGINE_COLOR: Record<string, { ring: string; bg: string; text: string; glo
 }
 
 export function EngineSelector({ allEngines, selectedEngine, onSelect }: EngineSelectorProps) {
+  const t = useDbUiTranslation()
   if (allEngines.length === 0) {
     return (
       <EmptyState
         icon={<Server size={24} strokeWidth={1.5} />}
-        title="Nenhuma engine configurada"
-        description="Configure uma engine de banco de dados para começar a gerenciar suas conexões e snapshots."
+        title={t('db.noEngineTitle')}
+        description={t('db.noEngineDesc')}
       />
     )
   }
@@ -80,7 +82,7 @@ export function EngineSelector({ allEngines, selectedEngine, onSelect }: EngineS
               <div className="mt-0.5 flex items-center gap-1.5">
                 <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-green-400' : 'bg-white/20'}`} />
                 <span className="text-xs text-text-secondary">
-                  {isActive ? 'Online' : 'Offline'}
+                  {isActive ? t('db.online') : t('db.offline')}
                 </span>
               </div>
             </div>

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Video, RefreshCw, FolderOpen } from 'lucide-react';
+import { ArrowLeft, Plus, CircleDot, Square, RefreshCw, FolderOpen } from 'lucide-react';
 import type { Project, StatusResponse, RecordingState } from '@stubrix/shared';
 import { api } from '../lib/api';
-import { Badge } from '../components/ui/Badge';
+import { useTranslation } from '../lib/i18n';
 
 export function DashboardPage() {
+  const { t } = useTranslation();
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
@@ -28,8 +29,8 @@ export function DashboardPage() {
 
   useEffect(() => { void load(); }, [projectId]);
 
-  if (loading) return <div className="flex items-center justify-center h-full text-text-secondary">Loading...</div>;
-  if (!project) return <div className="p-6 text-red-400">Project not found</div>;
+  if (loading) return <div className="flex items-center justify-center h-full text-text-secondary">{t('common.loading')}</div>;
+  if (!project) return <div className="p-6 text-red-400">{t('dashboard.notFound')}</div>;
 
   const mocksCount = status?.mocks.byProject[projectId!] ?? 0;
 
@@ -41,84 +42,94 @@ export function DashboardPage() {
         </button>
         <div>
           <h1 className="text-2xl font-bold">{project.name}</h1>
-          <p className="text-text-secondary text-sm">Dashboard</p>
+          <p className="text-text-secondary text-sm">{t('dashboard.title')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <StatCard label="Engine" value={status?.engine ?? '—'} />
+        <StatCard label={t('projects.statEngine')} value={status?.engine ?? '—'} />
         <StatCard
-          label="Status"
-          value={status?.engineStatus === 'running' ? '🟢 Online' : '🔴 Offline'}
+          label={t('projects.statStatus')}
+          value={status?.engineStatus === 'running' ? `🟢 ${t('projects.statOnline')}` : `🔴 ${t('projects.statOffline')}`}
         />
-        <StatCard label="Mocks" value={String(mocksCount)} />
-        <StatCard label="Port" value={String(status?.port ?? '—')} />
+        <StatCard label={t('projects.statTotalMocks')} value={String(mocksCount)} />
+        <StatCard label={t('projects.statPort')} value={String(status?.port ?? '—')} />
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white/5 border border-white/10 rounded-lg p-4">
           <h3 className="font-medium mb-3 flex items-center gap-2">
-            <Video size={16} className="text-danger" />
-            Recording
+            <CircleDot size={18} className="text-danger" aria-hidden />
+            {t('dashboard.recordingTitle')}
           </h3>
           {recording?.active ? (
             <div>
-              <Badge variant="danger">🔴 Recording</Badge>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-2 px-4 py-2 rounded-md bg-danger/20 text-red-400 text-sm font-medium">
+                  <CircleDot size={18} aria-hidden />
+                  {t('dashboard.recordingActive')}
+                </span>
+                <button
+                  onClick={async () => {
+                    await api.recording.stop(projectId!);
+                    void load();
+                  }}
+                  className="px-4 py-2 text-sm font-medium rounded-md bg-danger/20 text-red-400 hover:bg-danger/30"
+                >
+                  {t('dashboard.stopRecording')}
+                </button>
+              </div>
               <p className="text-sm text-text-secondary mt-2">
-                Target: {recording.proxyTarget}
+                {t('dashboard.targetLabel')}: {recording.proxyTarget}
               </p>
-              <button
-                onClick={async () => {
-                  await api.recording.stop(projectId!);
-                  void load();
-                }}
-                className="mt-3 text-sm bg-danger/20 text-red-400 hover:bg-danger/30 px-3 py-1.5 rounded-md"
-              >
-                Stop Recording
-              </button>
             </div>
           ) : (
             <div>
-              <Badge variant="default">⚪ Inactive</Badge>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-2 px-4 py-2 rounded-md bg-white/10 text-text-secondary text-sm font-medium">
+                  <Square size={18} aria-hidden />
+                  {t('dashboard.recordingStopped')}
+                </span>
+                <Link
+                  to={`/projects/${projectId}/recording`}
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md bg-primary/20 text-primary hover:bg-primary/30"
+                >
+                  {t('dashboard.startRecording')}
+                </Link>
+              </div>
               {project.proxyTarget && (
-                <p className="text-xs text-text-secondary mt-2">Target: {project.proxyTarget}</p>
+                <p className="text-xs text-text-secondary mt-2">{t('dashboard.targetLabel')}: {project.proxyTarget}</p>
               )}
-              <Link
-                to={`/projects/${projectId}/recording`}
-                className="mt-3 inline-block text-sm bg-primary/20 text-primary hover:bg-primary/30 px-3 py-1.5 rounded-md"
-              >
-                Start Recording
-              </Link>
             </div>
           )}
         </div>
 
         <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-          <h3 className="font-medium mb-3">Quick Actions</h3>
+          <h3 className="font-medium mb-3">{t('dashboard.quickActions')}</h3>
           <div className="flex flex-wrap gap-2">
             <Link
               to={`/projects/${projectId}/mocks`}
               className="flex items-center gap-1.5 text-sm bg-primary/20 text-primary hover:bg-primary/30 px-3 py-1.5 rounded-md"
             >
-              <FolderOpen size={14} /> View Mocks
+              <FolderOpen size={14} /> {t('dashboard.viewMocks')}
             </Link>
             <Link
               to={`/projects/${projectId}/mocks/new`}
               className="flex items-center gap-1.5 text-sm bg-primary/20 text-primary hover:bg-primary/30 px-3 py-1.5 rounded-md"
             >
-              <Plus size={14} /> New Mock
+              <Plus size={14} /> {t('dashboard.newMock')}
             </Link>
             <Link
               to={`/projects/${projectId}/recording`}
               className="flex items-center gap-1.5 text-sm bg-white/5 text-text-secondary hover:bg-white/10 px-3 py-1.5 rounded-md"
             >
-              <Video size={14} /> Record
+              <CircleDot size={14} /> {t('dashboard.record')}
             </Link>
             <button
               onClick={() => void load()}
               className="flex items-center gap-1.5 text-sm bg-white/5 text-text-secondary hover:bg-white/10 px-3 py-1.5 rounded-md"
             >
-              <RefreshCw size={14} /> Refresh
+              <RefreshCw size={14} /> {t('dashboard.refresh')}
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Camera, Loader2, Link2 } from 'lucide-react'
+import { useDbUiTranslation } from '../lib/i18n'
 import type { ProjectDatabaseConfigItem } from '../lib/db-api'
 
 type SnapshotFormProps = {
@@ -24,6 +25,7 @@ function StatusIndicator({ status }: { status: 'unknown' | 'ok' | 'error' }) {
 }
 
 export function SnapshotForm({ databases, connections, onSubmit, onConnectionChange }: SnapshotFormProps) {
+  const t = useDbUiTranslation()
   const [label, setLabel] = useState('snapshot')
   const [database, setDatabase] = useState('')
   const [category, setCategory] = useState('')
@@ -76,8 +78,8 @@ export function SnapshotForm({ databases, connections, onSubmit, onConnectionCha
             <Camera size={15} />
           </div>
           <div>
-            <h2 className="text-sm font-semibold leading-tight text-text-primary">Criar Snapshot</h2>
-            <p className="text-xs text-text-secondary">Salve o estado atual do database</p>
+            <h2 className="text-sm font-semibold leading-tight text-text-primary">{t('db.createSnapshot')}</h2>
+            <p className="text-xs text-text-secondary">{t('db.createSnapshotDesc')}</p>
           </div>
         </div>
         <button
@@ -86,14 +88,14 @@ export function SnapshotForm({ databases, connections, onSubmit, onConnectionCha
           className="flex shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {submitting ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-          {submitting ? 'Salvando...' : 'Criar Snapshot'}
+          {submitting ? t('db.saving') : t('db.createSnapshotButton')}
         </button>
       </div>
 
       {connections.length > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-white/10 bg-main-bg px-3 py-2.5">
           <Link2 size={12} className="shrink-0 text-text-secondary/50" />
-          <span className="shrink-0 text-xs text-text-secondary/70">Conexão:</span>
+          <span className="shrink-0 text-xs text-text-secondary/70">{t('db.connection')}</span>
           <div className="flex flex-1 flex-wrap gap-1">
             <button
               type="button"
@@ -104,7 +106,7 @@ export function SnapshotForm({ databases, connections, onSubmit, onConnectionCha
                   : 'text-text-secondary hover:bg-surface-2 hover:text-text-primary'
               }`}
             >
-              Padrão
+              {t('db.default')}
             </button>
             {connections.map((conn) => {
               const style = ENGINE_STYLE[conn.engine] ?? ENGINE_STYLE.sqlite
@@ -139,22 +141,22 @@ export function SnapshotForm({ databases, connections, onSubmit, onConnectionCha
 
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-text-secondary">Label</label>
+          <label className="mb-1.5 block text-xs font-medium text-text-secondary">{t('db.label')}</label>
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder="snapshot"
+            placeholder={t('db.labelPlaceholder')}
             className={INPUT_CLASS}
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-text-secondary">Database *</label>
+          <label className="mb-1.5 block text-xs font-medium text-text-secondary">{t('db.database')} *</label>
           <select
             value={database}
             onChange={(e) => setDatabase(e.target.value)}
             className={INPUT_CLASS}
           >
-            <option value="">Selecionar...</option>
+            <option value="">{t('db.selectDatabase')}</option>
             {databases.map((db) => (
               <option key={db} value={db}>{db}</option>
             ))}
@@ -162,19 +164,19 @@ export function SnapshotForm({ databases, connections, onSubmit, onConnectionCha
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-medium text-text-secondary">
-            Categoria <span className="font-normal text-white/25">(opcional)</span>
+            {t('db.category')} <span className="font-normal text-white/25">{t('db.optional')}</span>
           </label>
           <input
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            placeholder="ex: staging"
+            placeholder={t('db.categoryPlaceholder')}
             className={INPUT_CLASS}
           />
         </div>
       </div>
 
       {databases.length === 0 && (
-        <p className="mt-2 text-xs text-text-secondary/60">Selecione uma engine ou conexão para ver databases disponíveis</p>
+        <p className="mt-2 text-xs text-text-secondary/60">{t('db.selectEngineHint')}</p>
       )}
     </form>
   )

@@ -1,14 +1,17 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { FolderOpen, ScrollText, FlaskConical, Database } from 'lucide-react';
+import { FolderOpen, ScrollText, FlaskConical, Database, Settings } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useTranslation } from '../lib/i18n';
 
 const navItems = [
-  { to: '/', label: 'Projects', icon: FolderOpen, end: true },
-  { to: '/databases', label: 'Databases', icon: Database },
-  { to: '/logs', label: 'Logs', icon: ScrollText },
+  { to: '/', labelKey: 'nav.projects', icon: FolderOpen, end: true },
+  { to: '/databases', labelKey: 'nav.databases', icon: Database, end: false },
+  { to: '/logs', labelKey: 'nav.logs', icon: ScrollText, end: false },
+  { to: '/settings', labelKey: 'nav.settings', icon: Settings, end: false },
 ];
 
 export function Layout() {
+  const { t } = useTranslation();
   return (
     <div className="flex h-screen overflow-hidden bg-main-bg text-text-primary">
       <aside className="flex w-56 flex-shrink-0 flex-col border-r border-white/5 bg-sidebar">
@@ -17,7 +20,7 @@ export function Layout() {
           <span className="text-lg font-bold tracking-wide">Stubrix</span>
         </div>
         <nav className="flex-1 space-y-1 px-2 py-4">
-          {navItems.map(({ to, label, icon: Icon, end }) => (
+          {navItems.map(({ to, labelKey, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -32,7 +35,7 @@ export function Layout() {
               }
             >
               <Icon size={16} />
-              {label}
+              {t(labelKey)}
             </NavLink>
           ))}
         </nav>

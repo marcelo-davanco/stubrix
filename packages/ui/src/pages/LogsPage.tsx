@@ -3,8 +3,8 @@ import { Trash2, Pause, Play } from 'lucide-react';
 import type { LogEntry } from '@stubrix/shared';
 import { api } from '../lib/api';
 import { connectLogs } from '../lib/ws';
-import { Badge } from '../components/ui/Badge';
 import { cn } from '../lib/utils';
+import { useTranslation } from '../lib/i18n';
 
 const METHOD_COLORS: Record<string, string> = {
   GET: 'text-green-400',
@@ -15,6 +15,7 @@ const METHOD_COLORS: Record<string, string> = {
 };
 
 export function LogsPage() {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [paused, setPaused] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -46,30 +47,38 @@ export function LogsPage() {
     setLogs([]);
   };
 
-  if (loading) return <div className="flex items-center justify-center h-full text-text-secondary">Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center h-full text-text-secondary">{t('common.loading')}</div>;
 
   return (
     <div className="flex flex-col h-full p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold">Request Logs</h1>
-          <p className="text-text-secondary text-sm">{logs.length} entries</p>
+          <h1 className="text-2xl font-bold">{t('logs.title')}</h1>
+          <p className="text-text-secondary text-sm">{logs.length} {t('logs.entriesLabel')}</p>
         </div>
         <div className="flex items-center gap-2">
-          {!paused && <Badge variant="danger">🔴 Live</Badge>}
-          {paused && <Badge variant="default">⏸ Paused</Badge>}
+          {!paused && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-danger/20 text-red-400">
+              🔴 {t('logs.live')}
+            </span>
+          )}
+          {paused && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-white/10 text-text-secondary">
+              ⏸ {t('logs.paused')}
+            </span>
+          )}
           <button
             onClick={togglePause}
             className="flex items-center gap-1.5 text-sm bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-md text-text-secondary"
           >
             {paused ? <Play size={14} /> : <Pause size={14} />}
-            {paused ? 'Resume' : 'Pause'}
+            {paused ? t('logs.resume') : t('logs.pause')}
           </button>
           <button
             onClick={handleClear}
             className="flex items-center gap-1.5 text-sm bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-md text-text-secondary"
           >
-            <Trash2 size={14} /> Clear
+            <Trash2 size={14} /> {t('logs.clear')}
           </button>
         </div>
       </div>
@@ -77,18 +86,18 @@ export function LogsPage() {
       <div className="flex-1 overflow-auto bg-white/5 border border-white/10 rounded-lg">
         {logs.length === 0 ? (
           <div className="flex items-center justify-center h-full text-text-secondary">
-            No requests yet. Make some requests to see them here.
+            {t('logs.empty')}
           </div>
         ) : (
           <table className="w-full text-xs font-mono">
             <thead className="sticky top-0 bg-[#1a1a2e] border-b border-white/10">
               <tr className="text-left text-text-secondary">
-                <th className="px-4 py-2">Timestamp</th>
-                <th className="px-4 py-2 w-16">Method</th>
-                <th className="px-4 py-2">URL</th>
-                <th className="px-4 py-2 w-16">Status</th>
-                <th className="px-4 py-2 w-16">ms</th>
-                <th className="px-4 py-2 w-16">Matched</th>
+                <th className="px-4 py-2">{t('logs.timestamp')}</th>
+                <th className="px-4 py-2 w-16">{t('logs.method')}</th>
+                <th className="px-4 py-2">{t('logs.url')}</th>
+                <th className="px-4 py-2 w-16">{t('logs.status')}</th>
+                <th className="px-4 py-2 w-16">{t('logs.ms')}</th>
+                <th className="px-4 py-2 w-16">{t('logs.matched')}</th>
               </tr>
             </thead>
             <tbody>
