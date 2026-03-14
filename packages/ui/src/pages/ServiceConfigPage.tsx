@@ -158,7 +158,7 @@ export function ServiceConfigPage() {
               className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary/80 hover:bg-primary font-medium transition-colors disabled:opacity-40"
             >
               <Save size={14} />
-              {saving ? t('serviceConfig.saving') : hasChanges ? t('serviceConfig.saveCount').replace('{{count}}', String(Object.keys(dirty).length)) : t('serviceConfig.save')}
+              {saving ? t('serviceConfig.saving') : hasChanges ? t('serviceConfig.saveCount', { count: String(Object.keys(dirty).length) }) : t('serviceConfig.save')}
             </button>
           </div>
         </div>

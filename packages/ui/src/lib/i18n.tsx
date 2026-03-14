@@ -22,7 +22,7 @@ function getStoredLocale(): Locale {
 export const I18nContext = createContext<{
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 } | null>(null);
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -34,7 +34,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: string): string => messages[locale]?.[key] ?? messages.en?.[key] ?? key,
+    (key: string, vars?: Record<string, string | number>): string => {
+      let msg = messages[locale]?.[key] ?? messages.en?.[key] ?? key;
+      if (vars) Object.entries(vars).forEach(([k, v]) => { msg = msg.replaceAll(`{{${k}}}`, String(v)); });
+      return msg;
+    },
     [locale],
   );
 

@@ -131,7 +131,7 @@ export function BackupsPage() {
 
         {!loading && !error && backups.length > 0 && (
           <p className="text-xs text-text-secondary text-center py-2">
-            {t('backups.showing').replace('{{count}}', String(backups.length))}
+            {t('backups.showing', { count: String(backups.length) })}
           </p>
         )}
       </div>
