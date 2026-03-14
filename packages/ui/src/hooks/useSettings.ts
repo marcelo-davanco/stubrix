@@ -59,7 +59,11 @@ export function useSettings() {
 
   const toggleService = async (serviceId: string, enabled: boolean) => {
     const endpoint = enabled ? 'enable' : 'disable'
-    await fetch(`${API}/services/${serviceId}/${endpoint}`, { method: 'POST' })
+    const res = await fetch(`${API}/services/${serviceId}/${endpoint}`, { method: 'POST' })
+    if (!res.ok) {
+      await fetchServices()
+      throw new Error(`Failed to ${endpoint} service: ${res.statusText}`)
+    }
     await fetchServices()
   }
 

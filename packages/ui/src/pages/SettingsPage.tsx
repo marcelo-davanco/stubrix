@@ -140,7 +140,7 @@ export function SettingsPage() {
         <ServiceGrid
           services={services}
           selectedCategory={selectedCategory}
-          onToggle={(id, en) => void handleToggle(id, en)}
+          onToggle={(id, en) => handleToggle(id, en)}
           onToggleAutoStart={(id, val) => void toggleAutoStart(id, val)}
           onRestart={(id) => void handleRestart(id)}
           onViewLogs={handleViewLogs}

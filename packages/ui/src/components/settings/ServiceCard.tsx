@@ -5,7 +5,7 @@ import { ServiceActions } from './ServiceActions'
 
 interface ServiceCardProps {
   service: ServiceStatus
-  onToggle: (serviceId: string, enabled: boolean) => void
+  onToggle: (serviceId: string, enabled: boolean) => Promise<void> | void
   onToggleAutoStart: (serviceId: string, autoStart: boolean) => void
   onRestart: (serviceId: string) => void
   onViewLogs: (serviceId: string) => void
