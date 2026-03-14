@@ -14,6 +14,7 @@ export interface HealthCheckResult {
 interface HttpCheckConfig {
   type: 'http';
   url: string;
+  auth?: { username: string; password: string };
 }
 
 interface TcpCheckConfig {
@@ -48,6 +49,7 @@ const HEALTH_CHECK_MAP: Record<string, CheckConfig> = {
   rabbitmq: {
     type: 'http',
     url: 'http://localhost:15672/api/healthchecks/node',
+    auth: { username: 'guest', password: 'guest' },
   },
   gripmock: { type: 'http', url: 'http://localhost:4771/' },
   'pact-broker': {
@@ -88,7 +90,7 @@ export class HealthCheckService {
     const start = Date.now();
     try {
       if (config.type === 'http') {
-        await this.httpCheck(config.url);
+        await this.httpCheck(config.url, config.auth);
       } else {
         await this.tcpCheck(config.host, config.port);
       }
@@ -165,12 +167,23 @@ export class HealthCheckService {
     }
   }
 
-  private async httpCheck(url: string): Promise<void> {
+  private async httpCheck(
+    url: string,
+    auth?: { username: string; password: string },
+  ): Promise<void> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.httpTimeout);
 
+    const headers: Record<string, string> = {};
+    if (auth) {
+      const encoded = Buffer.from(`${auth.username}:${auth.password}`).toString(
+        'base64',
+      );
+      headers['Authorization'] = `Basic ${encoded}`;
+    }
+
     try {
-      const res = await fetch(url, { signal: controller.signal });
+      const res = await fetch(url, { signal: controller.signal, headers });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
