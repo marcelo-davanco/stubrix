@@ -157,6 +157,17 @@ export class ServiceLifecycleService implements OnModuleInit {
           );
         }
 
+        // Start companion services (e.g. openrag-langflow, openrag-opensearch)
+        const companions = this.registry.getCompanions(serviceId);
+        for (const companion of companions) {
+          const cr = await this.docker.startService(companion);
+          if (!cr.success) {
+            this.logger.warn(
+              `Failed to start companion ${companion} for ${serviceId}: ${cr.stderr}`,
+            );
+          }
+        }
+
         // Health check is fire-and-forget — respond immediately
         if (!skipHealthCheck) {
           this.waitForHealthy(serviceId, timeout)
@@ -241,6 +252,17 @@ export class ServiceLifecycleService implements OnModuleInit {
     // Stop Docker container — prefer by service name to avoid stopping unrelated co-profile services
     const def = this.registry.getService(serviceId);
     if (def.dockerService || def.dockerProfile) {
+      // Stop companion services first (e.g. openrag-langflow, openrag-opensearch)
+      const companions = this.registry.getCompanions(serviceId);
+      for (const companion of companions) {
+        const cr = await this.docker.stopService(companion);
+        if (!cr.success) {
+          this.logger.warn(
+            `Failed to stop companion ${companion} for ${serviceId}: ${cr.stderr}`,
+          );
+        }
+      }
+
       const result = def.dockerService
         ? await this.docker.stopService(def.dockerService)
         : await this.docker.stopProfile(def.dockerProfile!);

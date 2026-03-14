@@ -177,6 +177,15 @@ export class ServiceRegistryService implements OnModuleInit {
     return [...def.dependsOn];
   }
 
+  getCompanions(serviceId: string): string[] {
+    const def = this.definitionsMap.get(serviceId);
+    const companions: string[] | undefined = def?.dockerCompanions as
+      | string[]
+      | undefined;
+    if (!companions || companions.length === 0) return [];
+    return [...companions];
+  }
+
   getDependents(serviceId: string): string[] {
     const dependents: string[] = [];
     for (const def of SERVICE_DEFINITIONS) {

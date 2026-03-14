@@ -125,6 +125,7 @@ export interface ServiceDefinitionSeed {
   category: ServiceCategory;
   dockerProfile?: string;
   dockerService?: string;
+  dockerCompanions?: string[];
   defaultPort?: number;
   externalUrl?: string;
   dependsOn: string[];
