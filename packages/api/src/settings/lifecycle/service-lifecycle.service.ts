@@ -44,6 +44,8 @@ export class ServiceLifecycleService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
+    this.health.startMonitoring();
+
     const autoStartServices = this.configDb.getAutoStartServices();
     if (autoStartServices.length === 0) return;
     this.logger.log(
