@@ -1,0 +1,10 @@
+node_modules/
+packages/*/node_modules/
+packages/*/dist/
+packages/api/public/
+*.log
+.git
+.env
+.env.*
+!.env.example
+dumps/

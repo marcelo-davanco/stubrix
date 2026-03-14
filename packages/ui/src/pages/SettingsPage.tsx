@@ -1,75 +1,185 @@
-import { useState, useRef, useEffect } from 'react';
-import { useTranslation, type Locale } from '../lib/i18n';
-import { Settings, ChevronDown } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { useState, useMemo } from 'react'
+import { AlertTriangle } from 'lucide-react'
+import { useSettings } from '../hooks/useSettings'
+import { SettingsHeader } from '../components/settings/SettingsHeader'
+import { CategorySidebar } from '../components/settings/CategorySidebar'
+import type { CategoryInfo } from '../components/settings/CategorySidebar'
+import { ServiceGrid } from '../components/settings/ServiceGrid'
+import { MasterPasswordBanner } from '../components/settings/MasterPasswordBanner'
+import { LogsModal } from '../components/settings/LogsModal'
+import { DependencyWarningDialog } from '../components/settings/DependencyWarningDialog'
+import { ExportWizard } from '../components/settings/ExportWizard'
+import { ImportWizard } from '../components/settings/ImportWizard'
 
-const localeOptions: { value: Locale; label: string }[] = [
-  { value: 'pt', label: 'Português (Brasil)' },
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Español' },
-];
+const CATEGORY_LABELS: Record<string, string> = {
+  mock_engines: 'Mock Engines',
+  databases: 'Databases',
+  db_viewers: 'DB Viewers',
+  cloud: 'Cloud',
+  storage: 'Storage',
+  iam: 'IAM',
+  observability: 'Observability',
+  tracing: 'Tracing',
+  events: 'Events',
+  protocols: 'Protocols',
+  contracts: 'Contracts',
+  chaos: 'Chaos',
+  ai: 'AI / Intelligence',
+  api_clients: 'API Clients',
+}
 
 export function SettingsPage() {
-  const { t, locale, setLocale } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const {
+    services,
+    cryptoStatus,
+    loading,
+    error,
+    toggleService,
+    toggleAutoStart,
+    restartService,
+    getServiceLogs,
+    setupMasterPassword,
+    verifyMasterPassword,
+    lockSession,
+    refetch,
+  } = useSettings()
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [logsTarget, setLogsTarget] = useState<{ id: string; name: string } | null>(null)
+  const [depWarn, setDepWarn] = useState<{ serviceId: string; name: string; dependents: string[] } | null>(null)
+  const [showExport, setShowExport] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
-  const current = localeOptions.find((o) => o.value === locale);
+  const categories = useMemo<CategoryInfo[]>(() => {
+    const map = new Map<string, CategoryInfo>()
+    for (const svc of services) {
+      const cat = svc.category
+      if (!map.has(cat)) {
+        map.set(cat, {
+          id: cat,
+          label: CATEGORY_LABELS[cat] ?? cat,
+          count: 0,
+          enabledCount: 0,
+          healthyCount: 0,
+        })
+      }
+      const entry = map.get(cat)!
+      entry.count++
+      if (svc.enabled) entry.enabledCount++
+      if (svc.healthStatus === 'healthy') entry.healthyCount++
+    }
+    return Array.from(map.values())
+  }, [services])
 
-  return (
-    <div className="p-6 max-w-xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Settings size={24} className="text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
-        </div>
+  const handleToggle = async (serviceId: string, enabled: boolean) => {
+    if (!enabled) {
+      const svc = services.find((s) => s.serviceId === serviceId)
+      // Naively check for dependents — API will return 409 if there are issues
+      try {
+        await toggleService(serviceId, enabled)
+      } catch {
+        if (svc) {
+          setDepWarn({ serviceId, name: svc.name, dependents: [] })
+        }
+      }
+      return
+    }
+    await toggleService(serviceId, enabled)
+  }
+
+  const handleRestart = async (serviceId: string) => {
+    await restartService(serviceId)
+  }
+
+  const handleViewLogs = (serviceId: string) => {
+    const svc = services.find((s) => s.serviceId === serviceId)
+    if (svc) setLogsTarget({ id: svc.serviceId, name: svc.name })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center text-text-secondary">
+        <div className="text-sm animate-pulse">Loading services…</div>
       </div>
+    )
+  }
 
-      <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-        <label className="block text-sm font-medium mb-2">{t('settings.language')}</label>
-        <div className="relative w-full max-w-xs" ref={ref}>
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle size={32} className="text-red-400 mx-auto mb-3" />
+          <p className="text-sm text-text-secondary mb-4">{error}</p>
           <button
             type="button"
-            onClick={() => setOpen((v) => !v)}
-            className={cn(
-              'w-full flex items-center justify-between gap-2 bg-white/5 border rounded-md px-3 py-2 text-sm text-left transition-colors',
-              open ? 'border-primary' : 'border-white/10 focus:border-primary focus:outline-none',
-            )}
+            onClick={() => void refetch()}
+            className="px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg transition-colors"
           >
-            <span>{current?.label}</span>
-            <ChevronDown size={16} className={cn('text-text-secondary', open && 'rotate-180')} />
+            Retry
           </button>
-          {open && (
-            <ul className="absolute z-10 mt-1 w-full rounded-md border border-white/10 bg-main-bg py-1 shadow-lg">
-              {localeOptions.map((opt) => (
-                <li key={opt.value}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLocale(opt.value);
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      'w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-white/10',
-                      opt.value === locale && 'bg-primary/20 text-primary',
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col h-full p-6 gap-4 overflow-hidden">
+      <SettingsHeader
+        onExport={() => setShowExport(true)}
+        onImport={() => setShowImport(true)}
+      />
+
+      <div className="flex gap-5 flex-1 overflow-hidden">
+        <CategorySidebar
+          categories={categories}
+          selected={selectedCategory}
+          onSelect={setSelectedCategory}
+          totalCount={services.length}
+        />
+
+        <ServiceGrid
+          services={services}
+          selectedCategory={selectedCategory}
+          onToggle={(id, en) => handleToggle(id, en)}
+          onToggleAutoStart={(id, val) => void toggleAutoStart(id, val)}
+          onRestart={(id) => void handleRestart(id)}
+          onViewLogs={handleViewLogs}
+        />
+      </div>
+
+      <MasterPasswordBanner
+        status={cryptoStatus}
+        onSetup={setupMasterPassword}
+        onUnlock={async (pw) => verifyMasterPassword(pw)}
+        onLock={lockSession}
+      />
+
+      {logsTarget && (
+        <LogsModal
+          serviceId={logsTarget.id}
+          serviceName={logsTarget.name}
+          open={true}
+          onClose={() => setLogsTarget(null)}
+          fetchLogs={getServiceLogs}
+        />
+      )}
+
+      {depWarn && (
+        <DependencyWarningDialog
+          open={true}
+          serviceId={depWarn.serviceId}
+          serviceName={depWarn.name}
+          dependents={depWarn.dependents}
+          onCancel={() => setDepWarn(null)}
+          onForceDisable={async () => {
+            await toggleService(depWarn.serviceId, false)
+            setDepWarn(null)
+          }}
+        />
+      )}
+
+      {showExport && <ExportWizard open onClose={() => setShowExport(false)} />}
+      {showImport && <ImportWizard open onClose={() => setShowImport(false)} onComplete={() => void refetch()} />}
     </div>
-  );
+  )
 }

@@ -32,9 +32,10 @@ function DatabasesPageInner() {
     selectedEngine,
     setSelectedEngine,
     databases,
+    loadingDatabases,
     projectDatabaseConfigs,
     selectedConnectionId,
-    setSelectedConnectionId,
+    selectConnection,
     snapshots,
     loading,
     error,
@@ -71,9 +72,12 @@ function DatabasesPageInner() {
     }
   }
 
+  const selectedConnection = projectDatabaseConfigs.find((c) => c.id === selectedConnectionId) ?? null
+  const restoreTargetDatabase = selectedConnection?.database || databases[0] || ''
+
   async function handleRestoreSnapshot(name: string) {
     try {
-      await restoreSnapshot(name, databases[0] || 'default', { connectionId: selectedConnectionId || undefined })
+      await restoreSnapshot(name, restoreTargetDatabase || 'default', { connectionId: selectedConnectionId || undefined })
       toast({ type: 'success', title: t('db.toastSnapshotRestored'), description: t('db.toastSnapshotRestoredDesc').replace('{{name}}', name) })
     } catch (err) {
       toast({ type: 'error', title: t('db.toastSnapshotRestoreError'), description: err instanceof Error ? err.message : t('db.unknownError') })
@@ -151,7 +155,7 @@ function DatabasesPageInner() {
           </section>
 
           {/* Main grid */}
-          <div className="grid grid-cols-[1fr_340px] gap-x-5 gap-y-4">
+          <div className="grid grid-cols-[1fr_630px] gap-x-5 gap-y-4">
 
             {/* Row 1: section titles */}
             <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary/60">
@@ -165,9 +169,10 @@ function DatabasesPageInner() {
             <div className="flex flex-col">
               <SnapshotForm
                 databases={databases}
+                loadingDatabases={loadingDatabases}
                 connections={projectDatabaseConfigs}
                 onSubmit={handleCreateSnapshot}
-                onConnectionChange={setSelectedConnectionId}
+                onConnectionChange={selectConnection}
               />
             </div>
             <div className="flex flex-col">
@@ -183,6 +188,7 @@ function DatabasesPageInner() {
             {/* Row 3+: remaining content */}
             <SnapshotList
               snapshots={snapshots}
+              targetDatabase={restoreTargetDatabase}
               onDelete={handleDeleteSnapshot}
               onRestore={handleRestoreSnapshot}
               onUpdate={() => void refreshAll()}

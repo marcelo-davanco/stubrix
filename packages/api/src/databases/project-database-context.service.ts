@@ -28,6 +28,7 @@ export class ProjectDatabaseContextService {
 
     if (connectionId) {
       const config = this.configs.get(projectId, connectionId);
+      if (!config.enabled) return null;
       return {
         projectId,
         engine: config.engine,
@@ -41,7 +42,7 @@ export class ProjectDatabaseContextService {
       };
     }
 
-    const projectConfigs = this.configs.list(projectId);
+    const projectConfigs = this.configs.list(projectId).filter((c) => c.enabled);
     const selected = engine
       ? projectConfigs.find((item) => item.engine === engine)
       : projectConfigs[0];

@@ -1,0 +1,447 @@
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import type { HealthStatus, ServiceCategory } from '@stubrix/shared';
+import { ConfigDatabaseService } from '../database/config-database.service';
+import { ServiceRegistryService } from '../registry/service-registry.service';
+import {
+  DockerComposeService,
+  type ContainerInfo,
+} from './docker-compose.service';
+import { HealthCheckService } from './health-check.service';
+import type {
+  EnableServiceDto,
+  DisableServiceDto,
+} from '../dto/enable-service.dto';
+
+export interface ServiceActionResult {
+  serviceId: string;
+  action: 'enable' | 'disable' | 'restart';
+  success: boolean;
+  message: string;
+  affectedServices?: string[];
+  healthStatus?: HealthStatus;
+}
+
+export interface ServiceStatus {
+  serviceId: string;
+  name: string;
+  category: ServiceCategory;
+  enabled: boolean;
+  autoStart: boolean;
+  containerStatus: 'running' | 'stopped' | 'unknown';
+  healthStatus: HealthStatus;
+  ports: string[];
+  externalUrl?: string;
+  uptime?: string;
+}
+
+@Injectable()
+export class ServiceLifecycleService implements OnModuleInit {
+  private readonly logger = new Logger(ServiceLifecycleService.name);
+  private readonly inProgress = new Set<string>();
+
+  constructor(
+    private readonly configDb: ConfigDatabaseService,
+    private readonly registry: ServiceRegistryService,
+    private readonly docker: DockerComposeService,
+    private readonly health: HealthCheckService,
+  ) {}
+
+  onModuleInit(): void {
+    this.health.startMonitoring();
+
+    const autoStartServices = this.configDb.getAutoStartServices();
+    if (autoStartServices.length === 0) return;
+    this.logger.log(
+      `Auto-starting ${autoStartServices.length} service(s): ${autoStartServices.map((s) => s.id).join(', ')}`,
+    );
+    for (const row of autoStartServices) {
+      this.ensureServiceRunning(row.id).catch((err: unknown) => {
+        this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
+      });
+    }
+  }
+
+  private async ensureServiceRunning(serviceId: string): Promise<void> {
+    const def = this.registry.getService(serviceId);
+    if (!def?.dockerService && !def?.dockerProfile) return;
+
+    const result = def.dockerService
+      ? await this.docker.startService(def.dockerService)
+      : await this.docker.startProfile(def.dockerProfile!);
+    if (result.success) {
+      this.logger.log(`Ensured service running: ${serviceId}`);
+    } else {
+      this.logger.warn(
+        `Could not ensure ${serviceId} is running: ${result.stderr || result.stdout}`,
+      );
+    }
+  }
+
+  async enableService(
+    serviceId: string,
+    options?: EnableServiceDto,
+  ): Promise<ServiceActionResult> {
+    const enableDeps = options?.enableDependencies !== false;
+    const skipHealthCheck = options?.skipHealthCheck === true;
+    const timeout = options?.timeout ?? 60000;
+
+    if (this.inProgress.has(serviceId)) {
+      return this.errorResult(
+        serviceId,
+        'enable',
+        `Service "${serviceId}" enable already in progress`,
+      );
+    }
+
+    const row = this.configDb.getService(serviceId);
+    if (!row) {
+      return this.errorResult(
+        serviceId,
+        'enable',
+        `Service "${serviceId}" not found`,
+      );
+    }
+
+    if (row.enabled === 1) {
+      return this.errorResult(
+        serviceId,
+        'enable',
+        `Service "${serviceId}" is already enabled`,
+      );
+    }
+
+    this.inProgress.add(serviceId);
+
+    const affectedServices: string[] = [];
+
+    // Auto-enable dependencies
+    if (enableDeps) {
+      const deps = this.registry.getDependencies(serviceId);
+      for (const depId of deps) {
+        const depRow = this.configDb.getService(depId);
+        if (depRow && depRow.enabled !== 1) {
+          this.logger.log(`Auto-enabling dependency: ${depId}`);
+          const depResult = await this.enableService(depId, {
+            enableDependencies: true,
+            timeout,
+          });
+          if (!depResult.success) {
+            return this.errorResult(
+              serviceId,
+              'enable',
+              `Failed to enable dependency "${depId}": ${depResult.message}`,
+            );
+          }
+          affectedServices.push(depId);
+        }
+      }
+    }
+
+    try {
+      // Mark as enabled in SQLite
+      this.configDb.updateServiceStatus(serviceId, true);
+      this.configDb.updateHealthStatus(serviceId, 'unknown');
+
+      // Start Docker container — prefer by service name to avoid pulling unrelated co-profile services
+      const def = this.registry.getService(serviceId);
+      if (def.dockerService || def.dockerProfile) {
+        const result = def.dockerService
+          ? await this.docker.startService(def.dockerService)
+          : await this.docker.startProfile(def.dockerProfile!);
+        if (!result.success) {
+          this.configDb.updateServiceStatus(serviceId, false);
+          return this.errorResult(
+            serviceId,
+            'enable',
+            `Docker start failed: ${result.stderr || result.stdout}`,
+          );
+        }
+
+        // Start companion services (e.g. openrag-langflow, openrag-opensearch)
+        const companions = this.registry.getCompanions(serviceId);
+        for (const companion of companions) {
+          const cr = await this.docker.startService(companion);
+          if (!cr.success) {
+            this.logger.warn(
+              `Failed to start companion ${companion} for ${serviceId}: ${cr.stderr}`,
+            );
+          }
+        }
+
+        // Health check is fire-and-forget — respond immediately
+        if (!skipHealthCheck) {
+          this.waitForHealthy(serviceId, timeout)
+            .then((healthStatus) => {
+              this.configDb.updateHealthStatus(serviceId, healthStatus);
+              this.logger.log(
+                `Health check resolved: ${serviceId} → ${healthStatus}`,
+              );
+            })
+            .catch((err: unknown) => {
+              this.logger.warn(
+                `Health check error for ${serviceId}: ${String(err)}`,
+              );
+            });
+        }
+      }
+
+      this.logger.log(`Enabled service: ${serviceId}`);
+
+      return {
+        serviceId,
+        action: 'enable',
+        success: true,
+        message: `Service "${serviceId}" enabled successfully`,
+        affectedServices:
+          affectedServices.length > 0 ? affectedServices : undefined,
+        healthStatus: 'unknown',
+      };
+    } finally {
+      this.inProgress.delete(serviceId);
+    }
+  }
+
+  async disableService(
+    serviceId: string,
+    options?: DisableServiceDto,
+  ): Promise<ServiceActionResult> {
+    const force = options?.force === true;
+    const disableDependents = options?.disableDependents === true;
+
+    const row = this.configDb.getService(serviceId);
+    if (!row) {
+      return this.errorResult(
+        serviceId,
+        'disable',
+        `Service "${serviceId}" not found`,
+      );
+    }
+
+    if (row.enabled !== 1) {
+      return this.errorResult(
+        serviceId,
+        'disable',
+        `Service "${serviceId}" is not enabled`,
+      );
+    }
+
+    // Check dependents
+    const { allowed, blockedBy } = this.registry.canDisable(serviceId);
+
+    if (!allowed && !force && !disableDependents) {
+      return this.errorResult(
+        serviceId,
+        'disable',
+        `Cannot disable "${serviceId}": enabled dependents: ${blockedBy.join(', ')}`,
+      );
+    }
+
+    const affectedServices: string[] = [];
+
+    // Cascade disable dependents first
+    if (!allowed && disableDependents) {
+      for (const depId of blockedBy) {
+        this.logger.log(`Cascade disabling dependent: ${depId}`);
+        const depResult = await this.disableService(depId, { force: true });
+        if (depResult.success) {
+          affectedServices.push(depId);
+        }
+      }
+    }
+
+    // Stop Docker container — prefer by service name to avoid stopping unrelated co-profile services
+    const def = this.registry.getService(serviceId);
+    if (def.dockerService || def.dockerProfile) {
+      // Stop companion services first (e.g. openrag-langflow, openrag-opensearch)
+      const companions = this.registry.getCompanions(serviceId);
+      for (const companion of companions) {
+        const cr = await this.docker.stopService(companion);
+        if (!cr.success) {
+          this.logger.warn(
+            `Failed to stop companion ${companion} for ${serviceId}: ${cr.stderr}`,
+          );
+        }
+      }
+
+      const result = def.dockerService
+        ? await this.docker.stopService(def.dockerService)
+        : await this.docker.stopProfile(def.dockerProfile!);
+      if (!result.success) {
+        this.logger.warn(
+          `Docker stop failed for ${serviceId}: ${result.stderr}`,
+        );
+      }
+    }
+
+    // Update SQLite
+    this.configDb.updateServiceStatus(serviceId, false);
+    this.configDb.updateHealthStatus(serviceId, 'disabled' as HealthStatus);
+
+    this.logger.log(`Disabled service: ${serviceId}`);
+
+    return {
+      serviceId,
+      action: 'disable',
+      success: true,
+      message: `Service "${serviceId}" disabled successfully`,
+      affectedServices:
+        affectedServices.length > 0 ? affectedServices : undefined,
+      healthStatus: 'disabled' as HealthStatus,
+    };
+  }
+
+  async restartService(serviceId: string): Promise<ServiceActionResult> {
+    const row = this.configDb.getService(serviceId);
+    if (!row) {
+      return this.errorResult(
+        serviceId,
+        'restart',
+        `Service "${serviceId}" not found`,
+      );
+    }
+
+    const def = this.registry.getService(serviceId);
+
+    if (!def.dockerService) {
+      return this.errorResult(
+        serviceId,
+        'restart',
+        `Service "${serviceId}" has no Docker service configured`,
+      );
+    }
+
+    this.configDb.updateHealthStatus(serviceId, 'unknown');
+
+    const result = await this.docker.restartService(def.dockerService);
+    if (!result.success) {
+      return this.errorResult(
+        serviceId,
+        'restart',
+        `Docker restart failed: ${result.stderr || result.stdout}`,
+      );
+    }
+
+    this.waitForHealthy(serviceId, 60000)
+      .then((healthStatus) => {
+        this.configDb.updateHealthStatus(serviceId, healthStatus);
+        this.logger.log(
+          `Restarted service: ${serviceId} (health: ${healthStatus})`,
+        );
+      })
+      .catch((err: unknown) => {
+        this.logger.warn(
+          `Health check error after restart for ${serviceId}: ${String(err)}`,
+        );
+      });
+
+    return {
+      serviceId,
+      action: 'restart',
+      success: true,
+      message: `Service "${serviceId}" restarted successfully`,
+      healthStatus: 'unknown',
+    };
+  }
+
+  async getServiceStatus(
+    serviceId: string,
+    cachedContainers?: ContainerInfo[],
+  ): Promise<ServiceStatus> {
+    const svc = this.registry.getService(serviceId);
+    const row = this.configDb.getService(serviceId);
+
+    let containerStatus: ServiceStatus['containerStatus'] = 'unknown';
+    const ports: string[] = [];
+    let uptime: string | undefined;
+
+    if (svc.dockerService) {
+      try {
+        const containers =
+          cachedContainers ?? (await this.docker.getRunningContainers());
+        const container = containers.find(
+          (c) => c.service === svc.dockerService,
+        );
+        if (container) {
+          containerStatus =
+            container.status === 'running' ? 'running' : 'stopped';
+          ports.push(...container.ports);
+          uptime = container.uptime;
+        } else if (row?.enabled === 1) {
+          containerStatus = 'stopped';
+        }
+      } catch {
+        containerStatus = 'unknown';
+      }
+    }
+
+    return {
+      serviceId,
+      name: svc.name,
+      category: svc.category,
+      enabled: row?.enabled === 1,
+      autoStart: (row?.auto_start ?? 0) === 1,
+      containerStatus,
+      healthStatus: (row?.health_status as HealthStatus) ?? 'unknown',
+      ports,
+      externalUrl: svc.externalUrl,
+      uptime,
+    };
+  }
+
+  async getAllStatuses(): Promise<ServiceStatus[]> {
+    const services = this.registry.getAllServices();
+    const containers = await this.docker.getRunningContainers();
+    return Promise.all(
+      services.map((s) => this.getServiceStatus(s.id, containers)),
+    );
+  }
+
+  private async waitForHealthy(
+    serviceId: string,
+    timeoutMs: number,
+  ): Promise<HealthStatus> {
+    const pollInterval = 2000;
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      const result = await this.health.checkHealth(serviceId);
+      if (result.status === 'healthy') {
+        return 'healthy';
+      }
+      await this.sleep(pollInterval);
+    }
+
+    this.logger.warn(`Health check timed out for ${serviceId}`);
+    return 'unhealthy';
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  updateServiceSettings(
+    serviceId: string,
+    settings: { autoStart?: boolean },
+  ): { serviceId: string; autoStart?: boolean } {
+    const row = this.configDb.getService(serviceId);
+    if (!row) {
+      throw new Error(`Service "${serviceId}" not found`);
+    }
+    if (settings.autoStart !== undefined) {
+      this.configDb.updateAutoStart(serviceId, settings.autoStart);
+      this.logger.log(
+        `Service "${serviceId}" autoStart set to ${String(settings.autoStart)}`,
+      );
+    }
+    return { serviceId, ...settings };
+  }
+
+  private errorResult(
+    serviceId: string,
+    action: ServiceActionResult['action'],
+    message: string,
+  ): ServiceActionResult {
+    this.logger.warn(`[${action}] ${message}`);
+    return { serviceId, action, success: false, message };
+  }
+}

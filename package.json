@@ -1,23 +1,47 @@
 {
   "name": "stubrix",
-  "version": "1.0.0",
+  "version": "2.5.0",
   "private": true,
   "workspaces": [
     "packages/shared",
     "packages/api",
     "packages/ui",
-    "packages/db-ui"
+    "packages/db-ui",
+    "packages/mock-ui",
+    "packages/cli",
+    "packages/vscode-extension"
   ],
+  "devDependencies": {
+    "@usebruno/cli": "^1.4.0"
+  },
   "scripts": {
-    "build": "npm run build -w @stubrix/shared && npm run build -w @stubrix/api && npm run build -w @stubrix/db-ui && npm run build -w @stubrix/ui",
+    "bruno-test": "bash scripts/bruno-test.sh",
+    "build": "npm run build:shared && npm run build:api && npm run build:db-ui && npm run build:mock-ui && npm run build:ui && npm run build:cli",
+    "build:cli": "npm run build -w @stubrix/cli",
+    "build:vscode": "npm run build -w stubrix-vscode",
+    "package:vscode": "npm run package -w stubrix-vscode",
+    "install:vscode": "npm run install:vscode -w stubrix-vscode",
+    "install:windsurf": "npm run install:windsurf -w stubrix-vscode",
     "build:shared": "npm run build -w @stubrix/shared",
     "build:api": "npm run build -w @stubrix/api",
     "build:db-ui": "npm run build -w @stubrix/db-ui",
+    "build:mock-ui": "npm run build -w @stubrix/mock-ui",
     "build:ui": "npm run build -w @stubrix/ui",
     "dev": "npm run dev:api & npm run dev:ui",
     "dev:api": "npm run start:dev -w @stubrix/api",
     "dev:ui": "npm run dev -w @stubrix/ui",
-    "install:all": "npm install"
+    "install:all": "npm install",
+    "version": "node scripts/version.js",
+    "version:major": "node scripts/version.js --major",
+    "version:minor": "node scripts/version.js --minor",
+    "version:patch": "node scripts/version.js --patch",
+    "version:dry": "node scripts/version.js --dry-run",
+    "release": "./scripts/release.sh",
+    "release:patch": "npm run version:patch && npm run build && git add . && git commit -m \"🔖 chore: bump version\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release v$(node -p \"require('./package.json').version\")\" && git push origin main --tags",
+    "release:minor": "npm run version:minor && npm run build && git add . && git commit -m \"🔖 chore: bump version\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release v$(node -p \"require('./package.json').version\")\" && git push origin main --tags",
+    "release:major": "npm run version:major && npm run build && git add . && git commit -m \"🔖 chore: bump version\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release v$(node -p \"require('./package.json').version\")\" && git push origin main --tags",
+    "close-issue": "./scripts/close-issue.sh",
+    "close-issues": "./scripts/close-issue.sh --batch"
   },
   "engines": {
     "node": ">=24.0.0",

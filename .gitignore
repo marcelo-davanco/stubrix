@@ -3,6 +3,9 @@ node_modules/
 
 # Build output
 dist/
+*.vsix
+packages/api/public/assets/
+packages/api/public/index.html
 build/
 
 # Environment
@@ -23,18 +26,30 @@ features/
 executions/
 analysis/
 coverage/
+!packages/api/src/coverage/
 
 # OS files
 .DS_Store
 Thumbs.db
 
 # IDE / Editor
-.windsurf/
 .cursor/
 .vscode/
+.windsurf/
 .idea/
 *.swp
 *.swo
 *~
 dumps/
 **/dumps/
+
+# Config database & backups (F34)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/backups/
+**/data/*.db
+**/data/*.db-wal
+**/data/*.db-shm
+# MCP node_modules are gitignored via packages/mcp/.gitignore
+.env.bck

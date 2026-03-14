@@ -95,6 +95,7 @@
   "db.label": "Label",
   "db.labelPlaceholder": "snapshot",
   "db.database": "Database",
+  "db.loading": "Loading...",
   "db.selectDatabase": "Select...",
   "db.category": "Category",
   "db.optional": "(optional)",

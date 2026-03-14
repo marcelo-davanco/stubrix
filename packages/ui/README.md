@@ -1,73 +1,95 @@
-# React + TypeScript + Vite
+# @stubrix/ui
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite 7 host application — the main dashboard entry point for Stubrix.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This package is the **host shell** that composes the micro frontend architecture. It provides routing, layout, and real-time logs. All mock server and database UI logic lives in dedicated packages consumed here.
 
-## React Compiler
+## Package Role
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Responsibility | Package |
+| -------------- | ------- |
+| Mock server pages (Projects, Mocks, Editor, Recording) | `@stubrix/mock-ui` |
+| Database pages (Snapshots, Connections) | `@stubrix/db-ui` |
+| Real-time logs page | **`@stubrix/ui`** (this package) |
+| Layout, routing, navigation shell | **`@stubrix/ui`** (this package) |
 
-## Expanding the ESLint configuration
+## Structure
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── App.tsx                  Route definitions + bridge wrappers
+├── components/
+│   ├── Layout.tsx           Sidebar + outlet shell
+│   └── ui/
+│       └── Badge.tsx        Shared badge component
+├── lib/
+│   ├── api.ts               Base API client (fetch wrapper)
+│   ├── socket.ts            Socket.IO client for /ws/logs
+│   └── utils.ts             cn() utility
+└── pages/
+    ├── MockServersBridge.tsx      → MockServersPage (@stubrix/mock-ui)
+    ├── ProjectDashboardBridge.tsx → ProjectDashboardPage (@stubrix/mock-ui)
+    ├── MocksListBridge.tsx        → MocksListPage (@stubrix/mock-ui)
+    ├── MockEditorBridge.tsx       → MockEditorPage (@stubrix/mock-ui)
+    ├── RecordingBridge.tsx        → RecordingPanelPage (@stubrix/mock-ui)
+    └── LogsPage.tsx               Real-time logs (Socket.IO)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Bridge Pattern
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Each mock page is a thin wrapper that connects `react-router-dom` hooks to the router-agnostic props of `@stubrix/mock-ui`:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```tsx
+// Example: MocksListBridge.tsx
+import { useNavigate, useParams } from 'react-router-dom';
+import { MocksListPage } from '@stubrix/mock-ui';
+
+export function MocksListBridge() {
+  const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
+
+  if (!projectId) return null;
+
+  return (
+    <MocksListPage
+      projectId={projectId}
+      onBack={() => navigate(`/projects/${projectId}`)}
+      onNavigateToNewMock={(id) => navigate(`/projects/${id}/mocks/new`)}
+      onNavigateToEditMock={(id, mockId) => navigate(`/projects/${id}/mocks/${mockId}/edit`)}
+    />
+  );
+}
 ```
+
+## Routes
+
+| Path | Component |
+| ---- | --------- |
+| `/` | `MockServersBridge` → `MockServersPage` |
+| `/projects/:projectId` | `ProjectDashboardBridge` → `ProjectDashboardPage` |
+| `/projects/:projectId/mocks` | `MocksListBridge` → `MocksListPage` |
+| `/projects/:projectId/mocks/new` | `MockEditorBridge` → `MockEditorPage` |
+| `/projects/:projectId/mocks/:mockId/edit` | `MockEditorBridge` → `MockEditorPage` |
+| `/projects/:projectId/recording` | `RecordingBridge` → `RecordingPanelPage` |
+| `/databases` | `DatabasesPage` (`@stubrix/db-ui`) |
+| `/logs` | `LogsPage` |
+
+## Development
+
+```bash
+# From monorepo root
+npm run dev:ui       # Vite dev server on :5173 (proxies /api/* to :9090)
+npm run build:ui     # TypeScript check + Vite production build
+```
+
+> Production build outputs to `packages/api/public/` for single-container serving.
+
+## Dependencies
+
+- `@stubrix/mock-ui` — mock server micro frontend
+- `@stubrix/db-ui` — database micro frontend
+- `@stubrix/shared` — shared TypeScript types
+- `react-router-dom` ^7 — client-side routing
+- `socket.io-client` — WebSocket connection for logs

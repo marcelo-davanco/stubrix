@@ -1,14 +1,68 @@
 ## ==========================================================================
 ## Stubrix – Docker Compose (WireMock / Mockoon)
 ##
-## Usage:
-##   docker compose --profile databases up -d         # PostgreSQL only (SQLite runs on host)
+## Mock Engines:
 ##   docker compose --profile wiremock up -d          # run with WireMock
 ##   docker compose --profile mockoon  up -d          # run with Mockoon
 ##   docker compose --profile wiremock-record up -d   # WireMock in record mode
 ##   docker compose --profile mockoon-proxy  up -d    # Mockoon with proxy
+##
+## Databases:
 ##   docker compose --profile postgres up -d          # PostgreSQL only
 ##   docker compose --profile mysql up -d             # MySQL only
+##   docker compose --profile databases up -d         # PostgreSQL only (legacy alias)
+##
+## Database Viewers (F29):
+##   docker compose --profile adminer up -d           # Adminer UI  → http://localhost:8082
+##   docker compose --profile cloudbeaver up -d       # CloudBeaver → http://localhost:8083
+##   docker compose --profile db-viewer up -d         # Both viewers (Adminer + CloudBeaver)
+##
+## AI / RAG (F9):
+##   docker compose --profile ai up -d                 # ChromaDB + OpenRAG (AI layer)
+##
+## Contracts (F13):
+##   docker compose --profile pact up -d               # Pact Broker → http://localhost:9292
+##
+## Events (F16):
+##   docker compose --profile kafka up -d               # Redpanda (Kafka) → :9092 / :8082
+##   docker compose --profile rabbitmq up -d            # RabbitMQ → :5672 / :15672
+##
+## gRPC (F15):
+##   docker compose --profile gripmock up -d            # GripMock → :4770 / :4771
+##
+## Observability (F21):
+##   docker compose --profile monitoring up -d           # Prometheus :9091 + Grafana :3000
+##
+## Tracing (F28):
+##   docker compose --profile jaeger up -d              # Jaeger → :16686 / :4318
+##
+## Cloud Mocking (F27):
+##   docker compose --profile localstack up -d          # LocalStack → :4566
+##
+## Object Storage (F32):
+##   docker compose --profile minio up -d               # MinIO → :9000 / :9001
+##
+## IAM (F33):
+##   docker compose --profile keycloak up -d            # Keycloak → :8180
+##   docker compose --profile zitadel up -d             # Zitadel → :8080
+##
+## Queue & Cache:
+##   docker compose --profile redis up -d              # Redis → localhost:6379
+##
+## Infrastructure (local dev — all infra services):
+##   docker compose --profile infra --profile postgres --profile wiremock up -d
+##
+## Network Chaos (F26):
+##   docker compose --profile toxiproxy up -d          # Toxiproxy → http://localhost:8474
+##
+## API Clients (F8):
+##   docker compose --profile hoppscotch up -d        # Hoppscotch → http://localhost:3100
+##
+## Shortcuts (see Makefile):
+##   make adminer-up      # PostgreSQL + Adminer
+##   make cloudbeaver-up  # PostgreSQL + CloudBeaver
+##   make db-viewer       # PostgreSQL + both viewers
+##   make hoppscotch      # Hoppscotch API client
 ## ==========================================================================
 
 x-common: &common
@@ -23,6 +77,109 @@ x-common: &common
     MOCK_PORT: ${MOCK_PORT:-8081}
 
 services:
+  # --------------------------------------------------------------------------
+  # Stubrix – Control Plane (NestJS API + React UI)
+  # Access: http://localhost:9090
+  # Docs:   http://localhost:9090/api/docs
+  # --------------------------------------------------------------------------
+  stubrix:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    profiles: ["control-plane", "stubrix"]
+    container_name: stubrix-api
+    ports:
+      - "${CONTROL_PORT:-9090}:9090"
+    environment:
+      NODE_ENV: production
+      CONTROL_PORT: 9090
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      # Mock engine
+      MOCK_ENGINE: ${MOCK_ENGINE:-wiremock}
+      MOCK_PORT: ${MOCK_PORT:-8081}
+      WIREMOCK_URL: ${WIREMOCK_URL:-http://wiremock:8081}
+      # PostgreSQL
+      PG_HOST: ${PG_HOST:-db-postgres}
+      PG_PORT: ${PG_PORT:-5432}
+      PG_USER: ${PG_USER:-postgres}
+      PG_PASSWORD: ${PG_PASSWORD:-postgres}
+      PG_DATABASE: ${PG_DATABASE:-postgres}
+      # MySQL
+      MYSQL_HOST: ${MYSQL_HOST:-db-mysql}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-stubrix}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-stubrix}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-stubrix}
+      # SQLite + Dumps
+      SQLITE_DB_PATH: ${SQLITE_DB_PATH:-}
+      DUMPS_DIR: /app/dumps
+      # Auth
+      AUTH_MASTER_KEY: ${AUTH_MASTER_KEY:-stubrix-dev-key}
+      # AWS / LocalStack
+      LOCALSTACK_URL: ${LOCALSTACK_URL:-http://localstack:4566}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      # MinIO
+      MINIO_URL: ${MINIO_URL:-http://minio:9000}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-stubrix}
+      # Kafka / Redpanda
+      KAFKA_REST_URL: ${KAFKA_REST_URL:-http://redpanda:8082}
+      # RabbitMQ
+      RABBITMQ_API_URL: ${RABBITMQ_API_URL:-http://rabbitmq:15672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-%2F}
+      # gRPC
+      GRIPMOCK_URL: ${GRIPMOCK_URL:-http://gripmock:4771}
+      # Pact
+      PACT_BROKER_URL: ${PACT_BROKER_URL:-http://pact-broker:9292}
+      # Chaos
+      TOXIPROXY_URL: ${TOXIPROXY_URL:-http://toxiproxy:8474}
+      # AI / RAG
+      OPENRAG_URL: ${OPENRAG_URL:-http://openrag:8888}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OLLAMA_HOST: ${OLLAMA_HOST:-}
+      # Observability
+      JAEGER_URL: ${JAEGER_URL:-http://jaeger:16686}
+      OTEL_EXPORTER_ENDPOINT: ${OTEL_EXPORTER_ENDPOINT:-http://jaeger:4318}
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-stubrix}
+      OTEL_SAMPLING_RATE: ${OTEL_SAMPLING_RATE:-1.0}
+      PROMETHEUS_URL: ${PROMETHEUS_URL:-http://prometheus:9090}
+      # IAM
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-stubrix}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-stubrix-api}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
+      ZITADEL_URL: ${ZITADEL_URL:-http://zitadel:8080}
+      # Settings panel (F34)
+      COMPOSE_FILE_PATH: /app/docker-compose.yml
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-mocks-servers}
+      CONFIG_DB_PATH: ${CONFIG_DB_PATH:-/app/data/stubrix-config.db}
+      BACKUP_DIR: ${BACKUP_DIR:-/app/data/backups}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_MAX_COUNT: ${BACKUP_MAX_COUNT:-50}
+      CRYPTO_SESSION_TIMEOUT: ${CRYPTO_SESSION_TIMEOUT:-1800000}
+      PBKDF2_ITERATIONS: ${PBKDF2_ITERATIONS:-100000}
+      CRYPTO_BCRYPT_ROUNDS: ${CRYPTO_BCRYPT_ROUNDS:-12}
+      HEALTH_CHECK_INTERVAL: ${HEALTH_CHECK_INTERVAL:-30000}
+    volumes:
+      - ./mocks:/app/mocks
+      - ./dumps:/app/dumps
+      - ./data:/app/data
+      - ./docker-compose.yml:/app/docker-compose.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
   # --------------------------------------------------------------------------
   # WireMock – Serve mocks
   # --------------------------------------------------------------------------
@@ -73,6 +230,26 @@ services:
       PROXY_TARGET: "${PROXY_TARGET:-http://host.docker.internal:3000}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  # --------------------------------------------------------------------------
+  # Redis – Queue & Cache (BullMQ backend)
+  # Access: localhost:6379
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    profiles: ["redis", "infra"]
+    container_name: stubrix-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy noeviction
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   # --------------------------------------------------------------------------
   # PostgreSQL 17
@@ -128,6 +305,397 @@ services:
   # SQLite runs directly on the host via the API, no Docker container needed.
   # Database files are stored in: ./dumps/sqlite/
 
+  # --------------------------------------------------------------------------
+  # Adminer – Lightweight database web UI (F29.01)
+  # Supports: PostgreSQL, MySQL, SQLite
+  # Access: http://localhost:8082
+  # --------------------------------------------------------------------------
+  adminer:
+    image: adminer:4
+    profiles: ["adminer", "db-viewer"]
+    container_name: stubrix-adminer
+    ports:
+      - "${ADMINER_PORT:-8082}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: ${PG_HOST:-db-postgres}
+      ADMINER_DESIGN: pepa-linha-dark
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # CloudBeaver – Full-featured database web IDE (F29.02)
+  # Supports: PostgreSQL, MySQL, SQLite and 40+ databases
+  # Access: http://localhost:8083
+  # --------------------------------------------------------------------------
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    profiles: ["cloudbeaver", "db-viewer"]
+    container_name: stubrix-cloudbeaver
+    ports:
+      - "${CLOUDBEAVER_PORT:-8083}:8978"
+    volumes:
+      - cloudbeaver_data:/opt/cloudbeaver/workspace
+      - ./config/cloudbeaver:/opt/cloudbeaver/conf:ro
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # LocalStack – AWS Cloud service mocking (F27.01)
+  # Access: http://localhost:4566
+  # --------------------------------------------------------------------------
+  localstack:
+    image: localstack/localstack:latest
+    profiles: ["localstack", "cloud"]
+    container_name: stubrix-localstack
+    ports:
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    environment:
+      SERVICES: ${LOCALSTACK_SERVICES:-s3,sqs,sns,dynamodb,lambda,secretsmanager}
+      DEBUG: ${LOCALSTACK_DEBUG:-0}
+      PERSISTENCE: ${LOCALSTACK_PERSISTENCE:-0}
+      INIT_SCRIPTS_PATH: /etc/localstack/init/ready.d
+    volumes:
+      - ./scripts/localstack:/etc/localstack/init/ready.d:ro
+      - localstack_data:/var/lib/localstack
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # MinIO – S3-compatible object storage (F32.01)
+  # API: http://localhost:9000 | Console: http://localhost:9001 (minioadmin/minioadmin)
+  # --------------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    profiles: ["minio", "storage"]
+    container_name: stubrix-minio
+    command: server /data --console-address ':9001'
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Keycloak – Identity & Access Management (F33.01)
+  # Access: http://localhost:8180 (admin/admin)
+  # --------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    profiles: ["keycloak", "iam"]
+    container_name: stubrix-keycloak
+    command: start-dev
+    ports:
+      - "${KEYCLOAK_PORT:-8180}:8080"
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HTTP_PORT: 8080
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Zitadel – Lightweight IAM alternative (F33.02)
+  # Access: http://localhost:8085
+  # --------------------------------------------------------------------------
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:latest
+    profiles: ["zitadel"]
+    container_name: stubrix-zitadel
+    command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled
+    ports:
+      - "${ZITADEL_PORT:-8085}:8080"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Prometheus – Metrics scraping (F21.03)
+  # Access: http://localhost:9091
+  # --------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    profiles: ["prometheus", "monitoring"]
+    container_name: stubrix-prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9091}:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Grafana – Metrics dashboards (F21.04)
+  # Access: http://localhost:3000 (admin/admin)
+  # --------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana-oss:latest
+    profiles: ["grafana", "monitoring"]
+    container_name: stubrix-grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASS:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Jaeger – Distributed tracing (F28.01)
+  # UI: http://localhost:16686 | OTLP HTTP: :4318 | OTLP gRPC: :4317
+  # --------------------------------------------------------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    profiles: ["jaeger", "tracing"]
+    container_name: stubrix-jaeger
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Redpanda – Kafka-compatible broker for event-driven mocking (F16.01)
+  # Kafka: localhost:9092 | REST: http://localhost:8082 | Console: http://localhost:8080
+  # --------------------------------------------------------------------------
+  redpanda:
+    image: redpandadata/redpanda:latest
+    profiles: ["kafka", "events"]
+    container_name: stubrix-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp 1
+      - --memory 512M
+      - --kafka-addr PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://localhost:9092
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+      - "${KAFKA_REST_PORT:-8082}:8082"
+    restart: unless-stopped
+
+  redpanda-console:
+    image: redpandadata/console:latest
+    profiles: ["kafka", "events"]
+    container_name: stubrix-redpanda-console
+    ports:
+      - "${KAFKA_CONSOLE_PORT:-8080}:8080"
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+    depends_on:
+      - redpanda
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # RabbitMQ – AMQP message broker (F16.02)
+  # AMQP: localhost:5672 | Management: http://localhost:15672 (guest/guest)
+  # --------------------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    profiles: ["rabbitmq", "events"]
+    container_name: stubrix-rabbitmq
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # GripMock – gRPC mock engine (F15.06)
+  # gRPC: localhost:4770 | Stub API: http://localhost:4771
+  # --------------------------------------------------------------------------
+  gripmock:
+    image: tkpd/gripmock:latest
+    profiles: ["gripmock", "grpc"]
+    container_name: stubrix-gripmock
+    ports:
+      - "${GRIPMOCK_PORT:-4770}:4770"
+      - "${GRIPMOCK_API_PORT:-4771}:4771"
+    volumes:
+      - ./mocks/proto:/proto:ro
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Pact Broker – Contract testing (F13.01)
+  # Access: http://localhost:9292
+  # --------------------------------------------------------------------------
+  pact-broker:
+    image: pactfoundation/pact-broker:latest
+    profiles: ["pact"]
+    container_name: stubrix-pact-broker
+    ports:
+      - "${PACT_BROKER_PORT:-9292}:9292"
+    environment:
+      PACT_BROKER_DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
+      PACT_BROKER_ALLOW_PUBLIC_READ: "true"
+      PACT_BROKER_DISABLE_SSL_VERIFICATION: "true"
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Toxiproxy – Network-level chaos engineering (F26.01)
+  # API: http://localhost:8474 | Proxy range: 8475-8485
+  # --------------------------------------------------------------------------
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:latest
+    profiles: ["toxiproxy", "chaos-network"]
+    container_name: stubrix-toxiproxy
+    ports:
+      - "${TOXIPROXY_PORT:-8474}:8474"
+      - "8475-8485:8475-8485"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # ChromaDB – Vector database for RAG (F9.01)
+  # Access: http://localhost:8000
+  # --------------------------------------------------------------------------
+  chromadb:
+    image: chromadb/chroma:latest
+    profiles: ["ai"]
+    container_name: stubrix-chromadb
+    ports:
+      - "${CHROMADB_PORT:-8000}:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # OpenRAG – OpenSearch vector store (companion for openrag-backend)
+  # --------------------------------------------------------------------------
+  openrag-opensearch:
+    image: langflowai/openrag-opensearch:latest
+    platform: linux/amd64
+    profiles: ["ai", "openrag"]
+    container_name: stubrix-openrag-opensearch
+    ports:
+      - "9201:9200"
+    environment:
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:-Stubrix@1234}
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      bootstrap.memory_lock: "true"
+      discovery.type: single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # OpenRAG – Langflow engine (companion for openrag-backend)
+  # --------------------------------------------------------------------------
+  openrag-langflow:
+    image: langflowai/openrag-langflow:latest
+    platform: linux/amd64
+    profiles: ["ai", "openrag"]
+    container_name: stubrix-openrag-langflow
+    ports:
+      - "${LANGFLOW_PORT:-7860}:7860"
+    environment:
+      LANGFLOW_SECRET_KEY: ${LANGFLOW_SECRET_KEY:-}
+      LANGFLOW_SUPERUSER_PASSWORD: ${LANGFLOW_SUPERUSER_PASSWORD:-admin}
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # OpenRAG – RAG query service (F9.01)
+  # Access: http://localhost:8888
+  # --------------------------------------------------------------------------
+  openrag:
+    image: langflowai/openrag-backend:latest
+    platform: linux/amd64
+    profiles: ["ai", "openrag"]
+    container_name: stubrix-openrag
+    ports:
+      - "${OPENRAG_PORT:-8888}:8000"
+    environment:
+      LANGFLOW_URL: http://openrag-langflow:7860
+      OPENSEARCH_HOST: openrag-opensearch
+      OPENSEARCH_PORT: "9200"
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:-Stubrix@1234}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OLLAMA_ENDPOINT: ${OLLAMA_HOST:-}
+      LANGFLOW_SECRET_KEY: ${LANGFLOW_SECRET_KEY:-}
+    depends_on:
+      - openrag-langflow
+      - openrag-opensearch
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Hoppscotch – Self-Hosted API Client (F8.01)
+  # Access: http://localhost:3100
+  # --------------------------------------------------------------------------
+  hoppscotch-migrate:
+    image: hoppscotch/hoppscotch:latest
+    profiles: ["hoppscotch"]
+    container_name: stubrix-hoppscotch-migrate
+    command: ["sh", "-c", "cd /dist/backend && node_modules/.pnpm/node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma"]
+    environment:
+      DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+    restart: "no"
+
+  hoppscotch:
+    image: hoppscotch/hoppscotch:latest
+    profiles: ["hoppscotch"]
+    container_name: stubrix-hoppscotch
+    ports:
+      - "${HOPPSCOTCH_PORT:-3100}:3000"
+    environment:
+      VITE_BASE_URL: http://localhost:3100
+      VITE_SHORTCODE_BASE_URL: http://localhost:3100
+      VITE_ADMIN_URL: http://localhost:3100/admin
+      VITE_BACKEND_GQL_URL: http://localhost:3100/backend/graphql
+      VITE_BACKEND_WS_URL: wss://localhost:3100/backend/graphql
+      VITE_BACKEND_API_URL: http://localhost:3100/backend/v1
+      DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
+      SECRET: ${HOPPSCOTCH_SECRET:-stubrix-hoppscotch-secret}
+      DATA_ENCRYPTION_KEY: ${HOPPSCOTCH_ENCRYPTION_KEY:-stubrix-hoppscotch-32byteenckey!}
+      TOKEN_SALT_COMPLEXITY: 10
+      MAGIC_LINK_TOKEN_VALIDITY: 3
+      REFRESH_TOKEN_VALIDITY: 604800000
+      ACCESS_TOKEN_VALIDITY: 86400000
+      WHITELISTED_ORIGINS: http://localhost:3100,http://localhost:3100/admin
+      MAILER_SMTP_ENABLE: "false"
+      MAILER_USE_CUSTOM_CONFIGS: "false"
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+      hoppscotch-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
 volumes:
+  redis_data:
   pg_data:
   mysql_data:
+  cloudbeaver_data:
+  prometheus_data:
+  grafana_data:
+  localstack_data:
+  minio_data:
+  chromadb_data:
+  pact_data:

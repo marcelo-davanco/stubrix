@@ -1,0 +1,42 @@
+version: '3'
+
+vars:
+  API_URL: '{{.API_URL | default "http://localhost:9090"}}'
+
+tasks:
+  list:
+    desc: List all projects
+    cmds:
+      - curl -s {{.API_URL}}/api/projects | jq .
+
+  create:
+    desc: Create a mock (PROJECT=<id> METHOD=GET PATH=/foo STATUS=200 BODY='{}')
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/projects/{{.PROJECT}}/mocks \
+          -H 'Content-Type: application/json' \
+          -d '{"request":{"method":"{{.METHOD | default "GET"}}","urlPath":"{{.PATH | default "/example"}}"},"response":{"status":{{.STATUS | default 200}},"body":{{.BODY | default "{}"}}}}' | jq .
+
+  import:
+    desc: Import mocks from file (FILE=<path>)
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/import/content \
+          -H 'Content-Type: application/json' \
+          -d "{\"content\":$(cat {{.FILE}} | jq -Rs .)}" | jq .
+
+  lint:
+    desc: Lint an OpenAPI spec (FILE=<path>)
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/governance/lint \
+          -H 'Content-Type: application/json' \
+          -d "{\"content\":$(cat {{.FILE}} | jq -Rs .)}" | jq .
+
+  coverage:
+    desc: Run mock coverage report (FILE=<openapi-spec>)
+    cmds:
+      - |
+        curl -s -X POST {{.API_URL}}/api/coverage/analyze \
+          -H 'Content-Type: application/json' \
+          -d "{\"content\":$(cat {{.FILE}} | jq -Rs .)}" | jq .

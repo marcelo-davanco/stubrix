@@ -1,0 +1,42 @@
+version: '3'
+
+tasks:
+  postgres-up:
+    desc: Start PostgreSQL
+    cmds:
+      - docker compose --profile postgres up -d
+
+  mysql-up:
+    desc: Start MySQL
+    cmds:
+      - docker compose --profile mysql up -d
+
+  adminer-up:
+    desc: Start Adminer DB viewer
+    cmds:
+      - docker compose --profile postgres --profile adminer up -d
+
+  cloudbeaver-up:
+    desc: Start CloudBeaver DB IDE
+    cmds:
+      - docker compose --profile postgres --profile cloudbeaver up -d
+
+  pact-up:
+    desc: Start Pact Broker
+    cmds:
+      - docker compose --profile postgres --profile pact up -d
+
+  pact-down:
+    desc: Stop Pact Broker
+    cmds:
+      - docker compose --profile pact down
+
+  hoppscotch-up:
+    desc: Start Hoppscotch API client
+    cmds:
+      - docker compose --profile hoppscotch up -d
+
+  hoppscotch-down:
+    desc: Stop Hoppscotch
+    cmds:
+      - docker compose --profile hoppscotch down

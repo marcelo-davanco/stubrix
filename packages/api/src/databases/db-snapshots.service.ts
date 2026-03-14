@@ -5,7 +5,8 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { execFileSync } from 'child_process';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ProjectsService } from '../projects/projects.service';
@@ -69,6 +70,11 @@ export class DbSnapshotsService {
   private readonly postgresUser: string;
   private readonly postgresPassword: string;
   private readonly postgresDatabase: string;
+  private readonly mysqlHost: string | undefined;
+  private readonly mysqlPort: string;
+  private readonly mysqlUser: string;
+  private readonly mysqlPassword: string;
+  private readonly mysqlDatabase: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -86,6 +92,14 @@ export class DbSnapshotsService {
       this.config.get<string>('PG_PASSWORD') ?? 'postgres';
     this.postgresDatabase =
       this.config.get<string>('PG_DATABASE') ?? 'postgres';
+
+    // MySQL environment variables
+    this.mysqlHost = this.config.get<string>('MYSQL_HOST');
+    this.mysqlPort = this.config.get<string>('MYSQL_PORT') ?? '3306';
+    this.mysqlUser = this.config.get<string>('MYSQL_USER') ?? 'stubrix';
+    this.mysqlPassword = this.config.get<string>('MYSQL_PASSWORD') ?? 'stubrix';
+    this.mysqlDatabase = this.config.get<string>('MYSQL_DATABASE') ?? 'stubrix';
+
     this.ensureDir(this.dumpsDir);
     this.ensureDir(path.join(this.dumpsDir, 'postgres'));
     this.ensureDir(path.join(this.dumpsDir, 'mysql'));
@@ -210,7 +224,26 @@ export class DbSnapshotsService {
     };
   }
 
-  private createPostgresSnapshot(
+  private getMysqlEnv(
+    overrides?: Partial<{
+      host: string;
+      port: string;
+      username: string;
+      password: string;
+    }>,
+  ): NodeJS.ProcessEnv {
+    return {
+      ...process.env,
+      MYSQL_HOST: overrides?.host ?? this.mysqlHost,
+      MYSQL_PORT: overrides?.port ?? this.mysqlPort,
+      MYSQL_USER: overrides?.username ?? this.mysqlUser,
+      MYSQL_PWD: overrides?.password ?? this.mysqlPassword,
+    };
+  }
+
+  private readonly execFileAsync = promisify(execFile);
+
+  private async createPostgresSnapshot(
     database: string,
     filepath: string,
     envOverrides?: Partial<{
@@ -219,18 +252,17 @@ export class DbSnapshotsService {
       user: string;
       password: string;
     }>,
-  ): void {
-    execFileSync(
+  ): Promise<void> {
+    await this.execFileAsync(
       'pg_dump',
       ['--clean', '--if-exists', '--file', filepath, database],
       {
         env: this.getPostgresEnv(database, envOverrides),
-        stdio: 'pipe',
       },
     );
   }
 
-  private restorePostgresSnapshot(
+  private async restorePostgresSnapshot(
     database: string,
     filepath: string,
     envOverrides?: Partial<{
@@ -239,10 +271,9 @@ export class DbSnapshotsService {
       user: string;
       password: string;
     }>,
-  ): void {
-    execFileSync('psql', ['--file', filepath, database], {
+  ): Promise<void> {
+    await this.execFileAsync('psql', ['--file', filepath, database], {
       env: this.getPostgresEnv(database, envOverrides),
-      stdio: 'pipe',
     });
   }
 
@@ -329,7 +360,24 @@ export class DbSnapshotsService {
         dto.connectionId,
         driver.engine,
       );
-      this.createPostgresSnapshot(database, filepath, envOverrides);
+      await this.createPostgresSnapshot(database, filepath, envOverrides);
+    } else if (driver.engine === 'mysql') {
+      const envOverrides = this.resolveConnectionOverrides(
+        projectId,
+        dto.connectionId,
+        driver.engine,
+      );
+      if (driver.createSnapshot) {
+        await driver.createSnapshot(database, filepath, envOverrides);
+      } else {
+        throw new Error('MySQL driver does not support snapshots');
+      }
+    } else if (driver.engine === 'sqlite') {
+      if (driver.createSnapshot) {
+        await driver.createSnapshot(database, filepath);
+      } else {
+        throw new Error('SQLite driver does not support snapshots');
+      }
     } else {
       fs.writeFileSync(
         filepath,
@@ -426,11 +474,11 @@ export class DbSnapshotsService {
     return { message: `Snapshot "${name}" deleted` };
   }
 
-  restore(
+  async restore(
     name: string,
     dto: RestoreSnapshotDto,
     engineParam?: string,
-  ): RestoreSnapshotResponse {
+  ): Promise<RestoreSnapshotResponse> {
     const snapshots = this.listSnapshotFiles();
     const snapshot = snapshots.find((s) => s.file === name);
     if (!snapshot) throw new NotFoundException('Snapshot not found');
@@ -444,11 +492,46 @@ export class DbSnapshotsService {
         dto.connectionId,
         engine,
       );
-      this.restorePostgresSnapshot(database, snapshot.filepath, overrides);
+      await this.restorePostgresSnapshot(
+        database,
+        snapshot.filepath,
+        overrides,
+      );
       return {
         message: `Snapshot "${name}" restored to database "${database}"`,
         engine,
       };
+    } else if (engine === 'mysql') {
+      const overrides = this.resolveConnectionOverrides(
+        dto.projectId ?? null,
+        dto.connectionId,
+        engine,
+      );
+      const mysqlDriver = this.registry.get('mysql');
+      if (mysqlDriver?.restoreSnapshot) {
+        await mysqlDriver.restoreSnapshot(
+          database,
+          snapshot.filepath,
+          overrides,
+        );
+        return {
+          message: `Snapshot "${name}" restored to database "${database}"`,
+          engine,
+        };
+      } else {
+        throw new Error('MySQL driver does not support restore');
+      }
+    } else if (engine === 'sqlite') {
+      const sqliteDriver = this.registry.get('sqlite');
+      if (sqliteDriver?.restoreSnapshot) {
+        await sqliteDriver.restoreSnapshot(database, snapshot.filepath);
+        return {
+          message: `Snapshot "${name}" restored to database "${database}"`,
+          engine,
+        };
+      } else {
+        throw new Error('SQLite driver does not support restore');
+      }
     }
 
     return {

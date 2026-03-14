@@ -1,0 +1,20 @@
+meta {
+  name: Import from URL
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{api_url}}/api/import/url
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "url": "https://petstore3.swagger.io/api/v3/openapi.json",
+    "projectId": "{{project_id}}",
+    "deduplicate": true,
+    "overwrite": false
+  }
+}
