@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import type { StatusResponse } from '@stubrix/shared';
 import { useMockManager } from '../hooks/useMockManager.js';
