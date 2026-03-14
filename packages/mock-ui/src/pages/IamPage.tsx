@@ -1,12 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Key, Info } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 import type { IamToken } from '../lib/mock-api.js';
 import { InlineAlert } from '../components/InlineAlert.js';
 
-type IamPageProps = { onNavigateBack?: () => void };
+type IamPageProps = {
+  t?: (key: string) => string;
+  onNavigateBack?: () => void;
+};
 
-export function IamPage({ onNavigateBack }: IamPageProps) {
+export function IamPage({ t, onNavigateBack }: IamPageProps) {
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [tab, setTab] = useState<'token' | 'introspect' | 'config'>('token');
   const [keycloakOk, setKeycloakOk] = useState<boolean | null>(null);
   const [zitadelOk, setZitadelOk] = useState<boolean | null>(null);
@@ -37,7 +41,7 @@ export function IamPage({ onNavigateBack }: IamPageProps) {
     setError(null);
     try {
       setToken(await mockApi.iam.getToken(creds.username, creds.password));
-      setSuccess('Token obtained');
+      setSuccess(T('iam.tokenObtained', 'Token obtained'));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -50,7 +54,7 @@ export function IamPage({ onNavigateBack }: IamPageProps) {
     setError(null);
     try {
       setToken(await mockApi.iam.clientCredentials());
-      setSuccess('Client credentials token obtained');
+      setSuccess(T('iam.clientCredentialsObtained', 'Client credentials token obtained'));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -76,24 +80,24 @@ export function IamPage({ onNavigateBack }: IamPageProps) {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">← Back</button>
+            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
           )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <ShieldCheck size={22} className="text-emerald-400" /> IAM
+              <ShieldCheck size={22} className="text-emerald-400" /> {T('iam.title', 'IAM')}
             </h1>
-            <p className="text-text-secondary text-sm">Keycloak and Zitadel identity management</p>
+            <p className="text-text-secondary text-sm">{T('iam.subtitle', 'Keycloak and Zitadel identity management')}</p>
           </div>
         </div>
         <div className="flex gap-2 text-xs">
           {keycloakOk !== null && (
             <span className={`px-2 py-1 rounded-full ${keycloakOk ? 'bg-green-400/10 text-green-400' : 'bg-red-400/10 text-red-400'}`}>
-              {keycloakOk ? '● Keycloak' : '○ Keycloak'}
+              {keycloakOk ? T('iam.keycloak', 'Keycloak') : '○ Keycloak'}
             </span>
           )}
           {zitadelOk !== null && (
             <span className={`px-2 py-1 rounded-full ${zitadelOk ? 'bg-green-400/10 text-green-400' : 'bg-red-400/10 text-red-400'}`}>
-              {zitadelOk ? '● Zitadel' : '○ Zitadel'}
+              {zitadelOk ? T('iam.zitadel', 'Zitadel') : '○ Zitadel'}
             </span>
           )}
         </div>
@@ -107,11 +111,11 @@ export function IamPage({ onNavigateBack }: IamPageProps) {
       )}
 
       <div className="flex gap-1 mb-6 bg-white/5 rounded-lg p-1 w-fit">
-        {(['token', 'introspect', 'config'] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)}
+        {(['token', 'introspect', 'config'] as const).map((tabKey) => (
+          <button key={tabKey} onClick={() => setTab(tabKey)}
             className={['px-4 py-1.5 rounded-md text-sm capitalize transition-colors',
-              tab === t ? 'bg-emerald-400/20 text-emerald-400' : 'text-text-secondary hover:text-text-primary'].join(' ')}>
-            {t}
+              tab === tabKey ? 'bg-emerald-400/20 text-emerald-400' : 'text-text-secondary hover:text-text-primary'].join(' ')}>
+            {tabKey === 'token' ? T('iam.token', 'Token') : tabKey === 'introspect' ? T('iam.introspect', 'Introspect') : T('iam.config', 'Config')}
           </button>
         ))}
       </div>
@@ -119,21 +123,21 @@ export function IamPage({ onNavigateBack }: IamPageProps) {
       {tab === 'token' && (
         <div className="space-y-4">
           <div className="bg-white/5 border border-white/10 rounded-lg p-5">
-            <h3 className="font-medium mb-3 flex items-center gap-2"><Key size={14} /> Password Grant</h3>
+            <h3 className="font-medium mb-3 flex items-center gap-2"><Key size={14} /> {T('iam.passwordGrant', 'Password Grant')}</h3>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <input value={creds.username} onChange={(e) => setCreds({ ...creds, username: e.target.value })}
-                placeholder="Username" className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-emerald-400" />
+                placeholder={T('iam.usernamePlaceholder', 'Username')} className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-emerald-400" />
               <input value={creds.password} onChange={(e) => setCreds({ ...creds, password: e.target.value })}
-                type="password" placeholder="Password" className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-emerald-400" />
+                type="password" placeholder={T('iam.passwordPlaceholder', 'Password')} className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-emerald-400" />
             </div>
             <div className="flex gap-2">
               <button onClick={() => void getToken()} disabled={loading || !creds.username || !creds.password}
                 className="text-sm bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20 disabled:opacity-50 px-3 py-1.5 rounded-md">
-                {loading ? 'Getting token…' : 'Get Token'}
+                {loading ? T('iam.gettingToken', 'Getting token…') : T('iam.getToken', 'Get Token')}
               </button>
               <button onClick={() => void getClientCredentials()} disabled={loading}
                 className="text-sm bg-white/5 hover:bg-white/10 text-text-secondary disabled:opacity-50 px-3 py-1.5 rounded-md">
-                Client Credentials
+                {T('iam.clientCredentials', 'Client Credentials')}
               </button>
             </div>
           </div>
@@ -141,13 +145,13 @@ export function IamPage({ onNavigateBack }: IamPageProps) {
           {token !== null && (
             <div className="bg-white/5 border border-white/10 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Access Token</span>
+                <span className="text-sm font-medium">{T('iam.accessToken', 'Access Token')}</span>
                 <button onClick={() => setToken(null)} className="text-text-secondary text-xs">✕</button>
               </div>
               <div className="grid grid-cols-3 gap-3 mb-3 text-xs text-text-secondary">
-                <span>Type: <strong className="text-text-primary">{token.token_type}</strong></span>
-                <span>Expires: <strong className="text-text-primary">{token.expires_in}s</strong></span>
-                {token.scope && <span>Scope: <strong className="text-text-primary">{token.scope}</strong></span>}
+                <span>{T('iam.type', 'Type:')} <strong className="text-text-primary">{token.token_type}</strong></span>
+                <span>{T('iam.expires', 'Expires:')} <strong className="text-text-primary">{token.expires_in}s</strong></span>
+                {token.scope && <span>{T('iam.scope', 'Scope:')} <strong className="text-text-primary">{token.scope}</strong></span>}
               </div>
               <textarea readOnly value={token.access_token} rows={4}
                 className="w-full bg-white/5 rounded px-3 py-2 text-xs font-mono text-text-secondary resize-none focus:outline-none" />
@@ -159,11 +163,11 @@ export function IamPage({ onNavigateBack }: IamPageProps) {
       {tab === 'introspect' && (
         <div>
           <textarea value={introspectToken} onChange={(e) => setIntrospectToken(e.target.value)}
-            rows={4} placeholder="Paste a JWT or opaque token to introspect…"
+            rows={4} placeholder={T('iam.introspectPlaceholder', 'Paste a JWT or opaque token to introspect…')}
             className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-400 resize-none mb-3" />
           <button onClick={() => void introspect()} disabled={introspecting || !introspectToken.trim()}
             className="flex items-center gap-1.5 text-sm bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20 disabled:opacity-50 px-4 py-2 rounded-md mb-4">
-            <ShieldCheck size={13} /> {introspecting ? 'Introspecting…' : 'Introspect'}
+            <ShieldCheck size={13} /> {introspecting ? T('iam.introspecting', 'Introspecting…') : T('iam.introspect', 'Introspect')}
           </button>
           {introspectResult !== null && (
             <pre className="bg-white/5 border border-white/10 rounded-lg p-4 text-xs text-text-secondary overflow-auto max-h-64">
@@ -180,7 +184,7 @@ export function IamPage({ onNavigateBack }: IamPageProps) {
           </pre>
         ) : (
           <div className="flex items-center gap-3 text-text-secondary text-sm p-4 bg-white/5 rounded-lg">
-            <Info size={16} /> No IAM configuration found. Set KEYCLOAK_URL or ZITADEL_URL in environment.
+            <Info size={16} /> {T('iam.noConfig', 'No IAM configuration found. Set KEYCLOAK_URL or ZITADEL_URL in environment.')}
           </div>
         )
       )}

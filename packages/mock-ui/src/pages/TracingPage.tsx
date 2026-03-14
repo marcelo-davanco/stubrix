@@ -5,9 +5,13 @@ import type { Trace } from '../lib/mock-api.js';
 import { InlineAlert } from '../components/InlineAlert.js';
 import { EmptyState } from '../components/EmptyState.js';
 
-type TracingPageProps = { onNavigateBack?: () => void };
+type TracingPageProps = {
+  t?: (key: string) => string;
+  onNavigateBack?: () => void;
+};
 
-export function TracingPage({ onNavigateBack }: TracingPageProps) {
+export function TracingPage({ t, onNavigateBack }: TracingPageProps) {
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const [traces, setTraces] = useState<Trace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,11 +23,11 @@ export function TracingPage({ onNavigateBack }: TracingPageProps) {
     setLoading(true);
     setError(null);
     try {
-      const [t, h] = await Promise.all([
+      const [tracesList, h] = await Promise.all([
         mockApi.tracing.list(serviceFilter || undefined, 50),
         mockApi.tracing.health(),
       ]);
-      setTraces(t);
+      setTraces(tracesList);
       setJaegerAvailable((h as { available?: boolean })?.available ?? false);
     } catch (e) {
       setError((e as Error).message);
@@ -34,26 +38,26 @@ export function TracingPage({ onNavigateBack }: TracingPageProps) {
 
   useEffect(() => { void load(); }, [load]);
 
-  const services = [...new Set(traces.flatMap((t) => t.services))];
+  const services = [...new Set(traces.flatMap((tr) => tr.services))];
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">← Back</button>
+            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
           )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <GitBranch size={22} className="text-cyan-400" /> Distributed Tracing
+              <GitBranch size={22} className="text-cyan-400" /> {T('tracing.title', 'Distributed Tracing')}
             </h1>
-            <p className="text-text-secondary text-sm">OpenTelemetry traces via Jaeger</p>
+            <p className="text-text-secondary text-sm">{T('tracing.subtitle', 'OpenTelemetry traces via Jaeger')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {jaegerAvailable !== null && (
             <span className={`text-xs px-2 py-1 rounded-full ${jaegerAvailable ? 'bg-green-400/10 text-green-400' : 'bg-red-400/10 text-red-400'}`}>
-              {jaegerAvailable ? '● Jaeger connected' : '● Jaeger unavailable'}
+              {jaegerAvailable ? T('tracing.jaegerConnected', '● Jaeger connected') : T('tracing.jaegerUnavailable', '● Jaeger unavailable')}
             </span>
           )}
           <button onClick={load} className="p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/5">
@@ -62,7 +66,7 @@ export function TracingPage({ onNavigateBack }: TracingPageProps) {
         </div>
       </div>
 
-      {error && <InlineAlert message={error} onRetry={load} />}
+      {error && <InlineAlert message={error} onRetry={load} retryLabel={T('common.retry', 'Retry')} />}
 
       <div className="flex gap-2 mb-6">
         <div className="relative flex-1 max-w-xs">
@@ -72,16 +76,16 @@ export function TracingPage({ onNavigateBack }: TracingPageProps) {
             onChange={(e) => setServiceFilter(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded pl-8 pr-3 py-2 text-sm focus:outline-none focus:border-cyan-400"
           >
-            <option value="">All services</option>
+            <option value="">{T('tracing.allServices', 'All services')}</option>
             {services.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center text-text-secondary py-12">Loading…</div>
+        <div className="text-center text-text-secondary py-12">{T('tracing.loading', 'Loading…')}</div>
       ) : traces.length === 0 ? (
-        <EmptyState message="No traces found. Make sure Jaeger is running and requests are being traced." />
+        <EmptyState message={T('tracing.empty', 'No traces found. Make sure Jaeger is running and requests are being traced.')} />
       ) : (
         <div className="space-y-2">
           {traces.map((trace) => (
@@ -100,7 +104,7 @@ export function TracingPage({ onNavigateBack }: TracingPageProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
-                  <span className="text-xs text-text-secondary">{trace.spans.length} spans</span>
+                  <span className="text-xs text-text-secondary">{trace.spans.length} {T('tracing.spans', 'spans')}</span>
                   <span className="text-xs text-text-secondary">{trace.duration}ms</span>
                   <span className="text-xs text-text-secondary">{new Date(trace.startTime).toLocaleTimeString()}</span>
                 </div>

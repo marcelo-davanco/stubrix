@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Download } from 'lucide-react'
 import { useSettings } from '../../hooks/useSettings'
+import { useTranslation } from '../../lib/i18n'
 import type { ServiceOption } from './ServiceSelector'
 import { ServiceSelector } from './ServiceSelector'
 
@@ -12,6 +13,7 @@ interface ExportWizardProps {
 type Step = 1 | 2
 
 export function ExportWizard({ open, onClose }: ExportWizardProps) {
+  const { t } = useTranslation()
   const { services } = useSettings()
   const [step, setStep] = useState<Step>(1)
   const [allServices, setAllServices] = useState(true)
@@ -86,8 +88,8 @@ export function ExportWizard({ open, onClose }: ExportWizardProps) {
       <div className="bg-[#1e1e2e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div>
-            <h2 className="text-sm font-semibold">Export Configuration</h2>
-            <p className="text-xs text-text-secondary mt-0.5">Step {step} of 2</p>
+            <h2 className="text-sm font-semibold">{t('backups.exportTitle')}</h2>
+            <p className="text-xs text-text-secondary mt-0.5">{t('backups.stepOf', { step })}</p>
           </div>
           <button type="button" onClick={handleClose} className="text-text-secondary hover:text-text-primary transition-colors">
             <X size={16} />
@@ -134,19 +136,19 @@ export function ExportWizard({ open, onClose }: ExportWizardProps) {
               <label className="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" checked={includeSensitive} onChange={(e) => setIncludeSensitive(e.target.checked)} className="accent-primary mt-0.5" />
                 <div>
-                  <p className="text-sm">Include sensitive values</p>
-                  <p className="text-xs text-yellow-400/80 mt-0.5">⚠ Passwords and secrets will be included in the export file</p>
+                  <p className="text-sm">{t('backups.includeSensitive')}</p>
+                  <p className="text-xs text-yellow-400/80 mt-0.5">{t('backups.includeSensitiveWarning')}</p>
                 </div>
               </label>
 
               <label className="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" checked={encrypted} onChange={(e) => setEncrypted(e.target.checked)} className="accent-primary mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm">Encrypt export file</p>
+                  <p className="text-sm">{t('backups.encryptExport')}</p>
                   {encrypted && (
                     <input
                       type="password"
-                      placeholder="Master password"
+                      placeholder={t('backups.masterPassword')}
                       value={masterPassword}
                       onChange={(e) => setMasterPassword(e.target.value)}
                       className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
@@ -166,7 +168,7 @@ export function ExportWizard({ open, onClose }: ExportWizardProps) {
             onClick={() => step === 1 ? handleClose() : setStep(1)}
             className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
-            {step === 1 ? 'Cancel' : '← Back'}
+            {step === 1 ? t('common.cancel') : t('common.back')}
           </button>
           {step === 1 ? (
             <button
@@ -175,7 +177,7 @@ export function ExportWizard({ open, onClose }: ExportWizardProps) {
               disabled={!allServices && selectedIds.length === 0}
               className="px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg font-medium transition-colors disabled:opacity-40"
             >
-              Next →
+              {t('backups.next')}
             </button>
           ) : (
             <button
@@ -185,7 +187,7 @@ export function ExportWizard({ open, onClose }: ExportWizardProps) {
               className="flex items-center gap-2 px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg font-medium transition-colors disabled:opacity-40"
             >
               <Download size={14} />
-              {busy ? 'Exporting…' : 'Export & Download'}
+              {busy ? t('backups.exporting') : t('backups.exportDownload')}
             </button>
           )}
         </div>

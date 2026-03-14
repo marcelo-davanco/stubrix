@@ -6,6 +6,7 @@ import { MockMethodBadge } from '../components/MockMethodBadge.js';
 import { EmptyState } from '../components/EmptyState.js';
 
 type MocksListPageProps = {
+  t?: (key: string) => string;
   projectId: string;
   onBack?: () => void;
   onNavigateToNewMock?: (projectId: string) => void;
@@ -13,11 +14,13 @@ type MocksListPageProps = {
 };
 
 export function MocksListPage({
+  t,
   projectId,
   onBack,
   onNavigateToNewMock,
   onNavigateToEditMock,
 }: MocksListPageProps) {
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
   const { mocks, loading, deleteMock, loadMocks } = useMockManager(projectId);
   const [search, setSearch] = useState('');
 
@@ -32,14 +35,14 @@ export function MocksListPage({
   );
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this mock?')) return;
+    if (!confirm(T('mocksList.deleteConfirm', 'Delete this mock?'))) return;
     await deleteMock(projectId, id);
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full text-text-secondary">
-        Loading...
+        {T('mocksList.loading', 'Loading...')}
       </div>
     );
   }
@@ -55,9 +58,9 @@ export function MocksListPage({
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold">Mocks</h1>
+            <h1 className="text-2xl font-bold">{T('mocksList.title', 'Mocks')}</h1>
             <p className="text-text-secondary text-sm">
-              {projectId} · {mocks.length} mocks
+              {projectId} · {mocks.length} {T('mocksList.mocksCount', 'mocks')}
             </p>
           </div>
         </div>
@@ -65,7 +68,7 @@ export function MocksListPage({
           onClick={() => onNavigateToNewMock?.(projectId)}
           className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-md text-sm font-medium"
         >
-          <Plus size={16} /> New Mock
+          <Plus size={16} /> {T('mocksList.newMock', 'New Mock')}
         </button>
       </div>
 
@@ -74,7 +77,7 @@ export function MocksListPage({
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by URL or method..."
+          placeholder={T('mocksList.searchPlaceholder', 'Search by URL or method...')}
           className="w-full bg-white/5 border border-white/10 rounded-md pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-primary"
         />
       </div>
@@ -82,17 +85,17 @@ export function MocksListPage({
       <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
         {filtered.length === 0 ? (
           <EmptyState
-            message={search ? 'No mocks match your search.' : 'No mocks yet. Create your first mock.'}
+            message={search ? T('mocksList.emptySearch', 'No mocks match your search.') : T('mocksList.empty', 'No mocks yet. Create your first mock.')}
           />
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/10 text-left text-xs text-text-secondary uppercase">
-                <th className="px-4 py-3 w-20">Method</th>
-                <th className="px-4 py-3">URL</th>
-                <th className="px-4 py-3 w-20">Status</th>
-                <th className="px-4 py-3 w-24">Body</th>
-                <th className="px-4 py-3 w-24 text-right">Actions</th>
+                <th className="px-4 py-3 w-20">{T('mocksList.method', 'Method')}</th>
+                <th className="px-4 py-3">{T('mocksList.url', 'URL')}</th>
+                <th className="px-4 py-3 w-20">{T('mocksList.status', 'Status')}</th>
+                <th className="px-4 py-3 w-24">{T('mocksList.body', 'Body')}</th>
+                <th className="px-4 py-3 w-24 text-right">{T('mocksList.actions', 'Actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -120,20 +123,20 @@ export function MocksListPage({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-text-secondary">
-                    {mock.response.hasBodyFile ? 'file' : 'inline'}
+                    {mock.response.hasBodyFile ? T('mocksList.bodyFile', 'file') : T('mocksList.bodyInline', 'inline')}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
                       <button
                         onClick={() => onNavigateToEditMock?.(projectId, mock.id)}
-                        title="Edit"
+                        title={T('mocksList.edit', 'Edit')}
                         className="p-1.5 rounded hover:bg-white/10 text-text-secondary hover:text-text-primary"
                       >
                         <Pencil size={13} />
                       </button>
                       <button
                         onClick={() => handleDelete(mock.id)}
-                        title="Delete"
+                        title={T('common.delete', 'Delete')}
                         className="p-1.5 rounded hover:bg-red-400/20 text-text-secondary hover:text-red-400"
                       >
                         <Trash2 size={13} />

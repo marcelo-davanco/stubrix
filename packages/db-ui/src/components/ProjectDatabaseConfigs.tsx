@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Wifi, Loader2, X, Check, ChevronDown, ChevronUp, Power } from 'lucide-react'
+import { useDbUiTranslation } from '../lib/i18n'
 import type {
   ProjectDatabaseConfigItem,
   UpsertProjectDatabaseConfigPayload,
@@ -53,6 +54,7 @@ function ConfigForm({
   onSave: (payload: UpsertProjectDatabaseConfigPayload) => Promise<void>
   onCancel: () => void
 }) {
+  const t = useDbUiTranslation()
   const [form, setForm] = useState<ConfigFormState>(initial)
   const [submitting, setSubmitting] = useState(false)
   const isSqlite = form.engine === 'sqlite'
@@ -90,7 +92,7 @@ function ConfigForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className={LABEL_CLASS}>Engine</label>
+          <label className={LABEL_CLASS}>{t('db.engine')}</label>
           <select
             value={form.engine}
             onChange={(e) => handleEngineChange(e.target.value as ConfigFormState['engine'])}
@@ -102,11 +104,11 @@ function ConfigForm({
           </select>
         </div>
         <div>
-          <label className={LABEL_CLASS}>Nome da conexão *</label>
+          <label className={LABEL_CLASS}>{t('db.connectionName')}</label>
           <input
             value={form.name}
             onChange={(e) => set({ name: e.target.value })}
-            placeholder="ex: production-db"
+            placeholder={t('db.connectionNamePlaceholder')}
             required
             className={INPUT_CLASS}
           />
@@ -115,11 +117,11 @@ function ConfigForm({
 
       {isSqlite ? (
         <div>
-          <label className={LABEL_CLASS}>Caminho do arquivo (.db)</label>
+          <label className={LABEL_CLASS}>{t('db.filePath')}</label>
           <input
             value={form.filePath}
             onChange={(e) => set({ filePath: e.target.value })}
-            placeholder="/data/app.db"
+            placeholder={t('db.filePathPlaceholder')}
             className={INPUT_CLASS}
           />
         </div>
@@ -127,7 +129,7 @@ function ConfigForm({
         <>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="md:col-span-2">
-              <label className={LABEL_CLASS}>Host</label>
+              <label className={LABEL_CLASS}>{t('db.host')}</label>
               <input
                 value={form.host}
                 onChange={(e) => set({ host: e.target.value })}
@@ -136,7 +138,7 @@ function ConfigForm({
               />
             </div>
             <div>
-              <label className={LABEL_CLASS}>Porta</label>
+              <label className={LABEL_CLASS}>{t('db.port')}</label>
               <input
                 value={form.port}
                 onChange={(e) => set({ port: e.target.value })}
@@ -147,25 +149,25 @@ function ConfigForm({
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className={LABEL_CLASS}>Database</label>
+              <label className={LABEL_CLASS}>{t('db.database')}</label>
               <input
                 value={form.database}
                 onChange={(e) => set({ database: e.target.value })}
-                placeholder="mydb"
+                placeholder={t('db.databasePlaceholder')}
                 className={INPUT_CLASS}
               />
             </div>
             <div>
-              <label className={LABEL_CLASS}>Usuário</label>
+              <label className={LABEL_CLASS}>{t('db.user')}</label>
               <input
                 value={form.username}
                 onChange={(e) => set({ username: e.target.value })}
-                placeholder="postgres"
+                placeholder={t('db.userPlaceholder')}
                 className={INPUT_CLASS}
               />
             </div>
             <div>
-              <label className={LABEL_CLASS}>Senha</label>
+              <label className={LABEL_CLASS}>{t('db.password')}</label>
               <input
                 type="password"
                 value={form.password}
@@ -179,11 +181,11 @@ function ConfigForm({
       )}
 
       <div>
-        <label className={LABEL_CLASS}>Notas (opcional)</label>
+        <label className={LABEL_CLASS}>{t('db.notes')}</label>
         <input
           value={form.notes}
           onChange={(e) => set({ notes: e.target.value })}
-          placeholder="Conexão de produção, read-only..."
+          placeholder={t('db.notesPlaceholder')}
           className={INPUT_CLASS}
         />
       </div>
@@ -195,14 +197,14 @@ function ConfigForm({
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-          {submitting ? 'Salvando...' : 'Salvar'}
+          {submitting ? t('db.saving') : t('common.save')}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary focus:outline-none focus:ring-1 focus:ring-white/20"
         >
-          <X size={14} /> Cancelar
+          <X size={14} /> {t('common.cancel')}
         </button>
       </div>
     </form>
@@ -222,6 +224,7 @@ function ConfigCard({
   onDelete: () => void
   onRefresh: () => void
 }) {
+  const t = useDbUiTranslation()
   const [testStatus, setTestStatus] = useState<TestStatus>('idle')
   const [testMessage, setTestMessage] = useState('')
   const [expanded, setExpanded] = useState(false)
@@ -250,7 +253,7 @@ function ConfigCard({
       onRefresh()
     } catch (err) {
       setTestStatus('error')
-      setTestMessage(err instanceof Error ? err.message : 'Erro desconhecido')
+      setTestMessage(err instanceof Error ? err.message : t('db.unknownError'))
       onRefresh()
     }
   }
@@ -258,8 +261,8 @@ function ConfigCard({
   const isSqlite = config.engine === 'sqlite'
   const style = ENGINE_STYLE[config.engine] ?? ENGINE_STYLE.sqlite
   const connStr = isSqlite
-    ? (config.filePath || 'Sem arquivo definido')
-    : config.host ? `${config.host}:${config.port || '?'}` : 'Sem host'
+    ? (config.filePath || '—')
+    : config.host ? `${config.host}:${config.port || '?'}` : '—'
 
   return (
     <div className={`overflow-hidden rounded-2xl border transition-all duration-200 ${
@@ -305,16 +308,16 @@ function ConfigCard({
             type="button"
             onClick={() => void handleTest()}
             disabled={testStatus === 'testing' || !config.enabled}
-            title={config.enabled ? 'Testar conexão' : 'Ative a conexão para testar'}
+            title={t('db.testConnection')}
             className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-white/8 hover:text-primary disabled:opacity-40"
           >
             {testStatus === 'testing' ? <Loader2 size={13} className="animate-spin" /> : <Wifi size={13} />}
           </button>
-          <button type="button" onClick={onEdit} title="Editar"
+          <button type="button" onClick={onEdit} title={t('db.edit')}
             className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-white/8 hover:text-text-primary">
             <Pencil size={13} />
           </button>
-          <button type="button" onClick={onDelete} title="Remover"
+          <button type="button" onClick={onDelete} title={t('db.remove')}
             className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-red-500/15 hover:text-red-400">
             <Trash2 size={13} />
           </button>
@@ -331,41 +334,41 @@ function ConfigCard({
             {!isSqlite ? (
               <>
                 <div className="flex items-center justify-between">
-                  <span className="text-text-secondary">Host</span>
+                  <span className="text-text-secondary">{t('db.host')}</span>
                   <span className="font-mono text-text-primary">{config.host || '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-text-secondary">Porta</span>
+                  <span className="text-text-secondary">{t('db.port')}</span>
                   <span className="font-mono text-text-primary">{config.port || '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-text-secondary">Usuário</span>
+                  <span className="text-text-secondary">{t('db.user')}</span>
                   <span className="font-mono text-text-primary">{config.username || '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-text-secondary">Database</span>
+                  <span className="text-text-secondary">{t('db.database')}</span>
                   <span className="font-mono text-text-primary">{config.database || '—'}</span>
                 </div>
               </>
             ) : (
               <div className="flex items-center justify-between md:col-span-2">
-                <span className="text-text-secondary">Arquivo</span>
+                <span className="text-text-secondary">{t('db.file')}</span>
                 <span className="font-mono text-text-primary">{config.filePath || '—'}</span>
               </div>
             )}
             {config.notes && (
               <div className="flex items-center justify-between md:col-span-2">
-                <span className="text-text-secondary">Notas</span>
+                <span className="text-text-secondary">{t('db.notes')}</span>
                 <span className="text-text-primary">{config.notes}</span>
               </div>
             )}
             <div className="flex items-center justify-between pt-1 border-t border-white/5">
-              <span className="text-text-secondary">Atualizado</span>
-              <span className="text-white/40">{new Date(config.updatedAt).toLocaleString('pt-BR')}</span>
+              <span className="text-text-secondary">{t('db.updated')}</span>
+              <span className="text-white/40">{new Date(config.updatedAt).toLocaleString()}</span>
             </div>
             {config.connectionTestedAt && (
               <div className="flex items-center justify-between pt-1 border-t border-white/5">
-                <span className="text-text-secondary">Último teste</span>
+                <span className="text-text-secondary">{t('db.lastTest')}</span>
                 <span className="text-white/40">{new Date(config.connectionTestedAt).toLocaleString('pt-BR')}</span>
               </div>
             )}
@@ -386,6 +389,7 @@ export function ProjectDatabaseConfigs({
   onDelete,
   onRefresh,
 }: ProjectDatabaseConfigsProps) {
+  const t = useDbUiTranslation()
   const [showForm, setShowForm] = useState(false)
   const [editingConfig, setEditingConfig] = useState<ProjectDatabaseConfigItem | null>(null)
 
@@ -423,8 +427,8 @@ export function ProjectDatabaseConfigs({
     <div className="flex-1 rounded-2xl border border-white/10 bg-surface-1 p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-text-primary">Conexões do projeto</h2>
-          <p className="mt-0.5 text-xs text-text-secondary">Acesso e conectividade por projeto</p>
+          <h2 className="text-sm font-semibold text-text-primary">{t('db.projectConnections')}</h2>
+          <p className="mt-0.5 text-xs text-text-secondary">{t('db.projectConnectionsDesc')}</p>
         </div>
         {!showForm && (
           <button
@@ -432,7 +436,7 @@ export function ProjectDatabaseConfigs({
             onClick={() => { setEditingConfig(null); setShowForm(true) }}
             className="flex items-center gap-1.5 rounded-lg bg-primary/20 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/30 focus:outline-none focus:ring-1 focus:ring-primary/40"
           >
-            <Plus size={13} strokeWidth={2.5} /> Nova conexão
+            <Plus size={13} strokeWidth={2.5} /> {t('db.newConnection')}
           </button>
         )}
       </div>
@@ -441,7 +445,7 @@ export function ProjectDatabaseConfigs({
         <div className="mb-4 overflow-hidden rounded-2xl border border-primary/20 bg-surface-2">
           <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
             <p className="text-sm font-semibold text-text-primary">
-              {editingConfig ? `Editar — ${editingConfig.name}` : 'Nova conexão'}
+              {editingConfig ? t('db.editConnection').replace('{{name}}', editingConfig.name) : t('db.newConnection')}
             </p>
             <button type="button" onClick={handleCancel} className="rounded-lg p-1 text-text-secondary hover:bg-white/8">
               <X size={14} />
@@ -461,8 +465,8 @@ export function ProjectDatabaseConfigs({
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-xl">🔌</div>
           <div>
-            <p className="text-sm font-medium text-text-primary">Nenhuma conexão configurada</p>
-            <p className="text-xs text-text-secondary">Clique para adicionar a primeira</p>
+            <p className="text-sm font-medium text-text-primary">{t('db.noConnectionsTitle')}</p>
+            <p className="text-xs text-text-secondary">{t('db.noConnectionsDesc')}</p>
           </div>
         </button>
       ) : (

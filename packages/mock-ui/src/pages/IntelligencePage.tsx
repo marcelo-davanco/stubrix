@@ -5,12 +5,19 @@ import type { RagQueryResult, MockSuggestion, DataSuggestion } from '../lib/mock
 import { InlineAlert } from '../components/InlineAlert.js';
 
 type IntelligencePageProps = {
+  t?: (key: string) => string;
   onNavigateBack?: () => void;
 };
 
+function interpolate(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ''));
+}
+
 type Tab = 'query' | 'mock' | 'data';
 
-export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
+export function IntelligencePage({ t, onNavigateBack }: IntelligencePageProps) {
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
+  const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [tab, setTab] = useState<Tab>('query');
   const [available, setAvailable] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +87,7 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
     setError(null);
     try {
       const res = await mockApi.intelligence.index();
-      setSuccess(`Indexed ${res.indexed} mocks into the knowledge base`);
+      setSuccess(Tvars('intelligence.indexedSuccess', `Indexed ${res.indexed} mocks into the knowledge base`, { count: res.indexed }));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -88,10 +95,10 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
     }
   }
 
-  const tabConfig: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
-    { id: 'query', label: 'RAG Query', icon: <Search size={13} /> },
-    { id: 'mock', label: 'Suggest Mock', icon: <Sparkles size={13} /> },
-    { id: 'data', label: 'Suggest Data', icon: <Database size={13} /> },
+  const tabConfig: Array<{ id: Tab; labelKey: string; label: string; icon: React.ReactNode }> = [
+    { id: 'query', labelKey: 'intelligence.ragQuery', label: 'RAG Query', icon: <Search size={13} /> },
+    { id: 'mock', labelKey: 'intelligence.suggestMock', label: 'Suggest Mock', icon: <Sparkles size={13} /> },
+    { id: 'data', labelKey: 'intelligence.suggestData', label: 'Suggest Data', icon: <Database size={13} /> },
   ];
 
   return (
@@ -99,19 +106,19 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">← Back</button>
+            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
           )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Brain size={22} className="text-purple-400" /> Intelligence
+              <Brain size={22} className="text-purple-400" /> {T('intelligence.title', 'Intelligence')}
             </h1>
-            <p className="text-text-secondary text-sm">AI-powered mock generation and knowledge queries</p>
+            <p className="text-text-secondary text-sm">{T('intelligence.subtitle', 'AI-powered mock generation and knowledge queries')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {available !== null && (
             <span className={`text-xs px-2 py-1 rounded-full ${available ? 'bg-green-400/10 text-green-400' : 'bg-red-400/10 text-red-400'}`}>
-              {available ? '● OpenRAG connected' : '● OpenRAG unavailable'}
+              {available ? T('intelligence.openRagConnected', '● OpenRAG connected') : T('intelligence.openRagUnavailable', '● OpenRAG unavailable')}
             </span>
           )}
           <button
@@ -120,7 +127,7 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
             className="flex items-center gap-1.5 text-xs bg-purple-400/10 text-purple-400 hover:bg-purple-400/20 disabled:opacity-50 px-3 py-1.5 rounded-md"
           >
             {indexing ? <Loader size={12} className="animate-spin" /> : <Brain size={12} />}
-            {indexing ? 'Indexing…' : 'Re-index Mocks'}
+            {indexing ? T('intelligence.indexing', 'Indexing…') : T('intelligence.reindexMocks', 'Re-index Mocks')}
           </button>
         </div>
       </div>
@@ -136,21 +143,21 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
       {!available && (
         <div className="flex items-start gap-3 rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4 mb-6 text-sm text-yellow-300">
           <Sparkles size={16} className="mt-0.5 shrink-0" />
-          <span>OpenRAG is not configured. Set the OPENAI_API_KEY or RAG_ENDPOINT env variable to enable AI features.</span>
+          <span>{T('intelligence.notConfigured', 'OpenRAG is not configured. Set the OPENAI_API_KEY or RAG_ENDPOINT env variable to enable AI features.')}</span>
         </div>
       )}
 
       <div className="flex gap-1 mb-6 bg-white/5 rounded-lg p-1">
-        {tabConfig.map((t) => (
+        {tabConfig.map((tabItem) => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
+            key={tabItem.id}
+            onClick={() => setTab(tabItem.id)}
             className={[
               'flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors',
-              tab === t.id ? 'bg-purple-400/20 text-purple-400' : 'text-text-secondary hover:text-text-primary',
+              tab === tabItem.id ? 'bg-purple-400/20 text-purple-400' : 'text-text-secondary hover:text-text-primary',
             ].join(' ')}
           >
-            {t.icon} {t.label}
+            {tabItem.icon} {T(tabItem.labelKey, tabItem.label)}
           </button>
         ))}
       </div>
@@ -162,7 +169,7 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && void runQuery()}
-              placeholder="Ask anything about your mocks, schemas or docs…"
+              placeholder={T('intelligence.queryPlaceholder', 'Ask anything about your mocks, schemas or docs…')}
               className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-400"
             />
             <button
@@ -171,7 +178,7 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
               className="flex items-center gap-1.5 text-sm bg-purple-400/20 text-purple-400 hover:bg-purple-400/30 disabled:opacity-50 px-4 py-2 rounded-md"
             >
               {loading ? <Loader size={13} className="animate-spin" /> : <Search size={13} />}
-              Ask
+              {T('intelligence.ask', 'Ask')}
             </button>
           </div>
           {queryResult && (
@@ -179,7 +186,7 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
               <p className="text-sm leading-relaxed">{queryResult.answer}</p>
               {queryResult.sources.length > 0 && (
                 <div>
-                  <p className="text-xs text-text-secondary mb-1">Sources:</p>
+                  <p className="text-xs text-text-secondary mb-1">{T('intelligence.sources', 'Sources:')}</p>
                   <div className="flex flex-wrap gap-1">
                     {queryResult.sources.map((s, i) => (
                       <span key={i} className="text-xs bg-purple-400/10 text-purple-300 px-2 py-0.5 rounded">{s}</span>
@@ -198,7 +205,7 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
             value={mockDesc}
             onChange={(e) => setMockDesc(e.target.value)}
             rows={4}
-            placeholder="Describe the mock you want… e.g. 'A GET /api/products endpoint that returns a list of 3 products with id, name and price'"
+            placeholder={T('intelligence.mockDescPlaceholder', "Describe the mock you want… e.g. 'A GET /api/products endpoint that returns a list of 3 products with id, name and price'")}
             className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-400 resize-none mb-3"
           />
           <button
@@ -207,7 +214,7 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
             className="flex items-center gap-1.5 text-sm bg-purple-400/20 text-purple-400 hover:bg-purple-400/30 disabled:opacity-50 px-4 py-2 rounded-md mb-4"
           >
             {loading ? <Loader size={13} className="animate-spin" /> : <Sparkles size={13} />}
-            Generate Mock
+            {T('intelligence.generateMock', 'Generate Mock')}
           </button>
           {mockResult && (
             <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
@@ -224,7 +231,7 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
             value={dataDesc}
             onChange={(e) => setDataDesc(e.target.value)}
             rows={4}
-            placeholder="Describe the seed data you want… e.g. 'Insert 5 users with name, email and role (admin or viewer)'"
+            placeholder={T('intelligence.dataDescPlaceholder', "Describe the seed data you want… e.g. 'Insert 5 users with name, email and role (admin or viewer)'")}
             className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-400 resize-none mb-3"
           />
           <button
@@ -233,7 +240,7 @@ export function IntelligencePage({ onNavigateBack }: IntelligencePageProps) {
             className="flex items-center gap-1.5 text-sm bg-purple-400/20 text-purple-400 hover:bg-purple-400/30 disabled:opacity-50 px-4 py-2 rounded-md mb-4"
           >
             {loading ? <Loader size={13} className="animate-spin" /> : <Database size={13} />}
-            Generate SQL
+            {T('intelligence.generateSql', 'Generate SQL')}
           </button>
           {dataResult && (
             <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">

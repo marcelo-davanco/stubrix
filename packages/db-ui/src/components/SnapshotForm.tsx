@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Camera, Loader2, ChevronDown, Plus, X } from 'lucide-react'
+import { useDbUiTranslation } from '../lib/i18n'
 import type { ProjectDatabaseConfigItem } from '../lib/db-api'
 
 type SnapshotFormProps = {
@@ -45,6 +46,7 @@ function saveStoredCategories(cats: Array<string>): void {
 }
 
 function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useDbUiTranslation()
   const [customCategories, setCustomCategories] = useState<Array<string>>(loadStoredCategories)
   const [open, setOpen] = useState(false)
   const [newValue, setNewValue] = useState('')
@@ -97,7 +99,7 @@ function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: st
           value ? 'text-text-primary' : 'text-white/20'
         }`}
       >
-        <span className="truncate">{value || 'Selecionar ou adicionar...'}</span>
+        <span className="truncate">{value || t('db.categorySelectPlaceholder')}</span>
         <div className="flex shrink-0 items-center gap-1">
           {value && (
             <span
@@ -144,7 +146,7 @@ function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: st
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddNew()}
-                placeholder="Nova categoria..."
+                placeholder={t('db.categoryNewPlaceholder')}
                 className="flex-1 rounded-lg border border-white/10 bg-main-bg px-3 py-1.5 text-xs text-text-primary placeholder-white/20 outline-none focus:border-primary"
               />
               <button
@@ -153,7 +155,7 @@ function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: st
                 disabled={!newValue.trim()}
                 className="flex items-center gap-1 rounded-lg bg-primary/20 px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/30 disabled:opacity-40"
               >
-                <Plus size={11} /> Add
+                <Plus size={11} /> {t('db.add')}
               </button>
             </div>
           </div>
@@ -164,6 +166,7 @@ function CategoryCombobox({ value, onChange }: { value: string; onChange: (v: st
 }
 
 export function SnapshotForm({ databases, loadingDatabases = false, connections, onSubmit, onConnectionChange }: SnapshotFormProps) {
+  const t = useDbUiTranslation()
   const [label, setLabel] = useState('snapshot')
   const [database, setDatabase] = useState('')
   const [category, setCategory] = useState('')
@@ -230,8 +233,8 @@ export function SnapshotForm({ databases, loadingDatabases = false, connections,
             <Camera size={15} />
           </div>
           <div>
-            <h2 className="text-sm font-semibold leading-tight text-text-primary">Criar Snapshot</h2>
-            <p className="text-xs text-text-secondary">Salve o estado atual do database</p>
+            <h2 className="text-sm font-semibold leading-tight text-text-primary">{t('db.createSnapshot')}</h2>
+            <p className="text-xs text-text-secondary">{t('db.createSnapshotDesc')}</p>
           </div>
         </div>
         <button
@@ -240,20 +243,20 @@ export function SnapshotForm({ databases, loadingDatabases = false, connections,
           className="flex shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {submitting ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-          {submitting ? 'Salvando...' : 'Criar Snapshot'}
+          {submitting ? t('db.saving') : t('db.createSnapshotButton')}
         </button>
       </div>
 
       {connections.length > 0 && (
         <div className="mb-3">
-          <label className="mb-1.5 block text-xs font-medium text-text-secondary">Conexão</label>
+          <label className="mb-1.5 block text-xs font-medium text-text-secondary">{t('db.connection')}</label>
           <div className="relative">
             <select
               value={connectionId}
               onChange={(e) => handleSelectConnection(e.target.value)}
               className="w-full appearance-none rounded-lg border border-white/10 bg-main-bg py-2.5 pl-3.5 pr-9 text-sm text-text-primary outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary/40"
             >
-              <option value="">— Padrão (engine selecionada) —</option>
+              <option value="">— {t('db.default')} —</option>
               {enabledConnections.map((conn) => (
                 <option key={conn.id} value={conn.id}>
                   {ENGINE_LABEL[conn.engine] ?? conn.engine} · {conn.name}
@@ -267,7 +270,7 @@ export function SnapshotForm({ databases, loadingDatabases = false, connections,
           {selectedConn && (
             <div className="mt-1.5 flex items-center gap-2 text-xs text-text-secondary/70">
               <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[selectedConn.connectionStatus]}`} />
-              {selectedConn.connectionStatus === 'ok' ? 'Conectado' : selectedConn.connectionStatus === 'error' ? 'Erro de conexão' : 'Status desconhecido'}
+              {selectedConn.connectionStatus === 'ok' ? t('db.statusConnected') : selectedConn.connectionStatus === 'error' ? t('db.statusError') : t('db.statusUnknown')}
               {selectedConn.host && <span className="font-mono opacity-60">{selectedConn.host}:{selectedConn.port ?? '?'}</span>}
             </div>
           )}
@@ -276,17 +279,17 @@ export function SnapshotForm({ databases, loadingDatabases = false, connections,
 
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-text-secondary">Label</label>
+          <label className="mb-1.5 block text-xs font-medium text-text-secondary">{t('db.label')}</label>
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder="snapshot"
+            placeholder={t('db.labelPlaceholder')}
             className={INPUT_CLASS}
           />
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-medium text-text-secondary">
-            Database *
+            {t('db.database')} *
             {loadingDatabases && <Loader2 size={11} className="ml-1.5 inline animate-spin text-text-secondary/60" />}
           </label>
           <select
@@ -295,7 +298,7 @@ export function SnapshotForm({ databases, loadingDatabases = false, connections,
             disabled={loadingDatabases}
             className={`${INPUT_CLASS} disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            <option value="">{loadingDatabases ? 'Carregando...' : 'Selecionar...'}</option>
+            <option value="">{loadingDatabases ? t('db.loading') : t('db.selectDatabase')}</option>
             {databases.map((db) => (
               <option key={db} value={db}>{db}</option>
             ))}
@@ -303,14 +306,14 @@ export function SnapshotForm({ databases, loadingDatabases = false, connections,
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-medium text-text-secondary">
-            Categoria <span className="font-normal text-white/25">(opcional)</span>
+            {t('db.category')} <span className="font-normal text-white/25">{t('db.optional')}</span>
           </label>
           <CategoryCombobox value={category} onChange={setCategory} />
         </div>
       </div>
 
       {databases.length === 0 && (
-        <p className="mt-2 text-xs text-text-secondary/60">Selecione uma engine ou conexão para ver databases disponíveis</p>
+        <p className="mt-2 text-xs text-text-secondary/60">{t('db.selectEngineHint')}</p>
       )}
     </form>
   )

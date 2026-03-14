@@ -1,4 +1,5 @@
 import { cn } from '../../lib/utils'
+import { useTranslation } from '../../lib/i18n'
 
 export interface CategoryInfo {
   id: string
@@ -16,6 +17,7 @@ interface CategorySidebarProps {
 }
 
 export function CategorySidebar({ categories, selected, onSelect, totalCount }: CategorySidebarProps) {
+  const { t } = useTranslation()
   const itemClass = (active: boolean) =>
     cn(
       'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer',
@@ -27,7 +29,7 @@ export function CategorySidebar({ categories, selected, onSelect, totalCount }: 
   return (
     <aside className="w-44 flex-shrink-0 flex flex-col gap-0.5 py-1">
       <button type="button" className={itemClass(selected === null)} onClick={() => onSelect(null)}>
-        <span>All</span>
+        <span>{t('settings.all')}</span>
         <span className="text-xs opacity-60">{totalCount}</span>
       </button>
       <div className="my-1 border-t border-white/10" />

@@ -8,28 +8,32 @@ import { CreateProjectModal } from '../components/CreateProjectModal.js';
 import { EmptyState } from '../components/EmptyState.js';
 
 type MockServersPageProps = {
+  t?: (key: string) => string;
   onNavigateToProject?: (id: string) => void;
   onNavigateToMocks?: (id: string) => void;
   onNavigateToRecording?: (id: string) => void;
 };
 
 export function MockServersPage({
+  t,
   onNavigateToProject,
   onNavigateToMocks,
   onNavigateToRecording,
 }: MockServersPageProps) {
   const { projects, status, loading, deleteProject, refreshAll } = useMockManager();
   const [showCreate, setShowCreate] = useState(false);
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm(`Delete project "${id}"? Mocks will be moved to "default".`)) return;
+    const msg = T('projects.deleteConfirm', `Delete project "${id}"? Its simulations will be moved to the "Default" project.`);
+    if (!confirm(msg.replace('{{id}}', id))) return;
     await deleteProject(id);
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full text-text-secondary">
-        Loading...
+        {T('common.loading', 'Loading...')}
       </div>
     );
   }
@@ -38,14 +42,14 @@ export function MockServersPage({
     <div className="p-6" data-component="mock-servers-page">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Projects</h1>
-          <p className="text-text-secondary text-sm mt-1">Manage your mock projects</p>
+          <h1 className="text-2xl font-bold">{T('projects.title', 'Projects')}</h1>
+          <p className="text-text-secondary text-sm mt-1">{T('projects.subtitle', 'Organize your simulated APIs by project')}</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
         >
-          <Plus size={16} /> New Project
+          <Plus size={16} /> {T('projects.newProject', 'New Project')}
         </button>
       </div>
 
@@ -55,6 +59,7 @@ export function MockServersPage({
         {projects.map((project) => (
           <ProjectCard
             key={project.id}
+            t={t}
             project={project}
             mocksCount={status?.mocks.byProject[project.id] ?? 0}
             onDashboard={() => onNavigateToProject?.(project.id)}
@@ -64,12 +69,13 @@ export function MockServersPage({
           />
         ))}
         {projects.length === 0 && (
-          <EmptyState message="No projects yet. Create your first project to get started." />
+          <EmptyState message={T('projects.empty', 'No projects yet. Create your first project to get started.')} />
         )}
       </div>
 
       {showCreate && (
         <CreateProjectModal
+          t={t}
           onClose={() => setShowCreate(false)}
           onCreate={() => { setShowCreate(false); void refreshAll(); }}
         />

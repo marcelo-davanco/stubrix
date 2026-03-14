@@ -1,5 +1,6 @@
 import { RotateCcw } from 'lucide-react'
 import type { ConfigField as ConfigFieldType, EffectiveConfigValue } from '../../hooks/useServiceConfig'
+import { useTranslation } from '../../lib/i18n'
 import { SensitiveField } from './SensitiveField'
 import { EffectiveConfigBadge } from './EffectiveConfigBadge'
 
@@ -39,6 +40,7 @@ export function ConfigField({
   sessionActive = false,
   error: externalError,
 }: ConfigFieldProps) {
+  const { t } = useTranslation()
   const isEnvOverride = effective?.source === 'env'
   const validationError = validateField(field, value)
   const displayError = externalError ?? (value !== '' ? validationError : null)
@@ -134,7 +136,7 @@ export function ConfigField({
           <button
             type="button"
             onClick={onReset}
-            title="Reset to default"
+            title={t('serviceConfig.resetToDefault')}
             className="p-1 text-text-secondary hover:text-text-primary transition-colors"
           >
             <RotateCcw size={12} />

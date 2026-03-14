@@ -6,10 +6,17 @@ import { InlineAlert } from '../components/InlineAlert.js';
 import { EmptyState } from '../components/EmptyState.js';
 
 type WebhooksPageProps = {
+  t?: (key: string) => string;
   onNavigateBack?: () => void;
 };
 
-export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
+function interpolate(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ''));
+}
+
+export function WebhooksPage({ t, onNavigateBack }: WebhooksPageProps) {
+  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
+  const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
   const [events, setEvents] = useState<WebhookEvent[]>([]);
   const [simulations, setSimulations] = useState<WebhookSimulation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,10 +53,10 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
   useEffect(() => { void load(); }, [load]);
 
   async function clearEvents() {
-    if (!confirm('Clear all webhook events?')) return;
+    if (!confirm(T('webhooks.clearConfirm', 'Clear all webhook events?'))) return;
     try {
       await mockApi.webhooks.clearEvents();
-      setSuccess('Events cleared');
+      setSuccess(T('webhooks.clearedSuccess', 'Events cleared'));
       void loadEvents();
     } catch (e) {
       setError((e as Error).message);
@@ -59,7 +66,7 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
   async function replayEvent(id: string) {
     try {
       const res = await mockApi.webhooks.replayEvent(id);
-      setSuccess(`Replayed — HTTP ${res.status} (${res.ok ? 'OK' : 'failed'})`);
+      setSuccess(Tvars('webhooks.replayedSuccess', `Replayed — HTTP ${res.status} (${res.ok ? 'OK' : 'failed'})`, { status: res.status, result: res.ok ? 'OK' : 'failed' }));
     } catch (e) {
       setError((e as Error).message);
     }
@@ -70,7 +77,7 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
     setSaving(true);
     try {
       await mockApi.webhooks.createSimulation(simForm);
-      setSuccess('Simulation created');
+      setSuccess(T('webhooks.createdSuccess', 'Simulation created'));
       setShowSimForm(false);
       setSimForm({ name: '', targetUrl: '', method: 'POST' });
       void loadSims();
@@ -84,7 +91,7 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
   async function fireSim(id: string, name: string) {
     try {
       const res = await mockApi.webhooks.fireSimulation(id);
-      setSuccess(`"${name}" fired — HTTP ${res.status} (${res.ok ? 'OK' : 'failed'})`);
+      setSuccess(Tvars('webhooks.firedSuccess', `"${name}" fired — HTTP ${res.status} (${res.ok ? 'OK' : 'failed'})`, { name, status: res.status, result: res.ok ? 'OK' : 'failed' }));
     } catch (e) {
       setError((e as Error).message);
     }
@@ -95,13 +102,13 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           {onNavigateBack && (
-            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">← Back</button>
+            <button onClick={onNavigateBack} className="text-text-secondary hover:text-text-primary text-sm">{T('common.back', '← Back')}</button>
           )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Webhook size={22} className="text-primary" /> Webhooks
+              <Webhook size={22} className="text-primary" /> {T('webhooks.title', 'Webhooks')}
             </h1>
-            <p className="text-text-secondary text-sm">Inspect incoming events and fire simulations</p>
+            <p className="text-text-secondary text-sm">{T('webhooks.subtitle', 'Inspect incoming events and fire simulations')}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -110,7 +117,7 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
               onClick={() => void clearEvents()}
               className="flex items-center gap-1.5 text-sm bg-red-400/10 text-red-400 hover:bg-red-400/20 px-3 py-1.5 rounded-md"
             >
-              <Trash2 size={14} /> Clear
+              <Trash2 size={14} /> {T('webhooks.clear', 'Clear')}
             </button>
           )}
           {tab === 'simulations' && (
@@ -118,13 +125,13 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
               onClick={() => setShowSimForm(true)}
               className="flex items-center gap-1.5 text-sm bg-primary/20 text-primary hover:bg-primary/30 px-3 py-1.5 rounded-md"
             >
-              <Plus size={14} /> New Simulation
+              <Plus size={14} /> {T('webhooks.newSimulation', 'New Simulation')}
             </button>
           )}
         </div>
       </div>
 
-      {error && <InlineAlert message={error} onRetry={load} />}
+      {error && <InlineAlert message={error} onRetry={load} retryLabel={T('common.retry', 'Retry')} />}
       {success && (
         <div className="flex items-center gap-2 rounded-xl border border-green-500/20 bg-green-500/10 p-3 mb-4 text-sm text-green-300">
           {success}
@@ -133,28 +140,28 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
       )}
 
       <div className="flex gap-1 mb-6 bg-white/5 rounded-lg p-1 w-fit">
-        {(['events', 'simulations'] as const).map((t) => (
+        {(['events', 'simulations'] as const).map((tabKey) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
             className={[
               'px-4 py-1.5 rounded-md text-sm capitalize transition-colors',
-              tab === t ? 'bg-primary/20 text-primary' : 'text-text-secondary hover:text-text-primary',
+              tab === tabKey ? 'bg-primary/20 text-primary' : 'text-text-secondary hover:text-text-primary',
             ].join(' ')}
           >
-            {t}
+            {tabKey === 'events' ? T('webhooks.events', 'Events') : T('webhooks.simulations', 'Simulations')}
           </button>
         ))}
       </div>
 
       {tab === 'simulations' && showSimForm && (
         <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">
-          <h3 className="font-medium mb-3">New Simulation</h3>
+          <h3 className="font-medium mb-3">{T('webhooks.newSimulationTitle', 'New Simulation')}</h3>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <input
               value={simForm.name}
               onChange={(e) => setSimForm({ ...simForm, name: e.target.value })}
-              placeholder="Simulation name *"
+              placeholder={T('webhooks.simulationNamePlaceholder', 'Simulation name *')}
               className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
             />
             <select
@@ -169,7 +176,7 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
             <input
               value={simForm.targetUrl}
               onChange={(e) => setSimForm({ ...simForm, targetUrl: e.target.value })}
-              placeholder="Target URL *"
+              placeholder={T('webhooks.targetUrlPlaceholder', 'Target URL *')}
               className="col-span-2 bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
             />
           </div>
@@ -179,20 +186,20 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
               disabled={saving || !simForm.name || !simForm.targetUrl}
               className="text-sm bg-primary/20 text-primary hover:bg-primary/30 disabled:opacity-50 px-3 py-1.5 rounded-md"
             >
-              {saving ? 'Creating…' : 'Create'}
+              {saving ? T('webhooks.creating', 'Creating…') : T('webhooks.create', 'Create')}
             </button>
             <button onClick={() => setShowSimForm(false)} className="text-sm text-text-secondary hover:text-text-primary px-3 py-1.5">
-              Cancel
+              {T('common.cancel', 'Cancel')}
             </button>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="text-center text-text-secondary py-12">Loading…</div>
+        <div className="text-center text-text-secondary py-12">{T('webhooks.loading', 'Loading…')}</div>
       ) : tab === 'events' ? (
         events.length === 0 ? (
-          <EmptyState message="No webhook events received yet. Send a request to /api/webhooks/receive/<endpoint> to capture events." />
+          <EmptyState message={T('webhooks.emptyEvents', 'No webhook events received yet. Send a request to /api/webhooks/receive/<endpoint> to capture events.')} />
         ) : (
           <div className="space-y-2">
             {events.map((ev) => (
@@ -205,7 +212,7 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
                     <span className="text-xs font-mono bg-blue-400/10 text-blue-400 px-1.5 py-0.5 rounded shrink-0">{ev.method}</span>
                     <span className="font-mono text-sm truncate">{ev.endpoint}</span>
                     {ev.verified && (
-                      <span className="text-xs bg-green-400/10 text-green-400 px-1.5 py-0.5 rounded shrink-0">✓ verified</span>
+                      <span className="text-xs bg-green-400/10 text-green-400 px-1.5 py-0.5 rounded shrink-0">{T('webhooks.verified', '✓ verified')}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -214,7 +221,7 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
                       onClick={(e) => { e.stopPropagation(); void replayEvent(ev.id); }}
                       className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary"
                     >
-                      <RotateCcw size={12} /> Replay
+                      <RotateCcw size={12} /> {T('webhooks.replay', 'Replay')}
                     </button>
                   </div>
                 </div>
@@ -229,7 +236,7 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
         )
       ) : (
         simulations.length === 0 ? (
-          <EmptyState message="No simulations yet. Create one to fire fake webhooks to external services." />
+          <EmptyState message={T('webhooks.emptySimulations', 'No simulations yet. Create one to fire fake webhooks to external services.')} />
         ) : (
           <div className="space-y-3">
             {simulations.map((sim) => (
@@ -245,7 +252,7 @@ export function WebhooksPage({ onNavigateBack }: WebhooksPageProps) {
                   onClick={() => void fireSim(sim.id, sim.name)}
                   className="flex items-center gap-1.5 text-sm bg-primary/20 text-primary hover:bg-primary/30 px-3 py-1.5 rounded-md shrink-0"
                 >
-                  <Zap size={13} /> Fire
+                  <Zap size={13} /> {T('webhooks.fire', 'Fire')}
                 </button>
               </div>
             ))}

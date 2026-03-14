@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { useTranslation } from '../../lib/i18n'
 import { ServiceSelector } from './ServiceSelector'
 import type { ServiceOption } from './ServiceSelector'
 
@@ -13,6 +14,7 @@ interface CreateBackupDialogProps {
 type Step = 1 | 2
 
 export function CreateBackupDialog({ open, services, onClose, onComplete }: CreateBackupDialogProps) {
+  const { t } = useTranslation()
   const [step, setStep] = useState<Step>(1)
   const [fullScope, setFullScope] = useState(true)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -64,8 +66,8 @@ export function CreateBackupDialog({ open, services, onClose, onComplete }: Crea
       <div className="bg-[#1e1e2e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div>
-            <h2 className="text-sm font-semibold">Create Backup</h2>
-            <p className="text-xs text-text-secondary mt-0.5">Step {step} of 2</p>
+            <h2 className="text-sm font-semibold">{t('backups.createBackup')}</h2>
+            <p className="text-xs text-text-secondary mt-0.5">{t('backups.stepOf', { step })}</p>
           </div>
           <button type="button" onClick={handleClose} className="text-text-secondary hover:text-text-primary transition-colors">
             <X size={16} />
@@ -78,11 +80,11 @@ export function CreateBackupDialog({ open, services, onClose, onComplete }: Crea
               <div className="space-y-2">
                 <label className="flex items-center gap-3 p-3 rounded-lg border border-white/10 cursor-pointer hover:border-white/20 transition-colors">
                   <input type="radio" checked={fullScope} onChange={() => setFullScope(true)} className="accent-primary" />
-                  <span className="text-sm">Full backup (all {services.length} services)</span>
+                  <span className="text-sm">{t('backups.fullBackup', { count: services.length })}</span>
                 </label>
                 <label className="flex items-center gap-3 p-3 rounded-lg border border-white/10 cursor-pointer hover:border-white/20 transition-colors">
                   <input type="radio" checked={!fullScope} onChange={() => setFullScope(false)} className="accent-primary" />
-                  <span className="text-sm">Partial backup (select services)</span>
+                  <span className="text-sm">{t('backups.partialBackup')}</span>
                 </label>
               </div>
 
@@ -92,14 +94,14 @@ export function CreateBackupDialog({ open, services, onClose, onComplete }: Crea
 
               <input
                 type="text"
-                placeholder="Name (optional)"
+                placeholder={t('backups.nameOptional')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
               />
               <input
                 type="text"
-                placeholder="Description (optional)"
+                placeholder={t('backups.descriptionOptional')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
@@ -117,12 +119,12 @@ export function CreateBackupDialog({ open, services, onClose, onComplete }: Crea
                   className="accent-primary mt-0.5"
                 />
                 <div className="flex-1">
-                  <p className="text-sm">Encrypt backup file</p>
-                  <p className="text-xs text-text-secondary mt-0.5">Master password required to restore.</p>
+                  <p className="text-sm">{t('backups.encryptBackup')}</p>
+                  <p className="text-xs text-text-secondary mt-0.5">{t('backups.masterPasswordRequired')}</p>
                   {encrypted && (
                     <input
                       type="password"
-                      placeholder="Master password"
+                      placeholder={t('backups.masterPassword')}
                       value={masterPassword}
                       onChange={(e) => setMasterPassword(e.target.value)}
                       className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
@@ -141,7 +143,7 @@ export function CreateBackupDialog({ open, services, onClose, onComplete }: Crea
             onClick={() => step === 1 ? handleClose() : setStep(1)}
             className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
-            {step === 1 ? 'Cancel' : '← Back'}
+            {step === 1 ? t('common.cancel') : t('common.back')}
           </button>
           {step === 1 ? (
             <button
@@ -150,7 +152,7 @@ export function CreateBackupDialog({ open, services, onClose, onComplete }: Crea
               disabled={!fullScope && selectedIds.length === 0}
               className="px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg font-medium transition-colors disabled:opacity-40"
             >
-              Next →
+              {t('backups.next')}
             </button>
           ) : (
             <button
@@ -159,7 +161,7 @@ export function CreateBackupDialog({ open, services, onClose, onComplete }: Crea
               disabled={busy || (encrypted && !masterPassword)}
               className="px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg font-medium transition-colors disabled:opacity-40"
             >
-              {busy ? 'Creating…' : 'Create Backup'}
+              {busy ? t('backups.creating') : t('backups.createBackup')}
             </button>
           )}
         </div>
