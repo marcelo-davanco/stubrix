@@ -279,7 +279,7 @@ export const SERVICE_DEFINITIONS: ServiceDefinitionSeed[] = [
     dockerService: 'openrag',
     defaultPort: 8888,
     externalUrl: 'http://localhost:8888',
-    dependsOn: ['chromadb'],
+    dependsOn: [],
     configSchema: OPENRAG_CONFIG_SCHEMA,
   },
   // ─── API Clients ─────────────────────────────────────────────
