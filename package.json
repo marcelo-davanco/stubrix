@@ -1,7 +1,36 @@
 {
   "name": "stubrix",
   "version": "2.5.1",
-  "private": true,
+  "description": "Unified mock server platform with WireMock and Mockoon engines",
+  "keywords": ["mock", "api", "testing", "wiremock", "mockoon", "server"],
+  "author": "Marcelo Davanço",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcelo-davanco/stubrix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marcelo-davanco/stubrix/issues"
+  },
+  "homepage": "https://github.com/marcelo-davanco/stubrix#readme",
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=10.0.0"
+  },
+  "files": [
+    "packages/shared/dist/**",
+    "packages/api/dist/**",
+    "packages/db-ui/dist/**",
+    "packages/mock-ui/dist/**",
+    "packages/ui/dist/**",
+    "packages/cli/dist/**",
+    "packages/vscode-extension/dist/**",
+    "scripts/",
+    "docker-compose.yml",
+    "Dockerfile",
+    "Makefile",
+    "README.md"
+  ],
   "workspaces": [
     "packages/shared",
     "packages/api",
@@ -42,9 +71,5 @@
     "release:major": "npm run version:major && npm run build && git add . && git commit -m \"🔖 chore: bump version\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release v$(node -p \"require('./package.json').version\")\" && git push origin main --tags",
     "close-issue": "./scripts/close-issue.sh",
     "close-issues": "./scripts/close-issue.sh --batch"
-  },
-  "engines": {
-    "node": ">=24.0.0",
-    "npm": ">=10.0.0"
   }
 }

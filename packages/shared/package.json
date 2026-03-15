@@ -1,7 +1,9 @@
 {
   "name": "@stubrix/shared",
   "version": "2.5.1",
-  "private": true,
+  "description": "Shared TypeScript types and utilities for Stubrix platform",
+  "author": "Marcelo Davanço",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

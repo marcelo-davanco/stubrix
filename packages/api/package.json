@@ -3,7 +3,6 @@
   "version": "2.5.1",
   "description": "Stubrix Control Plane — NestJS backend",
   "author": "Marcelo Davanço",
-  "private": true,
   "license": "MIT",
   "scripts": {
     "build": "nest build",
