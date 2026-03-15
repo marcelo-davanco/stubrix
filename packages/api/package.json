@@ -28,6 +28,7 @@
     "@nestjs/platform-socket.io": "^11.0.1",
     "@nestjs/serve-static": "^5.0.0",
     "@nestjs/swagger": "^11.2.6",
+    "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^11.0.1",
     "@stoplight/spectral-core": "^1.21.0",
     "@stoplight/spectral-formats": "^1.8.2",
