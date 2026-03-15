@@ -119,7 +119,7 @@ export class ChaosNetworkService {
   ): Promise<Toxic> {
     const name = toxic.name ?? `${toxic.type}_${Date.now()}`;
     const res = await fetch(
-      `${this.toxiproxyUrl}/proxies/${proxyName}/toxics`,
+      `${this.toxiproxyUrl}/proxies/${encodeURIComponent(proxyName)}/toxics`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -133,7 +133,7 @@ export class ChaosNetworkService {
 
   async removeToxic(proxyName: string, toxicName: string): Promise<void> {
     await fetch(
-      `${this.toxiproxyUrl}/proxies/${proxyName}/toxics/${toxicName}`,
+      `${this.toxiproxyUrl}/proxies/${encodeURIComponent(proxyName)}/toxics/${encodeURIComponent(toxicName)}`,
       {
         method: 'DELETE',
         signal: AbortSignal.timeout(5_000),
@@ -142,7 +142,7 @@ export class ChaosNetworkService {
   }
 
   async deleteProxy(name: string): Promise<void> {
-    await fetch(`${this.toxiproxyUrl}/proxies/${name}`, {
+    await fetch(`${this.toxiproxyUrl}/proxies/${encodeURIComponent(name)}`, {
       method: 'DELETE',
       signal: AbortSignal.timeout(5_000),
     });
