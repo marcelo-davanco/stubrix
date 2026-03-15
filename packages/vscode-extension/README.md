@@ -47,10 +47,10 @@ Or step by step:
 make vscode-package     # generates packages/vscode-extension/stubrix-vscode-X.Y.Z.vsix
 
 # Windsurf:
-windsurf --install-extension packages/vscode-extension/stubrix-vscode-2.3.0.vsix
+make windsurf-install
 
 # VS Code:
-code --install-extension packages/vscode-extension/stubrix-vscode-2.3.0.vsix
+make vscode-install
 ```
 
 Or via UI: `Cmd+Shift+P → Extensions: Install from VSIX...` → select the `.vsix` file.

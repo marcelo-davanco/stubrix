@@ -75,6 +75,28 @@ export function MocksListBridge() {
 | `/projects/:projectId/recording` | `RecordingBridge` → `RecordingPanelPage` |
 | `/databases` | `DatabasesPage` (`@stubrix/db-ui`) |
 | `/logs` | `LogsPage` |
+| `/scenarios` | `ScenariosBridge` |
+| `/stateful` | `StatefulMocksBridge` |
+| `/webhooks` | `WebhooksBridge` |
+| `/chaos` | `ChaosBridge` |
+| `/chaos-network` | `ChaosNetworkBridge` |
+| `/coverage` | `CoverageBridge` |
+| `/governance` | `GovernanceBridge` |
+| `/intelligence` | `IntelligenceBridge` |
+| `/templates` | `TemplatesBridge` |
+| `/metrics` | `MetricsBridge` |
+| `/tracing` | `TracingBridge` |
+| `/performance` | `PerformanceBridge` |
+| `/protocols` | `ProtocolsBridge` (GraphQL SDL + gRPC stubs) |
+| `/events` | `EventsBridge` (Kafka + RabbitMQ) |
+| `/auth` | `AuthBridge` |
+| `/iam` | `IamBridge` |
+| `/contracts` | `ContractsBridge` |
+| `/cloud` | `CloudBridge` |
+| `/storage` | `StorageBridge` |
+| `/settings` | `SettingsPage` — service dashboard (24 services) |
+| `/settings/services/:serviceId` | `ServiceConfigPage` — per-service config editor |
+| `/settings/backups` | `BackupsPage` — config backup management |
 
 ## Development
 
