@@ -15,16 +15,22 @@ export class CloudService {
   private readonly region: string;
 
   constructor(private readonly config: ConfigService) {
-    this.localstackUrl = this.config.get<string>('LOCALSTACK_URL') ?? 'http://localhost:4566';
+    this.localstackUrl =
+      this.config.get<string>('LOCALSTACK_URL') ?? 'http://localhost:4566';
     this.region = this.config.get<string>('AWS_DEFAULT_REGION') ?? 'us-east-1';
   }
 
-  async health(): Promise<{ available: boolean; url: string; services: string[] }> {
+  async health(): Promise<{
+    available: boolean;
+    url: string;
+    services: string[];
+  }> {
     try {
       const res = await fetch(`${this.localstackUrl}/_localstack/health`, {
         signal: AbortSignal.timeout(3_000),
       });
-      if (!res.ok) return { available: false, url: this.localstackUrl, services: [] };
+      if (!res.ok)
+        return { available: false, url: this.localstackUrl, services: [] };
       const data = (await res.json()) as { services?: Record<string, string> };
       const services = Object.entries(data.services ?? {})
         .filter(([, v]) => v === 'available' || v === 'running')
@@ -49,8 +55,10 @@ export class CloudService {
     }
   }
 
-  async createS3Bucket(bucket: string): Promise<{ bucket: string; url: string }> {
-    const url = `${this.localstackUrl}/${bucket}`;
+  async createS3Bucket(
+    bucket: string,
+  ): Promise<{ bucket: string; url: string }> {
+    const url = `${this.localstackUrl}/${encodeURIComponent(bucket)}`;
     const res = await fetch(url, {
       method: 'PUT',
       headers: { Host: 's3.localhost.localstack.cloud' },
