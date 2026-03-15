@@ -54,7 +54,7 @@ export function ConfigHistoryTimeline({ entries, onLoadMore, onRollback, hasMore
                 <span>{maskValue(entry.new_value, entry.key)}</span>
               </p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-text-secondary/50">{timeAgo(entry.created_at, t)}</span>
+                <span className="text-xs text-text-secondary/50">{timeAgo(entry.created_at)}</span>
                 <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${SOURCE_BADGE[entry.source] ?? 'bg-white/10 text-text-secondary'}`}>
                   {entry.source}
                 </span>
