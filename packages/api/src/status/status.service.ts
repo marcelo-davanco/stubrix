@@ -38,12 +38,16 @@ export class StatusService {
     try {
       await this.wireMock.get('/settings');
       engineStatus = 'running';
-      const recStatus = await this.wireMock.get<{ status?: string }>(
-        '/recordings/status',
-      );
-      recordMode = recStatus.status === 'Recording';
-    } catch {
-      engineStatus = 'stopped';
+      if (engine === 'wiremock') {
+        const recStatus = await this.wireMock.get<{ status?: string }>(
+          '/recordings/status',
+        );
+        recordMode = recStatus.status === 'Recording';
+      }
+    } catch (err: unknown) {
+      const hasResponse = !!(err as { response?: unknown }).response;
+      engineStatus =
+        engine === 'mockoon' && hasResponse ? 'running' : 'stopped';
     }
 
     const { total, byProject } = this.countMocksByProject();

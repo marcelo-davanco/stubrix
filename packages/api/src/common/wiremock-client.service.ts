@@ -12,8 +12,13 @@ export class WireMockClientService {
     private readonly http: HttpService,
     private readonly config: ConfigService,
   ) {
+    const engine = this.config.get<string>('MOCK_ENGINE') ?? 'wiremock';
     const port = this.config.get<string>('MOCK_PORT') ?? '8081';
-    this.baseUrl = `http://localhost:${port}/__admin`;
+    const urlFromEnv =
+      engine === 'mockoon'
+        ? this.config.get<string>('MOCKOON_URL')
+        : this.config.get<string>('WIREMOCK_URL');
+    this.baseUrl = `${urlFromEnv ?? `http://localhost:${port}`}/__admin`;
   }
 
   async get<T>(path: string, config?: AxiosRequestConfig): Promise<T> {
