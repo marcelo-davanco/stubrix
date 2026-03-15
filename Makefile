@@ -101,7 +101,7 @@ mysql-shell: ## Open mysql shell
 # Database Viewers (F29)
 # ---------------------------------------------------------------------------
 
-adminer: ## Start Adminer + PostgreSQL (lightweight DB web UI — http://localhost:8082)
+adminer: ## Start Adminer + PostgreSQL (lightweight DB web UI — http://localhost:8084)
 	docker compose --profile postgres --profile adminer up
 
 adminer-up: ## Start Adminer + PostgreSQL (detached)

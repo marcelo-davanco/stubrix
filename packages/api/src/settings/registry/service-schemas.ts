@@ -166,7 +166,7 @@ export const ADMINER_CONFIG_SCHEMA: ConfigField[] = [
     key: 'ADMINER_PORT',
     label: 'Port',
     dataType: 'number',
-    defaultValue: 8082,
+    defaultValue: 8084,
     validation: { min: 1, max: 65535 },
   },
   {
