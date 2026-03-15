@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -39,21 +39,30 @@ export class AuthService {
 
   constructor(private readonly config: ConfigService) {
     const mocksDir =
-      this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
     this.storageDir = path.join(mocksDir, 'auth');
     this.usersFile = path.join(this.storageDir, 'users.json');
     this.auditFile = path.join(this.storageDir, 'audit.json');
-    this.masterKey = this.config.get<string>('AUTH_MASTER_KEY') ?? 'stubrix-dev-key';
+    this.masterKey =
+      this.config.get<string>('AUTH_MASTER_KEY') ?? 'stubrix-dev-key';
     fs.mkdirSync(this.storageDir, { recursive: true });
     this.ensureDefaultAdmin();
   }
 
   listUsers(workspaceId?: string): User[] {
     const users = this.loadUsers();
-    return workspaceId ? users.filter((u) => u.workspaceId === workspaceId) : users;
+    return workspaceId
+      ? users.filter((u) => u.workspaceId === workspaceId)
+      : users;
   }
 
-  createUser(username: string, email: string, role: UserRole, workspaceId: string): User {
+  createUser(
+    username: string,
+    email: string,
+    role: UserRole,
+    workspaceId: string,
+  ): User {
     const users = this.loadUsers();
     if (users.find((u) => u.username === username)) {
       throw new Error(`User already exists: ${username}`);
@@ -70,7 +79,9 @@ export class AuthService {
     };
     users.push(user);
     this.saveUsers(users);
-    this.logger.log(`User created: ${username} (${role}) in workspace ${workspaceId}`);
+    this.logger.log(
+      `User created: ${username} (${role}) in workspace ${workspaceId}`,
+    );
     return user;
   }
 
@@ -112,7 +123,10 @@ export class AuthService {
     };
     const entries = this.loadAudit();
     entries.unshift(auditEntry);
-    fs.writeFileSync(this.auditFile, JSON.stringify(entries.slice(0, 1000), null, 2));
+    fs.writeFileSync(
+      this.auditFile,
+      JSON.stringify(entries.slice(0, 1000), null, 2),
+    );
   }
 
   listAudit(userId?: string, limit = 100): AuditEntry[] {
@@ -138,9 +152,10 @@ export class AuthService {
         email: 'admin@stubrix.local',
         role: 'admin',
         workspaceId: 'default',
-        apiKey: this.masterKey !== 'stubrix-dev-key'
-          ? this.generateApiKey()
-          : 'sbx_dev_default_admin_key',
+        apiKey:
+          this.masterKey !== 'stubrix-dev-key'
+            ? this.generateApiKey()
+            : 'sbx_dev_default_admin_key',
         createdAt: new Date().toISOString(),
         active: true,
       };
@@ -150,8 +165,11 @@ export class AuthService {
 
   private loadUsers(): User[] {
     if (!fs.existsSync(this.usersFile)) return [];
-    try { return JSON.parse(fs.readFileSync(this.usersFile, 'utf-8')) as User[]; }
-    catch { return []; }
+    try {
+      return JSON.parse(fs.readFileSync(this.usersFile, 'utf-8')) as User[];
+    } catch {
+      return [];
+    }
   }
 
   private saveUsers(users: User[]): void {
@@ -160,7 +178,12 @@ export class AuthService {
 
   private loadAudit(): AuditEntry[] {
     if (!fs.existsSync(this.auditFile)) return [];
-    try { return JSON.parse(fs.readFileSync(this.auditFile, 'utf-8')) as AuditEntry[]; }
-    catch { return []; }
+    try {
+      return JSON.parse(
+        fs.readFileSync(this.auditFile, 'utf-8'),
+      ) as AuditEntry[];
+    } catch {
+      return [];
+    }
   }
 }
