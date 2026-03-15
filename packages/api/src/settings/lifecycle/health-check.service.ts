@@ -25,17 +25,17 @@ interface TcpCheckConfig {
 
 type CheckConfig = HttpCheckConfig | TcpCheckConfig;
 
-const HEALTH_CHECK_MAP: Record<string, CheckConfig> = {
+const HEALTH_CHECK_MAP_LOCAL: Record<string, CheckConfig> = {
   wiremock: { type: 'http', url: 'http://localhost:8081/__admin/settings' },
   'wiremock-record': {
     type: 'http',
     url: 'http://localhost:8081/__admin/settings',
   },
-  mockoon: { type: 'http', url: 'http://localhost:8081/' },
-  'mockoon-proxy': { type: 'http', url: 'http://localhost:8081/' },
+  mockoon: { type: 'tcp', host: 'localhost', port: 8081 },
+  'mockoon-proxy': { type: 'tcp', host: 'localhost', port: 8081 },
   postgres: { type: 'tcp', host: 'localhost', port: 5442 },
   mysql: { type: 'tcp', host: 'localhost', port: 3307 },
-  adminer: { type: 'http', url: 'http://localhost:8082/' },
+  adminer: { type: 'http', url: 'http://localhost:8084/' },
   cloudbeaver: { type: 'http', url: 'http://localhost:8083/' },
   localstack: { type: 'http', url: 'http://localhost:4566/_localstack/health' },
   minio: { type: 'http', url: 'http://localhost:9000/minio/health/live' },
@@ -61,6 +61,51 @@ const HEALTH_CHECK_MAP: Record<string, CheckConfig> = {
   openrag: { type: 'http', url: 'http://localhost:8888/health' },
   hoppscotch: { type: 'tcp', host: 'localhost', port: 3100 },
 };
+
+const HEALTH_CHECK_MAP_DOCKER: Record<string, CheckConfig> = {
+  wiremock: { type: 'http', url: 'http://wiremock:8081/__admin/settings' },
+  'wiremock-record': {
+    type: 'http',
+    url: 'http://wiremock-record:8081/__admin/settings',
+  },
+  mockoon: { type: 'tcp', host: 'mockoon', port: 8081 },
+  'mockoon-proxy': { type: 'tcp', host: 'mockoon-proxy', port: 8081 },
+  postgres: { type: 'tcp', host: 'db-postgres', port: 5432 },
+  mysql: { type: 'tcp', host: 'db-mysql', port: 3306 },
+  adminer: { type: 'http', url: 'http://adminer:8080/' },
+  cloudbeaver: { type: 'http', url: 'http://cloudbeaver:8978/' },
+  localstack: {
+    type: 'http',
+    url: 'http://localstack:4566/_localstack/health',
+  },
+  minio: { type: 'http', url: 'http://minio:9000/minio/health/live' },
+  keycloak: { type: 'http', url: 'http://keycloak:8080/realms/master' },
+  zitadel: { type: 'http', url: 'http://zitadel:8080/' },
+  prometheus: { type: 'http', url: 'http://prometheus:9090/-/ready' },
+  grafana: { type: 'http', url: 'http://grafana:3000/api/health' },
+  jaeger: { type: 'http', url: 'http://jaeger:16686/api/services' },
+  redpanda: { type: 'http', url: 'http://redpanda:8082/topics' },
+  'redpanda-console': { type: 'http', url: 'http://redpanda-console:8080/' },
+  rabbitmq: {
+    type: 'http',
+    url: 'http://rabbitmq:15672/api/healthchecks/node',
+    auth: { username: 'guest', password: 'guest' },
+  },
+  gripmock: { type: 'http', url: 'http://gripmock:4771/' },
+  'pact-broker': {
+    type: 'http',
+    url: 'http://pact-broker:9292/diagnostic/status/heartbeat',
+  },
+  toxiproxy: { type: 'http', url: 'http://toxiproxy:8474/version' },
+  chromadb: { type: 'http', url: 'http://chromadb:8000/api/v2/heartbeat' },
+  openrag: { type: 'http', url: 'http://openrag:8000/health' },
+  hoppscotch: { type: 'tcp', host: 'hoppscotch', port: 3000 },
+};
+
+const HEALTH_CHECK_MAP: Record<string, CheckConfig> =
+  process.env.NODE_ENV === 'production'
+    ? HEALTH_CHECK_MAP_DOCKER
+    : HEALTH_CHECK_MAP_LOCAL;
 
 @Injectable()
 export class HealthCheckService {
