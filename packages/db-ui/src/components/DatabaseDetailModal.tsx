@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useState } from 'react'
 import { X, HardDrive, Table2, Database, Loader2, Search } from 'lucide-react'
+import { useDbUiTranslation } from '../lib/i18n'
 import type { DatabaseInfo } from '@stubrix/shared'
 
 type DatabaseDetailModalProps = {
@@ -15,6 +16,7 @@ const ENGINE_ICON: Record<string, string> = {
 }
 
 export function DatabaseDetailModal({ databaseName, onClose, onLoadInfo }: DatabaseDetailModalProps) {
+  const t = useDbUiTranslation()
   const [info, setInfo] = useState<DatabaseInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,11 +31,11 @@ export function DatabaseDetailModal({ databaseName, onClose, onLoadInfo }: Datab
       const result = await onLoadInfo(name)
       setInfo(result ?? null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar informações')
+      setError(err instanceof Error ? err.message : t('db.loadInfoError'))
     } finally {
       setLoading(false)
     }
-  }, [onLoadInfo])
+  }, [onLoadInfo, t])
 
   useEffect(() => {
     if (databaseName) {
@@ -100,7 +102,7 @@ export function DatabaseDetailModal({ databaseName, onClose, onLoadInfo }: Datab
           {loading && (
             <div className="flex flex-col items-center justify-center gap-3 py-12">
               <Loader2 size={24} className="animate-spin text-primary" />
-              <p className="text-sm text-text-secondary">Carregando informações...</p>
+              <p className="text-sm text-text-secondary">{t('db.loadingInfo')}</p>
             </div>
           )}
 
@@ -113,7 +115,7 @@ export function DatabaseDetailModal({ databaseName, onClose, onLoadInfo }: Datab
                 onClick={() => void load(databaseName)}
                 className="rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-text-primary transition-colors hover:bg-surface-3"
               >
-                Tentar novamente
+                {t('db.retry')}
               </button>
             </div>
           )}
@@ -124,15 +126,15 @@ export function DatabaseDetailModal({ databaseName, onClose, onLoadInfo }: Datab
               <div className="mb-4 grid grid-cols-3 gap-3">
                 <div className="rounded-xl bg-main-bg px-3 py-2.5 text-center">
                   <p className="text-lg font-bold text-text-primary">{info.tables.length}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-text-secondary">Tabelas</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-secondary">{t('db.tables')}</p>
                 </div>
                 <div className="rounded-xl bg-main-bg px-3 py-2.5 text-center">
                   <p className="text-lg font-bold text-text-primary">{info.totalSize}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-text-secondary">Tamanho</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-secondary">{t('db.size')}</p>
                 </div>
                 <div className="rounded-xl bg-main-bg px-3 py-2.5 text-center">
                   <p className="text-lg font-bold capitalize text-text-primary">{info.engine}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-text-secondary">Engine</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-secondary">{t('db.engine')}</p>
                 </div>
               </div>
 
@@ -142,7 +144,7 @@ export function DatabaseDetailModal({ databaseName, onClose, onLoadInfo }: Datab
                   <div className="flex items-center gap-1.5">
                     <Table2 size={13} className="text-text-secondary" />
                     <span className="text-xs font-semibold text-text-secondary">
-                      Tabelas ({filteredTables.length}{tableSearch ? `/${info.tables.length}` : ''})
+                      {t('db.tables')} ({filteredTables.length}{tableSearch ? `/${info.tables.length}` : ''})
                     </span>
                   </div>
                 </div>
@@ -153,16 +155,15 @@ export function DatabaseDetailModal({ databaseName, onClose, onLoadInfo }: Datab
                     <input
                       value={tableSearch}
                       onChange={(e) => setTableSearch(e.target.value)}
-                      placeholder="Filtrar tabelas..."
+                      placeholder={t('db.filterTables')}
                       className="flex-1 bg-transparent text-xs text-text-primary placeholder-text-secondary/50 outline-none caret-primary"
                     />
                   </div>
                 )}
 
-                {/* Table header */}
                 <div className="mb-1 flex items-center justify-between px-3 py-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary/60">Nome</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary/60">Tamanho</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary/60">{t('db.tableName')}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary/60">{t('db.size')}</span>
                 </div>
 
                 <div className="space-y-0.5">
@@ -179,7 +180,7 @@ export function DatabaseDetailModal({ databaseName, onClose, onLoadInfo }: Datab
                   ))}
                   {filteredTables.length === 0 && (
                     <p className="py-4 text-center text-xs text-text-secondary">
-                      Nenhuma tabela encontrada{tableSearch ? ` para "${tableSearch}"` : ''}
+                      {tableSearch ? t('db.noTablesForSearch').replace('{{search}}', tableSearch) : t('db.noTablesFound')}
                     </p>
                   )}
                 </div>

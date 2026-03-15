@@ -1,7 +1,9 @@
 {
   "name": "@stubrix/ui",
-  "private": true,
-  "version": "2.5.0",
+  "version": "2.6.1",
+  "description": "Stubrix Dashboard — React frontend",
+  "author": "Marcelo Davanço",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, useBlocker } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, RotateCcw, AlertTriangle } from 'lucide-react'
+import { useTranslation } from '../lib/i18n'
 import { useServiceConfig } from '../hooks/useServiceConfig'
 import { useSettings } from '../hooks/useSettings'
 import { ConfigField } from '../components/settings/ConfigField'
@@ -11,6 +12,7 @@ import { ServiceStatusBadge } from '../components/settings/ServiceStatusBadge'
 export function ServiceConfigPage() {
   const { serviceId } = useParams<{ serviceId: string }>()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { services, cryptoStatus, verifyMasterPassword } = useSettings()
   const {
     schema,
@@ -37,18 +39,10 @@ export function ServiceConfigPage() {
   const service = services.find((s) => s.serviceId === serviceId)
   const sessionActive = cryptoStatus?.sessionActive ?? false
 
-  // Unsaved changes guard
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-    return hasChanges && currentLocation.pathname !== nextLocation.pathname
-  })
-
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      const confirmed = window.confirm('You have unsaved changes. Leave anyway?')
-      if (confirmed) blocker.proceed()
-      else blocker.reset()
-    }
-  }, [blocker])
+  const goBack = () => {
+    if (hasChanges && !window.confirm(t('serviceConfig.leaveConfirm'))) return
+    navigate('/settings')
+  }
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -79,9 +73,9 @@ export function ServiceConfigPage() {
     try {
       await save()
       setShowDiff(false)
-      showToast('success', 'Configuration saved successfully.')
+      showToast('success', t('serviceConfig.saved'))
     } catch (e) {
-      showToast('error', e instanceof Error ? e.message : 'Save failed.')
+      showToast('error', e instanceof Error ? e.message : t('serviceConfig.saveFailed'))
     }
   }
 
@@ -89,25 +83,25 @@ export function ServiceConfigPage() {
     try {
       await resetAll()
       setShowResetConfirm(false)
-      showToast('success', 'Configuration reset to defaults.')
+      showToast('success', t('serviceConfig.resetDone'))
     } catch (e) {
-      showToast('error', e instanceof Error ? e.message : 'Reset failed.')
+      showToast('error', e instanceof Error ? e.message : t('serviceConfig.resetFailed'))
     }
   }
 
   const handleRollback = async (historyId: number) => {
     try {
       await rollback(historyId)
-      showToast('success', 'Rolled back successfully.')
+      showToast('success', t('serviceConfig.rollbackDone'))
     } catch (e) {
-      showToast('error', e instanceof Error ? e.message : 'Rollback failed.')
+      showToast('error', e instanceof Error ? e.message : t('serviceConfig.rollbackFailed'))
     }
   }
 
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-text-secondary">
-        <div className="text-sm animate-pulse">Loading configuration…</div>
+        <div className="text-sm animate-pulse">{t('serviceConfig.loading')}</div>
       </div>
     )
   }
@@ -119,7 +113,7 @@ export function ServiceConfigPage() {
           <AlertTriangle size={32} className="text-red-400 mx-auto mb-3" />
           <p className="text-sm text-text-secondary mb-4">{error}</p>
           <button type="button" onClick={() => navigate('/settings')} className="px-4 py-2 text-sm bg-primary/80 hover:bg-primary rounded-lg transition-colors">
-            Back to Settings
+            {t('serviceConfig.backToSettings')}
           </button>
         </div>
       </div>
@@ -130,13 +124,13 @@ export function ServiceConfigPage() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="px-6 pt-6 pb-4 border-b border-white/10 flex-shrink-0">
-        <button type="button" onClick={() => navigate('/settings')} className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mb-4">
+        <button type="button" onClick={goBack} className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mb-4">
           <ArrowLeft size={14} />
-          Back to Settings
+          {t('serviceConfig.backToSettings')}
         </button>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold">{service?.name ?? serviceId} Configuration</h1>
+            <h1 className="text-xl font-bold">{service?.name ?? serviceId} {t('serviceConfig.configuration')}</h1>
             <div className="flex items-center gap-3 mt-1 text-sm text-text-secondary">
               {service && (
                 <>
@@ -155,7 +149,7 @@ export function ServiceConfigPage() {
               className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-white/10 hover:bg-white/8 transition-colors"
             >
               <RotateCcw size={14} />
-              Reset All
+              {t('serviceConfig.resetAll')}
             </button>
             <button
               type="button"
@@ -164,7 +158,7 @@ export function ServiceConfigPage() {
               className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary/80 hover:bg-primary font-medium transition-colors disabled:opacity-40"
             >
               <Save size={14} />
-              {saving ? 'Saving…' : `Save${hasChanges ? ` (${Object.keys(dirty).length})` : ''}`}
+              {saving ? t('serviceConfig.saving') : hasChanges ? t('serviceConfig.saveCount', { count: String(Object.keys(dirty).length) }) : t('serviceConfig.save')}
             </button>
           </div>
         </div>
@@ -175,7 +169,7 @@ export function ServiceConfigPage() {
         {/* Config form */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {schema.length === 0 ? (
-            <p className="text-sm text-text-secondary">No configuration fields defined for this service.</p>
+            <p className="text-sm text-text-secondary">{t('serviceConfig.noFields')}</p>
           ) : (
             schema.map((field) => {
               const currentValue = dirty[field.key] ?? configs[field.key]?.value ?? field.defaultValue ?? ''
@@ -197,7 +191,7 @@ export function ServiceConfigPage() {
 
         {/* History sidebar */}
         <div className="w-72 flex-shrink-0 border-l border-white/10 px-4 py-6 overflow-y-auto">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4">Change History</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4">{t('serviceConfig.historyTitle')}</h3>
           <ConfigHistoryTimeline
             entries={history}
             onLoadMore={loadMoreHistory}
@@ -221,11 +215,11 @@ export function ServiceConfigPage() {
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-[#1e1e2e] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl p-6">
-            <h2 className="text-base font-semibold mb-2">Reset All to Defaults?</h2>
-            <p className="text-sm text-text-secondary mb-5">All configuration values will be reverted to their schema defaults. This cannot be undone.</p>
+            <h2 className="text-base font-semibold mb-2">{t('serviceConfig.resetConfirmTitle')}</h2>
+            <p className="text-sm text-text-secondary mb-5">{t('serviceConfig.resetConfirmDesc')}</p>
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
-              <button type="button" onClick={() => void handleResetAll()} className="px-4 py-2 text-sm bg-red-600/80 hover:bg-red-600 rounded-lg font-medium transition-colors">Reset All</button>
+              <button type="button" onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors">{t('serviceConfig.cancel')}</button>
+              <button type="button" onClick={() => void handleResetAll()} className="px-4 py-2 text-sm bg-red-600/80 hover:bg-red-600 rounded-lg font-medium transition-colors">{t('serviceConfig.resetAllButton')}</button>
             </div>
           </div>
         </div>

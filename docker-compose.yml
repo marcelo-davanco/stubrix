@@ -13,7 +13,7 @@
 ##   docker compose --profile databases up -d         # PostgreSQL only (legacy alias)
 ##
 ## Database Viewers (F29):
-##   docker compose --profile adminer up -d           # Adminer UI  → http://localhost:8082
+##   docker compose --profile adminer up -d           # Adminer UI  → http://localhost:8084
 ##   docker compose --profile cloudbeaver up -d       # CloudBeaver → http://localhost:8083
 ##   docker compose --profile db-viewer up -d         # Both viewers (Adminer + CloudBeaver)
 ##
@@ -45,6 +45,12 @@
 ## IAM (F33):
 ##   docker compose --profile keycloak up -d            # Keycloak → :8180
 ##   docker compose --profile zitadel up -d             # Zitadel → :8080
+##
+## Queue & Cache:
+##   docker compose --profile redis up -d              # Redis → localhost:6379
+##
+## Infrastructure (local dev — all infra services):
+##   docker compose --profile infra --profile postgres --profile wiremock up -d
 ##
 ## Network Chaos (F26):
 ##   docker compose --profile toxiproxy up -d          # Toxiproxy → http://localhost:8474
@@ -91,7 +97,8 @@ services:
       # Mock engine
       MOCK_ENGINE: ${MOCK_ENGINE:-wiremock}
       MOCK_PORT: ${MOCK_PORT:-8081}
-      WIREMOCK_URL: ${WIREMOCK_URL:-http://wiremock:8081}
+      WIREMOCK_URL: http://wiremock:8081
+      MOCKOON_URL: http://mockoon:8081
       # PostgreSQL
       PG_HOST: ${PG_HOST:-db-postgres}
       PG_PORT: ${PG_PORT:-5432}
@@ -104,7 +111,8 @@ services:
       MYSQL_USER: ${MYSQL_USER:-stubrix}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-stubrix}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-stubrix}
-      # SQLite + Dumps
+      # Mocks + SQLite + Dumps
+      MOCKS_DIR: /app/mocks
       SQLITE_DB_PATH: ${SQLITE_DB_PATH:-}
       DUMPS_DIR: /app/dumps
       # Auth
@@ -226,6 +234,26 @@ services:
       - "host.docker.internal:host-gateway"
 
   # --------------------------------------------------------------------------
+  # Redis – Queue & Cache (BullMQ backend)
+  # Access: localhost:6379
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    profiles: ["redis", "infra"]
+    container_name: stubrix-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy noeviction
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
   # PostgreSQL 17
   # --------------------------------------------------------------------------
   db-postgres:
@@ -282,14 +310,14 @@ services:
   # --------------------------------------------------------------------------
   # Adminer – Lightweight database web UI (F29.01)
   # Supports: PostgreSQL, MySQL, SQLite
-  # Access: http://localhost:8082
+  # Access: http://localhost:8084
   # --------------------------------------------------------------------------
   adminer:
     image: adminer:4
     profiles: ["adminer", "db-viewer"]
     container_name: stubrix-adminer
     ports:
-      - "${ADMINER_PORT:-8082}:8080"
+      - "${ADMINER_PORT:-8084}:8080"
     environment:
       ADMINER_DEFAULT_SERVER: ${PG_HOST:-db-postgres}
       ADMINER_DESIGN: pepa-linha-dark
@@ -382,6 +410,23 @@ services:
     command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled
     ports:
       - "${ZITADEL_PORT:-8085}:8080"
+    environment:
+      ZITADEL_DATABASE_POSTGRES_HOST: ${ZITADEL_DATABASE_POSTGRES_HOST:-db-postgres}
+      ZITADEL_DATABASE_POSTGRES_PORT: ${ZITADEL_DATABASE_POSTGRES_PORT:-5432}
+      ZITADEL_DATABASE_POSTGRES_DATABASE: ${ZITADEL_DATABASE_POSTGRES_DATABASE:-zitadel}
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${ZITADEL_DATABASE_POSTGRES_USER_USERNAME:-postgres}
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${ZITADEL_DATABASE_POSTGRES_USER_PASSWORD:-postgres}
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${ZITADEL_DATABASE_POSTGRES_USER_USERNAME:-postgres}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${ZITADEL_DATABASE_POSTGRES_USER_PASSWORD:-postgres}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_EXTERNALDOMAIN: localhost
+      ZITADEL_EXTERNALPORT: ${ZITADEL_PORT:-8085}
+      ZITADEL_EXTERNALPROTOCOL: http
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
@@ -497,9 +542,11 @@ services:
     ports:
       - "${GRIPMOCK_PORT:-4770}:4770"
       - "${GRIPMOCK_API_PORT:-4771}:4771"
+    command: ["--stub=/stub", "--admin-listen=0.0.0.0", "--grpc-listen=0.0.0.0", "/proto/placeholder.proto"]
     volumes:
       - ./mocks/proto:/proto:ro
-    restart: unless-stopped
+      - ./mocks/proto/stubs:/stub
+    restart: on-failure
 
   # --------------------------------------------------------------------------
   # Pact Broker – Contract testing (F13.01)
@@ -540,7 +587,7 @@ services:
   # --------------------------------------------------------------------------
   chromadb:
     image: chromadb/chroma:latest
-    profiles: ["ai", "openrag"]
+    profiles: ["ai"]
     container_name: stubrix-chromadb
     ports:
       - "${CHROMADB_PORT:-8000}:8000"
@@ -552,40 +599,84 @@ services:
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
+  # OpenRAG – OpenSearch vector store (companion for openrag-backend)
+  # --------------------------------------------------------------------------
+  openrag-opensearch:
+    image: langflowai/openrag-opensearch:latest
+    platform: linux/amd64
+    profiles: ["ai", "openrag"]
+    container_name: stubrix-openrag-opensearch
+    ports:
+      - "9201:9200"
+    environment:
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:-Stubrix@1234}
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      bootstrap.memory_lock: "true"
+      discovery.type: single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # OpenRAG – Langflow engine (companion for openrag-backend)
+  # --------------------------------------------------------------------------
+  openrag-langflow:
+    image: langflowai/openrag-langflow:latest
+    platform: linux/amd64
+    profiles: ["ai", "openrag"]
+    container_name: stubrix-openrag-langflow
+    ports:
+      - "${LANGFLOW_PORT:-7860}:7860"
+    environment:
+      LANGFLOW_SECRET_KEY: ${LANGFLOW_SECRET_KEY:-}
+      LANGFLOW_SUPERUSER_PASSWORD: ${LANGFLOW_SUPERUSER_PASSWORD:-admin}
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
   # OpenRAG – RAG query service (F9.01)
   # Access: http://localhost:8888
   # --------------------------------------------------------------------------
   openrag:
-    image: ghcr.io/openrag/openrag:latest
+    image: langflowai/openrag-backend:latest
+    platform: linux/amd64
     profiles: ["ai", "openrag"]
     container_name: stubrix-openrag
     ports:
-      - "${OPENRAG_PORT:-8888}:8888"
+      - "${OPENRAG_PORT:-8888}:8000"
     environment:
-      CHROMA_HOST: chromadb
-      CHROMA_PORT: 8000
+      LANGFLOW_URL: http://openrag-langflow:7860
+      OPENSEARCH_HOST: openrag-opensearch
+      OPENSEARCH_PORT: "9200"
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:-Stubrix@1234}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OLLAMA_HOST: ${OLLAMA_HOST:-}
+      OLLAMA_ENDPOINT: ${OLLAMA_HOST:-}
+      LANGFLOW_SECRET_KEY: ${LANGFLOW_SECRET_KEY:-}
     depends_on:
-      - chromadb
+      - openrag-langflow
+      - openrag-opensearch
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
   # Hoppscotch – Self-Hosted API Client (F8.01)
   # Access: http://localhost:3100
   # --------------------------------------------------------------------------
-  hoppscotch-migrate:
-    image: hoppscotch/hoppscotch:latest
-    profiles: ["hoppscotch"]
-    container_name: stubrix-hoppscotch-migrate
-    command: ["sh", "-c", "cd /dist/backend && node_modules/.pnpm/node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma"]
-    environment:
-      DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
-    depends_on:
-      db-postgres:
-        condition: service_healthy
-        required: false
-    restart: "no"
+  # hoppscotch-migrate:
+  #   image: hoppscotch/hoppscotch:latest
+  #   profiles: ["hoppscotch"]
+  #   container_name: stubrix-hoppscotch-migrate
+  #   command: ["sh", "-c", "cd /dist/backend && node_modules/.pnpm/node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma"]
+  #   environment:
+  #     DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
+  #   depends_on:
+  #     db-postgres:
+  #       condition: service_healthy
+  #       required: false
+  #   restart: "no"
 
   hoppscotch:
     image: hoppscotch/hoppscotch:latest
@@ -619,6 +710,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  redis_data:
   pg_data:
   mysql_data:
   cloudbeaver_data:

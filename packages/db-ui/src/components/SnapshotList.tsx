@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { RotateCcw, Trash2, Loader2, Camera, Star, Lock, Tag, Filter, AlertTriangle, X } from 'lucide-react'
+import { useDbUiTranslation } from '../lib/i18n'
 import { EmptyState } from './EmptyState'
 import type { Snapshot } from '@stubrix/shared'
 import { dbApi } from '../lib/db-api'
@@ -22,11 +23,13 @@ function RestoreConfirmDialog({
   onConfirm,
   onCancel,
   restoring,
+  t,
 }: {
   confirm: RestoreConfirm
   onConfirm: () => void
   onCancel: () => void
   restoring: boolean
+  t: (key: string) => string
 }) {
   const { snapshot } = confirm
   return (
@@ -38,8 +41,8 @@ function RestoreConfirmDialog({
               <AlertTriangle size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-text-primary">Confirmar Restauração</h3>
-              <p className="text-xs text-text-secondary">Esta ação sobrescreverá o database de destino</p>
+              <h3 className="text-sm font-semibold text-text-primary">{t('db.restoreConfirmTitle')}</h3>
+              <p className="text-xs text-text-secondary">{t('db.restoreConfirmSubtitle')}</p>
             </div>
           </div>
           <button
@@ -54,36 +57,34 @@ function RestoreConfirmDialog({
 
         <div className="mb-5 space-y-2.5 rounded-xl border border-white/8 bg-main-bg p-4">
           <div className="flex justify-between gap-2 text-xs">
-            <span className="text-text-secondary/70">Snapshot</span>
+            <span className="text-text-secondary/70">{t('db.restoreConfirmSnapshot')}</span>
             <span className="truncate text-right font-medium text-text-primary">{snapshot.name}</span>
           </div>
           <div className="flex justify-between gap-2 text-xs">
-            <span className="text-text-secondary/70">Database destino</span>
+            <span className="text-text-secondary/70">{t('db.restoreConfirmTargetDb')}</span>
             <span className="font-mono font-medium text-text-primary">{confirm.targetDatabase || '—'}</span>
           </div>
           <div className="flex justify-between gap-2 text-xs">
-            <span className="text-text-secondary/70">Engine</span>
+            <span className="text-text-secondary/70">{t('db.restoreConfirmEngine')}</span>
             <span className="font-medium capitalize text-text-primary">{snapshot.engine ?? '—'}</span>
           </div>
           <div className="flex justify-between gap-2 text-xs">
-            <span className="text-text-secondary/70">Tamanho</span>
+            <span className="text-text-secondary/70">{t('db.restoreConfirmSize')}</span>
             <span className="font-medium text-text-primary">{snapshot.sizeFormatted}</span>
           </div>
           <div className="flex justify-between gap-2 text-xs">
-            <span className="text-text-secondary/70">Criado em</span>
-            <span className="font-medium text-text-primary">{new Date(snapshot.createdAt).toLocaleString('pt-BR')}</span>
+            <span className="text-text-secondary/70">{t('db.restoreConfirmCreatedAt')}</span>
+            <span className="font-medium text-text-primary">{new Date(snapshot.createdAt).toLocaleString()}</span>
           </div>
           {snapshot.protected && (
             <div className="flex items-center gap-1.5 rounded-lg bg-warning/10 px-2.5 py-1.5 text-xs text-warning">
               <Lock size={11} />
-              Snapshot protegido — a restauração é permitida
+              {t('db.restoreConfirmProtectedNote')}
             </div>
           )}
         </div>
 
-        <p className="mb-5 text-xs text-text-secondary/80">
-          O conteúdo atual do database de destino será <strong className="text-warning">permanentemente substituído</strong> pelos dados deste snapshot. Esta ação não pode ser desfeita.
-        </p>
+        <p className="mb-5 text-xs text-text-secondary/80" dangerouslySetInnerHTML={{ __html: t('db.restoreConfirmWarning') }} />
 
         <div className="flex justify-end gap-2">
           <button
@@ -92,7 +93,7 @@ function RestoreConfirmDialog({
             disabled={restoring}
             className="rounded-lg border border-white/10 px-4 py-2 text-sm text-text-secondary transition-all hover:bg-surface-2 hover:text-text-primary disabled:opacity-40"
           >
-            Cancelar
+            {t('db.cancel')}
           </button>
           <button
             type="button"
@@ -101,7 +102,7 @@ function RestoreConfirmDialog({
             className="flex items-center gap-2 rounded-lg bg-warning px-4 py-2 text-sm font-semibold text-black transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-warning/50 disabled:opacity-50"
           >
             {restoring ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
-            {restoring ? 'Restaurando...' : 'Confirmar Restauração'}
+            {restoring ? t('db.restoring') : t('db.confirmRestore')}
           </button>
         </div>
       </div>
@@ -112,6 +113,7 @@ function RestoreConfirmDialog({
 type FilterMode = 'all' | 'favorites' | 'protected'
 
 export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onRestore, onUpdate }: SnapshotListProps) {
+  const t = useDbUiTranslation()
   const [pending, setPending] = useState<Record<string, 'restoring' | 'deleting'>>({})
   const [toggling, setToggling] = useState<Record<string, boolean>>({})
   const [filterMode, setFilterMode] = useState<FilterMode>('all')
@@ -169,7 +171,7 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-text-primary">Snapshots</h2>
+          <h2 className="text-sm font-semibold text-text-primary">{t('db.snapshots')}</h2>
           <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-text-secondary">
             {filtered.length}{filtered.length !== snapshots.length ? `/${snapshots.length}` : ''}
           </span>
@@ -186,7 +188,7 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
                   onChange={(e) => setFilterCategory(e.target.value)}
                   className="rounded-lg border border-white/10 bg-main-bg py-1 pl-7 pr-6 text-xs text-text-secondary outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary/40"
                 >
-                  <option value="">Categoria</option>
+                  <option value="">{t('db.filterCategory')}</option>
                   {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -197,7 +199,7 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
                   key={mode}
                   type="button"
                   onClick={() => setFilterMode(mode)}
-                  title={mode === 'all' ? 'Todos' : mode === 'favorites' ? 'Favoritos' : 'Protegidos'}
+                  title={mode === 'all' ? t('db.filterAll') : mode === 'favorites' ? t('db.filterFavorites') : t('db.filterProtected')}
                   className={`rounded-md p-1.5 transition-colors ${filterMode === mode ? 'bg-surface-2 text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
                 >
                   {mode === 'all' && <Filter size={12} />}
@@ -212,7 +214,7 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
                 onClick={() => { setFilterMode('all'); setFilterCategory('') }}
                 className="text-xs text-text-secondary hover:text-primary"
               >
-                Limpar
+                {t('db.clearFilters')}
               </button>
             )}
           </div>
@@ -223,14 +225,14 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
       {snapshots.length === 0 ? (
         <EmptyState
           icon={<Camera size={22} strokeWidth={1.5} />}
-          title="Nenhum snapshot criado"
-          description="Crie um snapshot para salvar o estado atual do database e restaurá-lo quando necessário."
+          title={t('db.noSnapshotsTitle')}
+          description={t('db.noSnapshotsDesc')}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Filter size={22} strokeWidth={1.5} />}
-          title="Nenhum resultado"
-          description="Nenhum snapshot corresponde ao filtro selecionado."
+          title={t('db.noResultsTitle')}
+          description={t('db.noResultsDesc')}
         />
       ) : (
         <div className="space-y-2">
@@ -252,7 +254,7 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
                   type="button"
                   disabled={toggling[favKey]}
                   onClick={() => void handleToggle(snapshot, 'favorite')}
-                  title={snapshot.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                    title={snapshot.favorite ? t('db.removeFavorite') : t('db.addFavorite')}
                   className={`flex shrink-0 items-center justify-center rounded-lg p-1 transition-colors ${snapshot.favorite ? 'text-warning' : 'text-white/20 hover:text-warning/60'
                     } disabled:opacity-40`}
                 >
@@ -267,7 +269,7 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
                     <p className="truncate text-sm font-medium text-text-primary">{snapshot.name}</p>
                     {snapshot.protected && (
                       <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
-                        <Lock size={9} /> Protegido
+                        <Lock size={9} /> {t('db.protected')}
                       </span>
                     )}
                     {snapshot.category && (
@@ -289,7 +291,7 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
                     type="button"
                     disabled={toggling[lockKey]}
                     onClick={() => void handleToggle(snapshot, 'protected')}
-                    title={snapshot.protected ? 'Desproteger snapshot' : 'Proteger snapshot'}
+                    title={snapshot.protected ? t('db.unprotectSnapshot') : t('db.protectSnapshot')}
                     className={`flex items-center justify-center rounded-lg p-1.5 transition-colors ${snapshot.protected
                         ? 'text-warning hover:bg-warning/15'
                         : 'text-white/20 hover:bg-white/8 hover:text-text-secondary'
@@ -301,19 +303,19 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
                   </button>
                   <button
                     type="button"
-                    disabled={!!state}
+                    disabled={!!state || snapshot.protected}
                     onClick={() => setRestoreConfirm({ snapshot, targetDatabase })}
-                    title="Restaurar snapshot"
+                    title={snapshot.protected ? t('db.restoreSnapshotProtected') : t('db.restoreSnapshot')}
                     className="flex items-center gap-1.5 rounded-lg bg-primary/15 px-2.5 py-1.5 text-xs font-medium text-primary transition-all hover:bg-primary/25 focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {state === 'restoring' ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
-                    {state === 'restoring' ? 'Restaurando...' : 'Restaurar'}
+                    {state === 'restoring' ? t('db.restoring') : t('db.restore')}
                   </button>
                   <button
                     type="button"
                     disabled={!!state || snapshot.protected}
                     onClick={() => void handleDelete(snapshot.name)}
-                    title={snapshot.protected ? 'Snapshot protegido — não pode ser deletado' : 'Deletar snapshot'}
+                    title={snapshot.protected ? t('db.deleteSnapshotProtected') : t('db.deleteSnapshot')}
                     className="flex items-center justify-center rounded-lg p-1.5 text-white/20 transition-colors hover:bg-red-500/15 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
                   >
                     {state === 'deleting' ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
@@ -332,6 +334,7 @@ export function SnapshotList({ snapshots, targetDatabase = '', onDelete, onResto
         restoring={!!pending[restoreConfirm.snapshot.name]}
         onConfirm={() => void confirmRestore()}
         onCancel={() => setRestoreConfirm(null)}
+        t={t}
       />
     )}
     </>

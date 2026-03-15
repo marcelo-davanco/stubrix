@@ -101,7 +101,7 @@ mysql-shell: ## Open mysql shell
 # Database Viewers (F29)
 # ---------------------------------------------------------------------------
 
-adminer: ## Start Adminer + PostgreSQL (lightweight DB web UI — http://localhost:8082)
+adminer: ## Start Adminer + PostgreSQL (lightweight DB web UI — http://localhost:8084)
 	docker compose --profile postgres --profile adminer up
 
 adminer-up: ## Start Adminer + PostgreSQL (detached)
@@ -138,6 +138,36 @@ windsurf-install: ## Package and install extension in Windsurf
 	npm run package:vscode
 	windsurf --install-extension packages/vscode-extension/stubrix-vscode-$(shell node -p "require('./packages/vscode-extension/package.json').version").vsix 2>/dev/null || \
 	/Applications/Windsurf.app/Contents/Resources/app/bin/windsurf --install-extension packages/vscode-extension/stubrix-vscode-$(shell node -p "require('./packages/vscode-extension/package.json').version").vsix
+
+# ---------------------------------------------------------------------------
+# Local Development (API + UI outside Docker, infra in Docker)
+# ---------------------------------------------------------------------------
+
+dev: infra-up ## Start local dev: infra in Docker + API/UI with hot-reload
+	@echo "⏳ Waiting for infrastructure services..."
+	@sleep 3
+	@echo "🚀 Starting API + UI locally (hot-reload)..."
+	npm run dev
+
+infra-up: ## Start infrastructure services in Docker (Redis + WireMock + PostgreSQL)
+	docker compose --profile redis --profile wiremock --profile postgres up -d
+	@echo "✅ Infrastructure ready: Redis :6379 | WireMock :8081 | PostgreSQL :5442"
+
+infra-down: ## Stop infrastructure services
+	docker compose --profile redis --profile wiremock --profile postgres down
+
+infra-logs: ## Tail infrastructure logs
+	docker compose --profile redis --profile wiremock --profile postgres logs -f
+
+redis-up: ## Start Redis (queue & cache)
+	docker compose --profile redis up -d
+
+redis-down: ## Stop Redis
+	docker compose --profile redis down
+
+# ---------------------------------------------------------------------------
+# Stubrix Control Plane (Docker mode)
+# ---------------------------------------------------------------------------
 
 stubrix-build: ## Build Stubrix control plane Docker image
 	docker compose build stubrix

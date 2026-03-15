@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { I18nProvider, useTranslation } from './lib/i18n'
 import { Layout } from './components/Layout'
 import { MockServersBridge } from './pages/MockServersBridge'
 import { ProjectDashboardBridge } from './pages/ProjectDashboardBridge'
@@ -6,7 +7,7 @@ import { MocksListBridge } from './pages/MocksListBridge'
 import { MockEditorBridge } from './pages/MockEditorBridge'
 import { RecordingBridge } from './pages/RecordingBridge'
 import { LogsPage } from './pages/LogsPage'
-import { DatabasesPage } from '@stubrix/db-ui'
+import { DatabasesPage, DbUiI18nProvider } from '@stubrix/db-ui'
 import { ScenariosBridge } from './pages/ScenariosBridge'
 import { StatefulMocksBridge } from './pages/StatefulMocksBridge'
 import { WebhooksBridge } from './pages/WebhooksBridge'
@@ -30,18 +31,28 @@ import { SettingsPage } from './pages/SettingsPage'
 import { ServiceConfigPage } from './pages/ServiceConfigPage'
 import { BackupsPage } from './pages/BackupsPage'
 
+function DatabasesRoute() {
+  const { t } = useTranslation()
+  return (
+    <DbUiI18nProvider t={t}>
+      <DatabasesPage />
+    </DbUiI18nProvider>
+  )
+}
+
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<MockServersBridge />} />
-          <Route path="projects/:projectId" element={<ProjectDashboardBridge />} />
-          <Route path="projects/:projectId/mocks" element={<MocksListBridge />} />
-          <Route path="projects/:projectId/mocks/new" element={<MockEditorBridge />} />
-          <Route path="projects/:projectId/mocks/:mockId/edit" element={<MockEditorBridge />} />
-          <Route path="projects/:projectId/recording" element={<RecordingBridge />} />
-          <Route path="databases" element={<DatabasesPage />} />
+    <I18nProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<MockServersBridge />} />
+            <Route path="projects/:projectId" element={<ProjectDashboardBridge />} />
+            <Route path="projects/:projectId/mocks" element={<MocksListBridge />} />
+            <Route path="projects/:projectId/mocks/new" element={<MockEditorBridge />} />
+            <Route path="projects/:projectId/mocks/:mockId/edit" element={<MockEditorBridge />} />
+            <Route path="projects/:projectId/recording" element={<RecordingBridge />} />
+            <Route path="databases" element={<DatabasesRoute />} />
           <Route path="logs" element={<LogsPage />} />
           <Route path="scenarios" element={<ScenariosBridge />} />
           <Route path="stateful" element={<StatefulMocksBridge />} />
@@ -69,6 +80,7 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </I18nProvider>
   )
 }
 

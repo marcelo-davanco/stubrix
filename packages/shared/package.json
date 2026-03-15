@@ -1,9 +1,17 @@
 {
   "name": "@stubrix/shared",
-  "version": "2.5.0",
-  "private": true,
+  "version": "2.6.1",
+  "description": "Shared TypeScript types and utilities for Stubrix platform",
+  "author": "Marcelo Davanço",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch"

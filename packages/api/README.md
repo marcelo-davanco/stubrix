@@ -15,6 +15,7 @@ Provides the REST API and WebSocket server that powers the Stubrix dashboard. Ma
 | Validation | class-validator + class-transformer |
 | Persistence | JSON files (mocks/projects), filesystem (snapshots) |
 | Database ops | pg_dump/psql (PostgreSQL), driver pattern (MySQL/SQLite) |
+| Service config | SQLite (`data/stubrix-config.db`) via better-sqlite3 |
 
 ## Module Structure
 
@@ -44,9 +45,16 @@ src/
 ├── metrics/          Prometheus exposition endpoint
 ├── performance/      k6 scripts + baseline regression gate
 ├── tracing/          Jaeger/OpenTelemetry distributed tracing
-├── cloud/            LocalStack AWS (S3, SQS, SNS, DynamoDB, Lambda)
+├── cloud/            LocalStack AWS mocking (S3, SQS, SNS, DynamoDB, Lambda)
 ├── storage/          MinIO object storage
-└── iam/              Keycloak + Zitadel IAM integration
+├── iam/              Keycloak + Zitadel IAM integration
+└── settings/
+    ├── database/     SQLite config DB (better-sqlite3)
+    ├── registry/     24-service registry + category definitions
+    ├── lifecycle/    Enable/disable via Docker Compose + health monitoring
+    ├── config/       Per-service CRUD config + AES-256-GCM encryption
+    ├── backup/       Config backup + restore
+    └── import-export/ JSON/YAML selective import/export
 ```
 
 ## API Reference
@@ -79,6 +87,24 @@ src/
 | POST | `/api/projects/:id/recording/start` | Start recording |
 | POST | `/api/projects/:id/recording/stop` | Stop and save mocks |
 | POST | `/api/projects/:id/recording/snapshot` | Take snapshot |
+
+### Settings & Services
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/settings/services` | List all services with status + health |
+| GET | `/api/settings/services/:id` | Get service details |
+| POST | `/api/settings/services/:id/enable` | Enable service (starts container) |
+| POST | `/api/settings/services/:id/disable` | Disable service (stops container) |
+| PATCH | `/api/settings/services/:id` | Update service config (autoStart, etc.) |
+| GET | `/api/settings/services/:id/config` | Get service configuration |
+| PUT | `/api/settings/services/:id/config` | Save service configuration |
+| GET | `/api/settings/backups` | List config backups |
+| POST | `/api/settings/backups` | Create config backup |
+| POST | `/api/settings/backups/:id/restore` | Restore config backup |
+| DELETE | `/api/settings/backups/:id` | Delete backup |
+| GET | `/api/settings/export` | Export all config (JSON/YAML) |
+| POST | `/api/settings/import` | Import config from file |
 
 ### Status & Engine
 

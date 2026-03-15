@@ -35,6 +35,7 @@ Stubrix covers the full API development lifecycle in a single tool — no stitch
 | **Identity & Access** | Keycloak and Zitadel — real OAuth2/OIDC token flows locally |
 | **AI-Native (MCP)** | 3 MCP servers with **100+ tools** — manage everything from your AI coding assistant |
 | **Database Snapshots** | PostgreSQL `pg_dump`/`psql`, MySQL, SQLite — snapshot and restore DB state alongside mocks |
+| **Service Control Panel** | Enable/disable 24 infrastructure services, configure, backup and restore all settings — no manual Docker commands |
 | **Visual Control Panel** | NestJS 11 API + React 19 Dashboard — no CLI-only workflows |
 
 ---
@@ -88,7 +89,7 @@ Stubrix is a **monorepo** (npm workspaces) built on three core layers:
 
 | Package | Description |
 |---------|-------------|
-| `@stubrix/api` | NestJS 11 control plane — 27 modules, REST API + WebSockets |
+| `@stubrix/api` | NestJS 11 control plane — 28 modules, REST API + WebSockets |
 | `@stubrix/ui` | React 19 + Vite 7 dashboard host |
 | `@stubrix/mock-ui` | Mock server microfrontend |
 | `@stubrix/db-ui` | Database management microfrontend |
@@ -246,7 +247,7 @@ make stack-down        # Stop full stack
 |---------|---------|------|---------|
 | `postgres` | PostgreSQL 17 | :5442 | `make postgres` |
 | `mysql` | MySQL 8 | :3307 | `make mysql` |
-| `adminer` | Adminer UI | :8082 | `make adminer-up` |
+| `adminer` | Adminer UI | :8084 | `make adminer-up` |
 | `cloudbeaver` | CloudBeaver UI | :8083 | `make cloudbeaver-up` |
 
 ### Messaging & Protocols
@@ -414,6 +415,23 @@ make postgres
 # GET  /api/db/snapshots?projectId=...           — list project snapshots
 ```
 
+### Service Control Panel (F34)
+
+Enable, disable, configure and health-check any of the 24 Docker services from the dashboard or API — no manual `docker compose` commands:
+
+```bash
+# Via Settings dashboard: http://localhost:9090/settings
+
+# Via API
+curl -X POST http://localhost:9090/api/settings/services/postgres/enable
+curl -X POST http://localhost:9090/api/settings/services/postgres/disable
+curl http://localhost:9090/api/settings/services            # list all + health status
+curl http://localhost:9090/api/settings/backups             # list config backups
+curl -X POST http://localhost:9090/api/settings/backups     # create backup
+```
+
+All service configuration is stored in `data/stubrix-config.db` (SQLite) with AES-256-GCM encryption for sensitive values.
+
 ---
 
 ## 🤖 MCP Ecosystem
@@ -537,7 +555,10 @@ All 27 modules are documented with request/response schemas, organized by tag:
 | v2.0.0 | Multi-Protocol | GraphQL/gRPC mocking, Kafka/RabbitMQ event simulation, webhooks |
 | v2.1.0 | Enterprise | Auth/RBAC/multi-tenancy, VS Code extension, environment templates |
 | v2.2.0 | Observability | Prometheus/Grafana metrics, k6 performance testing, Jaeger tracing |
-| **v2.3.0** | **Cloud & Storage** | **LocalStack AWS, MinIO object storage, Keycloak/Zitadel IAM** |
+| v2.3.0 | Cloud & Storage | LocalStack AWS, MinIO object storage, Keycloak/Zitadel IAM |
+| v2.4.0 | Micro Frontends | `@stubrix/mock-ui` and `@stubrix/db-ui` extracted as standalone packages |
+| v2.5.0 | Service Control Panel | Enable/disable 24 services via dashboard, health monitoring, config backup |
+| **v2.6.0** | **Proto & Stubs** | **gRPC proto file editor, live GripMock stub management, container runtime fixes** |
 
 ---
 

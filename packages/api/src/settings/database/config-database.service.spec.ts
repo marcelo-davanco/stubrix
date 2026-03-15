@@ -52,21 +52,21 @@ describe('ConfigDatabaseService', () => {
   });
 
   it('should apply migrations in order', () => {
-    expect(service.getSchemaVersion()).toBe(1);
+    expect(service.getSchemaVersion()).toBe(2);
   });
 
   it('should skip already-applied migrations', () => {
     // Running init again should not fail or re-apply
     const version = service.getSchemaVersion();
-    expect(version).toBe(1);
+    expect(version).toBe(2);
   });
 
   it('should return accurate DB stats', () => {
     const stats = service.getDbStats();
     expect(stats.size).toBeGreaterThan(0);
     expect(stats.tables).toBe(6);
-    // Only schema_version has 1 row (from migration)
-    expect(stats.totalRows).toBe(1);
+    // schema_version has 2 rows (migration v1 + v2 for auto_start column)
+    expect(stats.totalRows).toBe(2);
   });
 
   // ─── Services CRUD ─────────────────────────────────────────────
@@ -81,6 +81,7 @@ describe('ConfigDatabaseService', () => {
       default_port: 8081,
       external_url: undefined,
       enabled: 1,
+      auto_start: 1,
       health_status: 'unknown',
       last_health_check: undefined,
     });
@@ -104,13 +105,14 @@ describe('ConfigDatabaseService', () => {
       default_port: 8081,
       external_url: undefined,
       enabled: 0,
+      auto_start: 1,
       health_status: 'unknown',
       last_health_check: undefined,
     });
 
     const updated = service.getService('wiremock');
     expect(updated!.name).toBe('WireMock Updated');
-    expect(updated!.enabled).toBe(0);
+    expect(updated!.enabled).toBe(1);
   });
 
   it('should update service status', () => {
@@ -123,6 +125,7 @@ describe('ConfigDatabaseService', () => {
       default_port: 5432,
       external_url: undefined,
       enabled: 0,
+      auto_start: 0,
       health_status: 'unknown',
       last_health_check: undefined,
     });
@@ -146,6 +149,7 @@ describe('ConfigDatabaseService', () => {
       default_port: 3000,
       external_url: undefined,
       enabled: 1,
+      auto_start: 0,
       health_status: 'unknown',
       last_health_check: undefined,
     });
@@ -169,6 +173,7 @@ describe('ConfigDatabaseService', () => {
       default_port: 8081,
       external_url: undefined,
       enabled: 1,
+      auto_start: 1,
       health_status: 'unknown',
       last_health_check: undefined,
     });
@@ -211,6 +216,7 @@ describe('ConfigDatabaseService', () => {
       default_port: 5432,
       external_url: undefined,
       enabled: 1,
+      auto_start: 0,
       health_status: 'unknown',
       last_health_check: undefined,
     });
@@ -258,6 +264,7 @@ describe('ConfigDatabaseService', () => {
       default_port: 8081,
       external_url: undefined,
       enabled: 1,
+      auto_start: 1,
       health_status: 'unknown',
       last_health_check: undefined,
     });
@@ -308,6 +315,7 @@ describe('ConfigDatabaseService', () => {
       default_port: undefined,
       external_url: undefined,
       enabled: 0,
+      auto_start: 0,
       health_status: 'unknown',
       last_health_check: undefined,
     });

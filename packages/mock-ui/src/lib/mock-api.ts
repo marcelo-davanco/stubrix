@@ -210,6 +210,20 @@ export type ProtocolMock = {
   createdAt: string;
 };
 
+export type ProtoFileInfo = {
+  name: string;
+  size: number;
+  updatedAt: string;
+};
+
+export type GrpcStub = {
+  id: string;
+  service: string;
+  method: string;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+};
+
 export type EventRecord = {
   id: string;
   broker: string;
@@ -518,6 +532,18 @@ export const mockApi = {
     parseGraphQL: (schema: string): Promise<unknown> =>
       request<unknown>('/protocols/graphql/parse', { method: 'POST', body: JSON.stringify({ schema }) }),
     grpcHealth: (): Promise<unknown> => request<unknown>('/protocols/grpc/health'),
+    listProtos: (): Promise<ProtoFileInfo[]> => request<ProtoFileInfo[]>('/protocols/grpc/protos'),
+    getProto: (name: string): Promise<{ name: string; content: string }> =>
+      request<{ name: string; content: string }>(`/protocols/grpc/protos/${encodeURIComponent(name)}`),
+    saveProto: (name: string, content: string): Promise<ProtoFileInfo> =>
+      request<ProtoFileInfo>('/protocols/grpc/protos', { method: 'PUT', body: JSON.stringify({ name, content }) }),
+    deleteProto: (name: string): Promise<void> =>
+      request<void>(`/protocols/grpc/protos/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+    listStubs: (): Promise<GrpcStub[]> => request<GrpcStub[]>('/protocols/grpc/stubs'),
+    addStub: (stub: Record<string, unknown>): Promise<GrpcStub> =>
+      request<GrpcStub>('/protocols/grpc/stubs', { method: 'POST', body: JSON.stringify({ stub }) }),
+    clearStubs: (): Promise<void> =>
+      request<void>('/protocols/grpc/stubs', { method: 'DELETE' }),
   },
 
   events: {

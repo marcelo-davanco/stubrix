@@ -4,7 +4,7 @@ import { cn } from '../../lib/utils'
 interface ServiceToggleProps {
   enabled: boolean
   loading?: boolean
-  onChange: (enabled: boolean) => void
+  onChange: (enabled: boolean) => Promise<void> | void
 }
 
 export function ServiceToggle({ enabled, loading, onChange }: ServiceToggleProps) {
@@ -14,7 +14,7 @@ export function ServiceToggle({ enabled, loading, onChange }: ServiceToggleProps
     if (pending || loading) return
     setPending(true)
     try {
-      await Promise.resolve(onChange(!enabled))
+      await onChange(!enabled)
     } finally {
       setPending(false)
     }

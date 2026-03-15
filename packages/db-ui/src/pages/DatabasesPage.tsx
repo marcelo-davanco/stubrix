@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { RefreshCcw, ChevronDown, Loader2 } from 'lucide-react'
 import { useDbManager } from '../hooks/useDbManager'
+import { useDbUiTranslation } from '../lib/i18n'
 import { EngineSelector } from '../components/EngineSelector'
 import { DatabaseList } from '../components/DatabaseList'
 import { DatabaseDetailModal } from '../components/DatabaseDetailModal'
@@ -20,6 +21,7 @@ export function DatabasesPage() {
 }
 
 function DatabasesPageInner() {
+  const t = useDbUiTranslation()
   const { toast } = useToast()
   const {
     projects,
@@ -63,9 +65,9 @@ function DatabasesPageInner() {
   async function handleCreateSnapshot(payload: Parameters<typeof createSnapshot>[0]) {
     try {
       await createSnapshot(payload)
-      toast({ type: 'success', title: 'Snapshot criado com sucesso', description: `"${payload.label}" está disponível para restauração.` })
+      toast({ type: 'success', title: t('db.toastSnapshotCreated'), description: t('db.toastSnapshotCreatedDesc').replace('{{label}}', payload.label) })
     } catch (err) {
-      toast({ type: 'error', title: 'Falha ao criar snapshot', description: err instanceof Error ? err.message : 'Erro desconhecido.' })
+      toast({ type: 'error', title: t('db.toastSnapshotCreateError'), description: err instanceof Error ? err.message : t('db.unknownError') })
       throw err
     }
   }
@@ -76,18 +78,18 @@ function DatabasesPageInner() {
   async function handleRestoreSnapshot(name: string) {
     try {
       await restoreSnapshot(name, restoreTargetDatabase || 'default', { connectionId: selectedConnectionId || undefined })
-      toast({ type: 'success', title: 'Snapshot restaurado', description: `"${name}" foi restaurado com sucesso.` })
+      toast({ type: 'success', title: t('db.toastSnapshotRestored'), description: t('db.toastSnapshotRestoredDesc').replace('{{name}}', name) })
     } catch (err) {
-      toast({ type: 'error', title: 'Falha ao restaurar snapshot', description: err instanceof Error ? err.message : 'Erro desconhecido.' })
+      toast({ type: 'error', title: t('db.toastSnapshotRestoreError'), description: err instanceof Error ? err.message : t('db.unknownError') })
     }
   }
 
   async function handleDeleteSnapshot(name: string) {
     try {
       await deleteSnapshot(name)
-      toast({ type: 'info', title: 'Snapshot removido', description: `"${name}" foi deletado.` })
+      toast({ type: 'info', title: t('db.toastSnapshotDeleted'), description: t('db.toastSnapshotDeletedDesc').replace('{{name}}', name) })
     } catch (err) {
-      toast({ type: 'error', title: 'Falha ao deletar snapshot', description: err instanceof Error ? err.message : 'Erro desconhecido.' })
+      toast({ type: 'error', title: t('db.toastSnapshotDeleteError'), description: err instanceof Error ? err.message : t('db.unknownError') })
     }
   }
 
@@ -96,8 +98,8 @@ function DatabasesPageInner() {
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between border-b border-white/10 bg-surface-1/50 px-6 py-4">
         <div>
-          <h1 className="text-lg font-semibold text-text-primary">Databases</h1>
-          <p className="text-xs text-text-secondary">Gerencie engines, conexões e snapshots</p>
+          <h1 className="text-lg font-semibold text-text-primary">{t('db.title')}</h1>
+          <p className="text-xs text-text-secondary">{t('db.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Project picker */}
@@ -122,7 +124,7 @@ function DatabasesPageInner() {
             {loading
               ? <Loader2 size={14} className="animate-spin" />
               : <RefreshCcw size={14} />}
-            Refresh
+            {t('db.refresh')}
           </button>
         </div>
       </div>
@@ -134,7 +136,7 @@ function DatabasesPageInner() {
           {/* Error */}
           {error && (
             <InlineAlert
-              message={`Falha ao sincronizar dados: ${error}`}
+              message={t('db.syncError').replace('{{error}}', error)}
               onRetry={() => void refreshAll()}
             />
           )}
@@ -142,7 +144,7 @@ function DatabasesPageInner() {
           {/* Engine selector */}
           <section>
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-secondary/60">
-              Engines
+              {t('db.sectionEngines')}
             </p>
             <EngineSelector
               engines={activeEngines}
@@ -157,10 +159,10 @@ function DatabasesPageInner() {
 
             {/* Row 1: section titles */}
             <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary/60">
-              Snapshots — {selectedProject?.name ?? selectedProjectId}
+              {t('db.sectionSnapshots').replace('{{name}}', selectedProject?.name ?? selectedProjectId)}
             </p>
             <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary/60">
-              Conexões & Databases
+              {t('db.sectionConnections')}
             </p>
 
             {/* Row 2: top cards — same height via stretch */}

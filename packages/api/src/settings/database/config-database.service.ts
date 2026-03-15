@@ -120,6 +120,14 @@ export class ConfigDatabaseService implements OnModuleInit, OnModuleDestroy {
       .all() as ServiceRow[];
   }
 
+  getEnabledNoAutoStartServices(): ServiceRow[] {
+    return this.db
+      .prepare(
+        'SELECT * FROM services WHERE enabled = 1 AND auto_start = 0 ORDER BY category, name',
+      )
+      .all() as ServiceRow[];
+  }
+
   updateHealthStatus(id: string, status: HealthStatus): void {
     this.db
       .prepare(
