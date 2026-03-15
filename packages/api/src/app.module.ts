@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -94,6 +96,7 @@ export function setupSwagger(app: any) {
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 200 }]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
       renderPath: '/{*path}',
@@ -129,6 +132,12 @@ export function setupSwagger(app: any) {
     IamModule,
     SettingsModule,
     JobsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
