@@ -1,8 +1,15 @@
 {
   "name": "stubrix",
-  "version": "2.5.1",
+  "version": "2.6.0",
   "description": "Unified mock server platform with WireMock and Mockoon engines",
-  "keywords": ["mock", "api", "testing", "wiremock", "mockoon", "server"],
+  "keywords": [
+    "mock",
+    "api",
+    "testing",
+    "wiremock",
+    "mockoon",
+    "server"
+  ],
   "author": "Marcelo Davanço",
   "license": "MIT",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@stubrix/shared",
-  "version": "2.5.1",
+  "version": "2.6.0",
   "description": "Shared TypeScript types and utilities for Stubrix platform",
   "author": "Marcelo Davanço",
   "license": "MIT",

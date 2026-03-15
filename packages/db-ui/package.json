@@ -1,6 +1,6 @@
 {
   "name": "@stubrix/db-ui",
-  "version": "2.5.1",
+  "version": "2.6.0",
   "description": "Database management micro-frontend for Stubrix",
   "author": "Marcelo Davanço",
   "license": "MIT",
