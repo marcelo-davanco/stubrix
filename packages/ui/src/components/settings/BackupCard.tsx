@@ -67,7 +67,7 @@ export function BackupCard({ backup, onPreview, onRestore, onDownload, onDelete 
             <p className="text-xs text-text-secondary mt-0.5">
               {t('backups.scope')}: {scopeLabel} | {t('backups.size')}: {formatBytes(backup.fileSize)}
             </p>
-            <p className="text-xs text-text-secondary">{t('backups.created')}: {formatDate(backup.createdAt)}</p>
+            <p className="text-xs text-text-secondary">{t('backups.createdAt')}: {formatDate(backup.createdAt)}</p>
             {backup.description && (
               <p className="text-xs text-text-secondary/70 mt-1 italic">{backup.description}</p>
             )}
