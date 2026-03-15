@@ -80,7 +80,10 @@ export class ChaosNetworkController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Add a toxic to a proxy' })
   @ApiParam({ name: 'name', description: 'Proxy name' })
-  addToxic(@Param('name') name: string, @Body() dto: AddToxicDto): Promise<Toxic> {
+  addToxic(
+    @Param('name') name: string,
+    @Body() dto: AddToxicDto,
+  ): Promise<Toxic> {
     return this.service.addToxic(name, {
       type: dto.type,
       stream: dto.stream,
@@ -110,7 +113,10 @@ export class ChaosNetworkController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Apply a network chaos preset to a proxy' })
   @ApiParam({ name: 'name', description: 'Proxy name' })
-  applyPreset(@Param('name') name: string, @Body() dto: ApplyPresetDto): Promise<Toxic[]> {
+  applyPreset(
+    @Param('name') name: string,
+    @Body() dto: ApplyPresetDto,
+  ): Promise<Toxic[]> {
     return this.service.applyPreset(name, dto.preset);
   }
 }

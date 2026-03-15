@@ -1,6 +1,6 @@
 {
   "name": "@stubrix/mock-ui",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "Mock server management micro-frontend for Stubrix",
   "author": "Marcelo Davanço",
   "license": "MIT",
