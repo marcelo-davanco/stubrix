@@ -109,6 +109,12 @@ export class CoverageController {
     }
 
     try {
+      const parsedUrl = new URL(specUrl);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new BadRequestException(
+          `URL scheme not allowed: ${parsedUrl.protocol}`,
+        );
+      }
       const res = await fetch(specUrl);
       const content = await res.text();
       const report = await this.coverageService.analyze(content);
