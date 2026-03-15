@@ -48,16 +48,42 @@ export class ServiceLifecycleService implements OnModuleInit {
 
   onModuleInit(): void {
     this.health.startMonitoring();
+    void this.syncEnabledStateOnStartup();
 
     const autoStartServices = this.configDb.getAutoStartServices();
-    if (autoStartServices.length === 0) return;
-    this.logger.log(
-      `Auto-starting ${autoStartServices.length} service(s): ${autoStartServices.map((s) => s.id).join(', ')}`,
-    );
-    for (const row of autoStartServices) {
-      this.ensureServiceRunning(row.id).catch((err: unknown) => {
-        this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
-      });
+    if (autoStartServices.length > 0) {
+      this.logger.log(
+        `Auto-starting ${autoStartServices.length} service(s): ${autoStartServices.map((s) => s.id).join(', ')}`,
+      );
+      for (const row of autoStartServices) {
+        this.ensureServiceRunning(row.id).catch((err: unknown) => {
+          this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
+        });
+      }
+    }
+  }
+
+  private async syncEnabledStateOnStartup(): Promise<void> {
+    const candidates = this.configDb.getEnabledNoAutoStartServices();
+    if (candidates.length === 0) return;
+
+    try {
+      const running = await this.docker.getRunningContainers();
+      const runningServices = new Set(running.map((c) => c.service));
+
+      for (const row of candidates) {
+        const def = this.registry.getService(row.id);
+        if (!def?.dockerService) continue;
+        if (!runningServices.has(def.dockerService)) {
+          this.configDb.updateServiceStatus(row.id, false);
+          this.configDb.updateHealthStatus(row.id, 'unknown');
+          this.logger.log(
+            `Startup sync: disabled "${row.id}" (container not running, auto-start off)`,
+          );
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`Startup sync failed: ${String(err)}`);
     }
   }
 

@@ -13,7 +13,7 @@
 ##   docker compose --profile databases up -d         # PostgreSQL only (legacy alias)
 ##
 ## Database Viewers (F29):
-##   docker compose --profile adminer up -d           # Adminer UI  → http://localhost:8082
+##   docker compose --profile adminer up -d           # Adminer UI  → http://localhost:8084
 ##   docker compose --profile cloudbeaver up -d       # CloudBeaver → http://localhost:8083
 ##   docker compose --profile db-viewer up -d         # Both viewers (Adminer + CloudBeaver)
 ##
@@ -97,7 +97,8 @@ services:
       # Mock engine
       MOCK_ENGINE: ${MOCK_ENGINE:-wiremock}
       MOCK_PORT: ${MOCK_PORT:-8081}
-      WIREMOCK_URL: ${WIREMOCK_URL:-http://wiremock:8081}
+      WIREMOCK_URL: http://wiremock:8081
+      MOCKOON_URL: http://mockoon:8081
       # PostgreSQL
       PG_HOST: ${PG_HOST:-db-postgres}
       PG_PORT: ${PG_PORT:-5432}
@@ -110,7 +111,8 @@ services:
       MYSQL_USER: ${MYSQL_USER:-stubrix}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-stubrix}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-stubrix}
-      # SQLite + Dumps
+      # Mocks + SQLite + Dumps
+      MOCKS_DIR: /app/mocks
       SQLITE_DB_PATH: ${SQLITE_DB_PATH:-}
       DUMPS_DIR: /app/dumps
       # Auth
@@ -308,14 +310,14 @@ services:
   # --------------------------------------------------------------------------
   # Adminer – Lightweight database web UI (F29.01)
   # Supports: PostgreSQL, MySQL, SQLite
-  # Access: http://localhost:8082
+  # Access: http://localhost:8084
   # --------------------------------------------------------------------------
   adminer:
     image: adminer:4
     profiles: ["adminer", "db-viewer"]
     container_name: stubrix-adminer
     ports:
-      - "${ADMINER_PORT:-8082}:8080"
+      - "${ADMINER_PORT:-8084}:8080"
     environment:
       ADMINER_DEFAULT_SERVER: ${PG_HOST:-db-postgres}
       ADMINER_DESIGN: pepa-linha-dark
@@ -540,9 +542,11 @@ services:
     ports:
       - "${GRIPMOCK_PORT:-4770}:4770"
       - "${GRIPMOCK_API_PORT:-4771}:4771"
+    command: ["--stub=/stub", "--admin-listen=0.0.0.0", "--grpc-listen=0.0.0.0", "/proto/placeholder.proto"]
     volumes:
       - ./mocks/proto:/proto:ro
-    restart: unless-stopped
+      - ./mocks/proto/stubs:/stub
+    restart: on-failure
 
   # --------------------------------------------------------------------------
   # Pact Broker – Contract testing (F13.01)
@@ -661,18 +665,18 @@ services:
   # Hoppscotch – Self-Hosted API Client (F8.01)
   # Access: http://localhost:3100
   # --------------------------------------------------------------------------
-  hoppscotch-migrate:
-    image: hoppscotch/hoppscotch:latest
-    profiles: ["hoppscotch"]
-    container_name: stubrix-hoppscotch-migrate
-    command: ["sh", "-c", "cd /dist/backend && node_modules/.pnpm/node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma"]
-    environment:
-      DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
-    depends_on:
-      db-postgres:
-        condition: service_healthy
-        required: false
-    restart: "no"
+  # hoppscotch-migrate:
+  #   image: hoppscotch/hoppscotch:latest
+  #   profiles: ["hoppscotch"]
+  #   container_name: stubrix-hoppscotch-migrate
+  #   command: ["sh", "-c", "cd /dist/backend && node_modules/.pnpm/node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma"]
+  #   environment:
+  #     DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
+  #   depends_on:
+  #     db-postgres:
+  #       condition: service_healthy
+  #       required: false
+  #   restart: "no"
 
   hoppscotch:
     image: hoppscotch/hoppscotch:latest

@@ -50,7 +50,7 @@ ENV MOCK_ENGINE=wiremock \
   PROXY_TARGET=""
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=3 \
-  CMD curl -f http://localhost:${MOCK_PORT}/__admin/health 2>/dev/null || \
-  curl -f http://localhost:${MOCK_PORT}/ 2>/dev/null || exit 1
+  CMD curl -sf http://localhost:${MOCK_PORT}/__admin/health 2>/dev/null || \
+  bash -c "</dev/tcp/localhost/${MOCK_PORT}" 2>/dev/null || exit 1
 
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
