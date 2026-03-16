@@ -1,6 +1,6 @@
 {
   "name": "stubrix",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "Unified mock server platform with WireMock and Mockoon engines",
   "keywords": [
     "mock",
