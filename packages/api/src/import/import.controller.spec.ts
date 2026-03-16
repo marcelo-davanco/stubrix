@@ -1,32 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { ImportResultBuilder } from '../test/builders';
 import { ImportController } from './import.controller';
-import { ImportService, ImportResult } from './import.service';
+import { ImportService } from './import.service';
+import { JobsService } from '../jobs/jobs.service';
 
 describe('ImportController', () => {
   let controller: ImportController;
-  let importService: jest.Mocked<ImportService>;
+  let importService: DeepMocked<ImportService>;
+  let jobsService: DeepMocked<JobsService>;
 
   beforeEach(async () => {
-    const mockImportService = {
-      importFromHar: jest.fn(),
-      importFromPostman: jest.fn(),
-    } as any;
+    const mockImportService = createMock<ImportService>();
+    const mockJobsService = createMock<JobsService>();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ImportController],
       providers: [
-        {
-          provide: ImportService,
-          useValue: mockImportService,
-        },
+        { provide: ImportService, useValue: mockImportService },
+        { provide: JobsService, useValue: mockJobsService },
       ],
     }).compile();
 
     controller = module.get<ImportController>(ImportController);
-    importService = module.get<ImportService>(
-      ImportService,
-    ) as jest.Mocked<ImportService>;
+    importService = module.get<DeepMocked<ImportService>>(ImportService);
+    jobsService = module.get<DeepMocked<JobsService>>(JobsService);
+    void jobsService; // used via controller internals
   });
 
   describe('HAR Import', () => {
@@ -56,16 +56,12 @@ describe('ImportController', () => {
         mimetype: 'application/json',
       } as Express.Multer.File;
 
-      const expectedResult: ImportResult = {
-        created: 1,
-        skipped: 0,
-        errors: [],
-        summary: '1 created',
-      };
+      const expectedResult = ImportResultBuilder.create()
+        .withCreated(1)
+        .withSummary('1 created')
+        .build();
 
-      (importService.importFromHar as jest.Mock).mockResolvedValue(
-        expectedResult,
-      );
+      importService.importFromHar.mockResolvedValue(expectedResult);
 
       const result = await controller.importHar(projectId, mockFile);
 
@@ -112,16 +108,12 @@ describe('ImportController', () => {
         },
       });
 
-      const expectedResult: ImportResult = {
-        created: 1,
-        skipped: 0,
-        errors: [],
-        summary: '1 created',
-      };
+      const expectedResult = ImportResultBuilder.create()
+        .withCreated(1)
+        .withSummary('1 created')
+        .build();
 
-      (importService.importFromHar as jest.Mock).mockResolvedValue(
-        expectedResult,
-      );
+      importService.importFromHar.mockResolvedValue(expectedResult);
 
       const result = await controller.importHarRaw(projectId, harContent);
 
@@ -140,11 +132,11 @@ describe('ImportController', () => {
       );
 
       await expect(
-        controller.importHarRaw(projectId, null as any),
+        controller.importHarRaw(projectId, null as unknown as string),
       ).rejects.toThrow(BadRequestException);
 
       await expect(
-        controller.importHarRaw(projectId, 123 as any),
+        controller.importHarRaw(projectId, 123 as unknown as string),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -174,16 +166,12 @@ describe('ImportController', () => {
         mimetype: 'application/json',
       } as Express.Multer.File;
 
-      const expectedResult: ImportResult = {
-        created: 1,
-        skipped: 0,
-        errors: [],
-        summary: '1 created',
-      };
+      const expectedResult = ImportResultBuilder.create()
+        .withCreated(1)
+        .withSummary('1 created')
+        .build();
 
-      (importService.importFromPostman as jest.Mock).mockResolvedValue(
-        expectedResult,
-      );
+      importService.importFromPostman.mockResolvedValue(expectedResult);
 
       const result = await controller.importPostman(projectId, mockFile);
 
@@ -231,16 +219,12 @@ describe('ImportController', () => {
         ],
       });
 
-      const expectedResult: ImportResult = {
-        created: 1,
-        skipped: 0,
-        errors: [],
-        summary: '1 created',
-      };
+      const expectedResult = ImportResultBuilder.create()
+        .withCreated(1)
+        .withSummary('1 created')
+        .build();
 
-      (importService.importFromPostman as jest.Mock).mockResolvedValue(
-        expectedResult,
-      );
+      importService.importFromPostman.mockResolvedValue(expectedResult);
 
       const result = await controller.importPostmanRaw(
         projectId,
@@ -262,11 +246,11 @@ describe('ImportController', () => {
       );
 
       await expect(
-        controller.importPostmanRaw(projectId, null as any),
+        controller.importPostmanRaw(projectId, null as unknown as string),
       ).rejects.toThrow(BadRequestException);
 
       await expect(
-        controller.importPostmanRaw(projectId, 123 as any),
+        controller.importPostmanRaw(projectId, 123 as unknown as string),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -280,7 +264,7 @@ describe('ImportController', () => {
         mimetype: 'application/json',
       } as Express.Multer.File;
 
-      (importService.importFromHar as jest.Mock).mockRejectedValue(
+      importService.importFromHar.mockRejectedValue(
         new BadRequestException('Invalid HAR file'),
       );
 
@@ -293,7 +277,7 @@ describe('ImportController', () => {
       const projectId = 'test-project';
       const postmanContent = 'invalid json';
 
-      (importService.importFromPostman as jest.Mock).mockRejectedValue(
+      importService.importFromPostman.mockRejectedValue(
         new BadRequestException('Invalid Postman collection'),
       );
 

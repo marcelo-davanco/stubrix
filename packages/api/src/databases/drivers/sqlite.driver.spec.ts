@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { createMock } from '@golevelup/ts-jest';
 import { SqliteDriver } from './sqlite.driver';
 import * as fs from 'fs';
 
@@ -20,29 +21,25 @@ jest.mock('better-sqlite3', () => {
 
 describe('SqliteDriver', () => {
   let driver: SqliteDriver;
-  let configService: ConfigService;
   let mockFs: jest.Mocked<typeof fs>;
 
   beforeEach(async () => {
     mockFs = fs as jest.Mocked<typeof fs>;
 
+    const mockConfigService = createMock<ConfigService>();
+    mockConfigService.get.mockImplementation((key: string) => {
+      if (key === 'SQLITE_DB_PATH') return '/path/to/test.db';
+      return undefined;
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SqliteDriver,
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn((key: string) => {
-              if (key === 'SQLITE_DB_PATH') return '/path/to/test.db';
-              return undefined;
-            }),
-          },
-        },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
     driver = module.get<SqliteDriver>(SqliteDriver);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -65,10 +62,9 @@ describe('SqliteDriver', () => {
     });
 
     it('should return false when SQLITE_DB_PATH is not set', () => {
-      // Create a new driver instance with no config
-      const noConfigDriver = new SqliteDriver({
-        get: jest.fn().mockReturnValue(undefined),
-      } as any);
+      const noConfig = createMock<ConfigService>();
+      noConfig.get.mockReturnValue(undefined);
+      const noConfigDriver = new SqliteDriver(noConfig);
 
       expect(noConfigDriver.isConfigured()).toBe(false);
     });
@@ -82,9 +78,9 @@ describe('SqliteDriver', () => {
     });
 
     it('should return false when not configured', async () => {
-      const noConfigDriver = new SqliteDriver({
-        get: jest.fn().mockReturnValue(undefined),
-      } as any);
+      const noConfig = createMock<ConfigService>();
+      noConfig.get.mockReturnValue(undefined);
+      const noConfigDriver = new SqliteDriver(noConfig);
       const result = await noConfigDriver.healthCheck();
       expect(result).toBe(false);
     });
@@ -106,9 +102,9 @@ describe('SqliteDriver', () => {
     });
 
     it('should return empty array when not configured', async () => {
-      const noConfigDriver = new SqliteDriver({
-        get: jest.fn().mockReturnValue(undefined),
-      } as any);
+      const noConfig = createMock<ConfigService>();
+      noConfig.get.mockReturnValue(undefined);
+      const noConfigDriver = new SqliteDriver(noConfig);
       const result = await noConfigDriver.listDatabases();
       expect(result).toEqual([]);
     });
@@ -121,7 +117,7 @@ describe('SqliteDriver', () => {
   });
 
   describe('getDatabaseInfo', () => {
-    it('should return database information', async () => {
+    it('should return database information', () => {
       // Skip complex mocking for now - basic functionality test
       expect(driver.getDatabaseInfo).toBeDefined();
     });
@@ -166,9 +162,9 @@ describe('SqliteDriver', () => {
     });
 
     it('should throw error when not configured', async () => {
-      const noConfigDriver = new SqliteDriver({
-        get: jest.fn().mockReturnValue(undefined),
-      } as any);
+      const noConfig = createMock<ConfigService>();
+      noConfig.get.mockReturnValue(undefined);
+      const noConfigDriver = new SqliteDriver(noConfig);
 
       await expect(
         noConfigDriver.createSnapshot('testdb', '/path/to/snapshot.db'),
@@ -239,9 +235,9 @@ describe('SqliteDriver', () => {
     });
 
     it('should throw error when not configured', async () => {
-      const noConfigDriver = new SqliteDriver({
-        get: jest.fn().mockReturnValue(undefined),
-      } as any);
+      const noConfig = createMock<ConfigService>();
+      noConfig.get.mockReturnValue(undefined);
+      const noConfigDriver = new SqliteDriver(noConfig);
 
       await expect(
         noConfigDriver.restoreSnapshot('testdb', '/path/to/snapshot.db'),
