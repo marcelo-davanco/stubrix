@@ -280,7 +280,7 @@ export const SERVICE_DEFINITIONS: ServiceDefinitionSeed[] = [
     dockerCompanions: ['openrag-langflow', 'openrag-opensearch'],
     defaultPort: 8888,
     externalUrl: 'http://localhost:8888',
-    dependsOn: [],
+    dependsOn: ['chromadb'],
     configSchema: OPENRAG_CONFIG_SCHEMA,
   },
   // ─── API Clients ─────────────────────────────────────────────
