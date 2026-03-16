@@ -77,9 +77,20 @@ interface OpenApi3 {
   components?: { schemas?: Record<string, OpenApiSchema> };
 }
 
-const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'] as const;
+const HTTP_METHODS = [
+  'get',
+  'post',
+  'put',
+  'patch',
+  'delete',
+  'head',
+  'options',
+] as const;
 
-export function parseOpenApi(content: string, baseUrl = 'http://localhost'): ImportIR {
+export function parseOpenApi(
+  content: string,
+  baseUrl = 'http://localhost',
+): ImportIR {
   let spec: OpenApi3;
   try {
     spec = (yaml.load(content) ?? JSON.parse(content)) as OpenApi3;
@@ -87,12 +98,16 @@ export function parseOpenApi(content: string, baseUrl = 'http://localhost'): Imp
     try {
       spec = JSON.parse(content) as OpenApi3;
     } catch {
-      throw new BadRequestException('Invalid OpenAPI/Swagger spec: could not parse YAML or JSON');
+      throw new BadRequestException(
+        'Invalid OpenAPI/Swagger spec: could not parse YAML or JSON',
+      );
     }
   }
 
   if (!spec.paths && !spec.openapi && !spec.swagger) {
-    throw new BadRequestException('Invalid OpenAPI/Swagger spec: missing paths or version');
+    throw new BadRequestException(
+      'Invalid OpenAPI/Swagger spec: missing paths or version',
+    );
   }
 
   const isSwagger2 = Boolean(spec.swagger?.startsWith('2'));
@@ -108,7 +123,12 @@ export function parseOpenApi(content: string, baseUrl = 'http://localhost'): Imp
       const allParams = mergeParams(sharedParams, operation.parameters ?? []);
       const queryParams: ImportIRQueryParam[] = allParams
         .filter((p) => p.in === 'query')
-        .map((p) => ({ name: p.name, value: String(p.example ?? p.schema?.example ?? p.schema?.default ?? '') }));
+        .map((p) => ({
+          name: p.name,
+          value: String(
+            p.example ?? p.schema?.example ?? p.schema?.default ?? '',
+          ),
+        }));
 
       const headers: ImportIRHeader[] = allParams
         .filter((p) => p.in === 'header')
@@ -121,30 +141,42 @@ export function parseOpenApi(content: string, baseUrl = 'http://localhost'): Imp
         ? serializeExample(requestBodyContent[firstMimeType], spec)
         : undefined;
 
-      for (const [statusCode, responseObj] of Object.entries(operation.responses ?? { '200': {} })) {
+      for (const [statusCode, responseObj] of Object.entries(
+        operation.responses ?? { '200': {} },
+      )) {
         const status = parseInt(statusCode, 10);
         if (isNaN(status)) continue;
 
         const responseContent = responseObj.content ?? {};
-        const responseMimeType = Object.keys(responseContent)[0] ?? 'application/json';
-        const responseBody = Object.keys(responseContent).length > 0
-          ? serializeExample(responseContent[responseMimeType], spec)
-          : undefined;
+        const responseMimeType =
+          Object.keys(responseContent)[0] ?? 'application/json';
+        const responseBody =
+          Object.keys(responseContent).length > 0
+            ? serializeExample(responseContent[responseMimeType], spec)
+            : undefined;
 
-        const responseHeaders: ImportIRHeader[] = Object.entries(responseObj.headers ?? {}).map(
-          ([name, h]) => ({ name, value: String(h.example ?? '') }),
-        );
+        const responseHeaders: ImportIRHeader[] = Object.entries(
+          responseObj.headers ?? {},
+        ).map(([name, h]) => ({ name, value: String(h.example ?? '') }));
 
         entries.push({
           id: uuidv4(),
-          name: operation.operationId ?? operation.summary ?? `${method.toUpperCase()} ${pathTemplate}`,
+          name:
+            operation.operationId ??
+            operation.summary ??
+            `${method.toUpperCase()} ${pathTemplate}`,
           description: operation.description ?? operation.summary,
           tags: operation.tags,
           request: {
             method: method.toUpperCase(),
             url,
             path: pathTemplate,
-            headers: [...headers, ...(firstMimeType ? [{ name: 'Content-Type', value: firstMimeType }] : [])],
+            headers: [
+              ...headers,
+              ...(firstMimeType
+                ? [{ name: 'Content-Type', value: firstMimeType }]
+                : []),
+            ],
             queryParams,
             body: requestBody,
             bodyMimeType: firstMimeType,
@@ -152,7 +184,9 @@ export function parseOpenApi(content: string, baseUrl = 'http://localhost'): Imp
           response: {
             status,
             headers: [
-              ...(responseMimeType ? [{ name: 'Content-Type', value: responseMimeType }] : []),
+              ...(responseMimeType
+                ? [{ name: 'Content-Type', value: responseMimeType }]
+                : []),
               ...responseHeaders,
             ],
             body: responseBody,
@@ -172,17 +206,25 @@ export function parseOpenApi(content: string, baseUrl = 'http://localhost'): Imp
   };
 }
 
-function mergeParams(shared: OpenApiParameter[], local: OpenApiParameter[]): OpenApiParameter[] {
+function mergeParams(
+  shared: OpenApiParameter[],
+  local: OpenApiParameter[],
+): OpenApiParameter[] {
   const merged = [...shared];
   for (const param of local) {
-    const idx = merged.findIndex((p) => p.name === param.name && p.in === param.in);
+    const idx = merged.findIndex(
+      (p) => p.name === param.name && p.in === param.in,
+    );
     if (idx >= 0) merged[idx] = param;
     else merged.push(param);
   }
   return merged;
 }
 
-function serializeExample(media: OpenApiMediaType, spec: OpenApi3): string | undefined {
+function serializeExample(
+  media: OpenApiMediaType,
+  spec: OpenApi3,
+): string | undefined {
   const value =
     media.example ??
     Object.values(media.examples ?? {})[0]?.value ??
@@ -193,7 +235,11 @@ function serializeExample(media: OpenApiMediaType, spec: OpenApi3): string | und
   return JSON.stringify(value, null, 2);
 }
 
-function generateFromSchema(schema?: OpenApiSchema, spec?: OpenApi3, depth = 0): unknown {
+function generateFromSchema(
+  schema?: OpenApiSchema,
+  spec?: OpenApi3,
+  depth = 0,
+): unknown {
   if (!schema || depth > 3) return undefined;
 
   if (schema.example !== undefined) return schema.example;

@@ -2,7 +2,9 @@ import { Command } from 'commander';
 import { apiGet, apiPost } from './api';
 
 export function registerChaosCommands(program: Command): void {
-  const chaos = program.command('chaos').description('Chaos engineering and fault injection');
+  const chaos = program
+    .command('chaos')
+    .description('Chaos engineering and fault injection');
 
   chaos
     .command('list')
@@ -22,7 +24,9 @@ export function registerChaosCommands(program: Command): void {
 
   chaos
     .command('apply <preset>')
-    .description('Apply a built-in chaos preset (slow-network | flaky-service | total-outage | timeout)')
+    .description(
+      'Apply a built-in chaos preset (slow-network | flaky-service | total-outage | timeout)',
+    )
     .option('--url <pattern>', 'URL regex filter')
     .action(async (preset: string, opts: { url?: string }) => {
       const result = await apiPost('/api/chaos/presets/apply', {
@@ -36,7 +40,9 @@ export function registerChaosCommands(program: Command): void {
     .command('disable <id>')
     .description('Disable a chaos profile by ID')
     .action(async (id: string) => {
-      const result = await apiPost(`/api/chaos/profiles/${id}/toggle`, { enabled: false });
+      const result = await apiPost(`/api/chaos/profiles/${id}/toggle`, {
+        enabled: false,
+      });
       console.log(JSON.stringify(result, null, 2));
     });
 }

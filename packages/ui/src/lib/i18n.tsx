@@ -12,7 +12,8 @@ const STORAGE_KEY = 'stubrix-locale';
 function getStoredLocale(): Locale {
   if (typeof window === 'undefined') return 'en';
   const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
-  if (stored && (stored === 'pt' || stored === 'en' || stored === 'es')) return stored;
+  if (stored && (stored === 'pt' || stored === 'en' || stored === 'es'))
+    return stored;
   const lang = navigator.language?.toLowerCase();
   if (lang?.startsWith('pt')) return 'pt';
   if (lang?.startsWith('es')) return 'es';
@@ -36,7 +37,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>): string => {
       let msg = messages[locale]?.[key] ?? messages.en?.[key] ?? key;
-      if (vars) Object.entries(vars).forEach(([k, v]) => { msg = msg.replaceAll(`{{${k}}}`, String(v)); });
+      if (vars)
+        Object.entries(vars).forEach(([k, v]) => {
+          msg = msg.replaceAll(`{{${k}}}`, String(v));
+        });
       return msg;
     },
     [locale],

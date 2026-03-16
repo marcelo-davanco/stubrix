@@ -20,12 +20,19 @@ export function MockServersPage({
   onNavigateToMocks,
   onNavigateToRecording,
 }: MockServersPageProps) {
-  const { projects, status, loading, deleteProject, refreshAll } = useMockManager();
+  const { projects, status, loading, deleteProject, refreshAll } =
+    useMockManager();
   const [showCreate, setShowCreate] = useState(false);
-  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
+  const T = useCallback(
+    (key: string, fallback: string) => (t ? t(key) : fallback),
+    [t],
+  );
 
   const handleDelete = async (id: string) => {
-    const msg = T('projects.deleteConfirm', `Delete project "${id}"? Its simulations will be moved to the "Default" project.`);
+    const msg = T(
+      'projects.deleteConfirm',
+      `Delete project "${id}"? Its simulations will be moved to the "Default" project.`,
+    );
     if (!confirm(msg.replace('{{id}}', id))) return;
     await deleteProject(id);
   };
@@ -42,8 +49,12 @@ export function MockServersPage({
     <div className="p-6" data-component="mock-servers-page">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">{T('projects.title', 'Projects')}</h1>
-          <p className="text-text-secondary text-sm mt-1">{T('projects.subtitle', 'Organize your simulated APIs by project')}</p>
+          <h1 className="text-2xl font-bold">
+            {T('projects.title', 'Projects')}
+          </h1>
+          <p className="text-text-secondary text-sm mt-1">
+            {T('projects.subtitle', 'Organize your simulated APIs by project')}
+          </p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -69,7 +80,12 @@ export function MockServersPage({
           />
         ))}
         {projects.length === 0 && (
-          <EmptyState message={T('projects.empty', 'No projects yet. Create your first project to get started.')} />
+          <EmptyState
+            message={T(
+              'projects.empty',
+              'No projects yet. Create your first project to get started.',
+            )}
+          />
         )}
       </div>
 
@@ -77,7 +93,10 @@ export function MockServersPage({
         <CreateProjectModal
           t={t}
           onClose={() => setShowCreate(false)}
-          onCreate={() => { setShowCreate(false); void refreshAll(); }}
+          onCreate={() => {
+            setShowCreate(false);
+            void refreshAll();
+          }}
         />
       )}
     </div>

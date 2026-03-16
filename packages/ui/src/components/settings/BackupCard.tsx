@@ -1,50 +1,62 @@
-import { Archive, Download, Eye, RotateCcw, Trash2, Lock } from 'lucide-react'
-import { useTranslation } from '../../lib/i18n'
+import { Archive, Download, Eye, RotateCcw, Trash2, Lock } from 'lucide-react';
+import { useTranslation } from '../../lib/i18n';
 
 export interface BackupItem {
-  id: string
-  name: string
-  description?: string
-  scope: string
-  servicesIncluded: string[]
-  fileSize: number
-  checksum: string
-  encrypted: boolean
-  createdAt: string
+  id: string;
+  name: string;
+  description?: string;
+  scope: string;
+  servicesIncluded: string[];
+  fileSize: number;
+  checksum: string;
+  encrypted: boolean;
+  createdAt: string;
 }
 
 interface BackupCardProps {
-  backup: BackupItem
-  onPreview: (id: string) => void
-  onRestore: (id: string) => void
-  onDownload: (id: string) => void
-  onDelete: (id: string) => void
+  backup: BackupItem;
+  onPreview: (id: string) => void;
+  onRestore: (id: string) => void;
+  onDownload: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleString(undefined, {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    })
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   } catch {
-    return iso
+    return iso;
   }
 }
 
-export function BackupCard({ backup, onPreview, onRestore, onDownload, onDelete }: BackupCardProps) {
-  const { t } = useTranslation()
-  const scopeLabel = backup.scope === 'full'
-    ? t('backups.fullBackup', { count: backup.servicesIncluded.length })
-    : t('backups.partialWithCount', { count: backup.servicesIncluded.length })
+export function BackupCard({
+  backup,
+  onPreview,
+  onRestore,
+  onDownload,
+  onDelete,
+}: BackupCardProps) {
+  const { t } = useTranslation();
+  const scopeLabel =
+    backup.scope === 'full'
+      ? t('backups.fullBackup', { count: backup.servicesIncluded.length })
+      : t('backups.partialWithCount', {
+          count: backup.servicesIncluded.length,
+        });
 
-  const isAuto = backup.name.startsWith('auto-')
+  const isAuto = backup.name.startsWith('auto-');
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors">
@@ -55,7 +67,9 @@ export function BackupCard({ backup, onPreview, onRestore, onDownload, onDelete 
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-semibold truncate">{backup.name}</p>
               {isAuto && (
-                <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-text-secondary">{t('backups.autoBackup')}</span>
+                <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-text-secondary">
+                  {t('backups.autoBackup')}
+                </span>
               )}
               {backup.encrypted && (
                 <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300">
@@ -65,11 +79,16 @@ export function BackupCard({ backup, onPreview, onRestore, onDownload, onDelete 
               )}
             </div>
             <p className="text-xs text-text-secondary mt-0.5">
-              {t('backups.scope')}: {scopeLabel} | {t('backups.size')}: {formatBytes(backup.fileSize)}
+              {t('backups.scope')}: {scopeLabel} | {t('backups.size')}:{' '}
+              {formatBytes(backup.fileSize)}
             </p>
-            <p className="text-xs text-text-secondary">{t('backups.createdAt')}: {formatDate(backup.createdAt)}</p>
+            <p className="text-xs text-text-secondary">
+              {t('backups.createdAt')}: {formatDate(backup.createdAt)}
+            </p>
             {backup.description && (
-              <p className="text-xs text-text-secondary/70 mt-1 italic">{backup.description}</p>
+              <p className="text-xs text-text-secondary/70 mt-1 italic">
+                {backup.description}
+              </p>
             )}
           </div>
         </div>
@@ -110,5 +129,5 @@ export function BackupCard({ backup, onPreview, onRestore, onDownload, onDelete 
         </div>
       </div>
     </div>
-  )
+  );
 }

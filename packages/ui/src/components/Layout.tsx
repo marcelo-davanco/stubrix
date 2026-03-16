@@ -1,28 +1,105 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
-  FolderOpen, ScrollText, FlaskConical, Database,
-  Camera, Layers, Webhook, ShieldAlert,
-  BarChart2, ShieldCheck, Brain, LayoutTemplate,
-  GitBranch, Gauge, Network, Radio, Wifi,
-  Users, ShieldCheck as IamIcon, FileCheck,
-  Cloud, HardDrive, Settings,
+  FolderOpen,
+  ScrollText,
+  FlaskConical,
+  Database,
+  Camera,
+  Layers,
+  Webhook,
+  ShieldAlert,
+  BarChart2,
+  ShieldCheck,
+  Brain,
+  LayoutTemplate,
+  GitBranch,
+  Gauge,
+  Network,
+  Radio,
+  Wifi,
+  Users,
+  ShieldCheck as IamIcon,
+  FileCheck,
+  Cloud,
+  HardDrive,
+  Settings,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTranslation } from '../lib/i18n';
 
-type NavItem = { to: string; labelKey: string; icon: React.ElementType; end?: boolean };
+type NavItem = {
+  to: string;
+  labelKey: string;
+  icon: React.ElementType;
+  end?: boolean;
+};
 type NavGroup = { labelKey: string; items: NavItem[] };
 
 const navGroups: NavGroup[] = [
-  { labelKey: 'nav.groupCore', items: [{ to: '/', labelKey: 'nav.projects', icon: FolderOpen, end: true }, { to: '/databases', labelKey: 'nav.databases', icon: Database }, { to: '/logs', labelKey: 'nav.logs', icon: ScrollText }] },
-  { labelKey: 'nav.groupMocking', items: [{ to: '/scenarios', labelKey: 'nav.scenarios', icon: Camera }, { to: '/stateful', labelKey: 'nav.statefulMocks', icon: Layers }, { to: '/templates', labelKey: 'nav.templates', icon: LayoutTemplate }, { to: '/webhooks', labelKey: 'nav.webhooks', icon: Webhook }] },
-  { labelKey: 'nav.groupQuality', items: [{ to: '/coverage', labelKey: 'nav.coverage', icon: BarChart2 }, { to: '/governance', labelKey: 'nav.governance', icon: ShieldCheck }, { to: '/chaos', labelKey: 'nav.chaosPanel', icon: ShieldAlert }, { to: '/contracts', labelKey: 'nav.contracts', icon: FileCheck }] },
-  { labelKey: 'nav.groupIntelligence', items: [{ to: '/intelligence', labelKey: 'nav.intelligence', icon: Brain }] },
-  { labelKey: 'nav.groupObservability', items: [{ to: '/metrics', labelKey: 'nav.metrics', icon: BarChart2 }, { to: '/tracing', labelKey: 'nav.tracing', icon: GitBranch }, { to: '/performance', labelKey: 'nav.performance', icon: Gauge }] },
-  { labelKey: 'nav.groupProtocols', items: [{ to: '/protocols', labelKey: 'nav.protocols', icon: Network }, { to: '/events', labelKey: 'nav.events', icon: Radio }, { to: '/chaos-network', labelKey: 'nav.networkChaos', icon: Wifi }] },
-  { labelKey: 'nav.groupEnterprise', items: [{ to: '/auth', labelKey: 'nav.authUsers', icon: Users }, { to: '/iam', labelKey: 'nav.iam', icon: IamIcon }] },
-  { labelKey: 'nav.groupCloud', items: [{ to: '/cloud', labelKey: 'nav.cloudLocalStack', icon: Cloud }, { to: '/storage', labelKey: 'nav.storageMinio', icon: HardDrive }] },
-  { labelKey: 'nav.groupSystem', items: [{ to: '/settings', labelKey: 'nav.settings', icon: Settings }] },
+  {
+    labelKey: 'nav.groupCore',
+    items: [
+      { to: '/', labelKey: 'nav.projects', icon: FolderOpen, end: true },
+      { to: '/databases', labelKey: 'nav.databases', icon: Database },
+      { to: '/logs', labelKey: 'nav.logs', icon: ScrollText },
+    ],
+  },
+  {
+    labelKey: 'nav.groupMocking',
+    items: [
+      { to: '/scenarios', labelKey: 'nav.scenarios', icon: Camera },
+      { to: '/stateful', labelKey: 'nav.statefulMocks', icon: Layers },
+      { to: '/templates', labelKey: 'nav.templates', icon: LayoutTemplate },
+      { to: '/webhooks', labelKey: 'nav.webhooks', icon: Webhook },
+    ],
+  },
+  {
+    labelKey: 'nav.groupQuality',
+    items: [
+      { to: '/coverage', labelKey: 'nav.coverage', icon: BarChart2 },
+      { to: '/governance', labelKey: 'nav.governance', icon: ShieldCheck },
+      { to: '/chaos', labelKey: 'nav.chaosPanel', icon: ShieldAlert },
+      { to: '/contracts', labelKey: 'nav.contracts', icon: FileCheck },
+    ],
+  },
+  {
+    labelKey: 'nav.groupIntelligence',
+    items: [{ to: '/intelligence', labelKey: 'nav.intelligence', icon: Brain }],
+  },
+  {
+    labelKey: 'nav.groupObservability',
+    items: [
+      { to: '/metrics', labelKey: 'nav.metrics', icon: BarChart2 },
+      { to: '/tracing', labelKey: 'nav.tracing', icon: GitBranch },
+      { to: '/performance', labelKey: 'nav.performance', icon: Gauge },
+    ],
+  },
+  {
+    labelKey: 'nav.groupProtocols',
+    items: [
+      { to: '/protocols', labelKey: 'nav.protocols', icon: Network },
+      { to: '/events', labelKey: 'nav.events', icon: Radio },
+      { to: '/chaos-network', labelKey: 'nav.networkChaos', icon: Wifi },
+    ],
+  },
+  {
+    labelKey: 'nav.groupEnterprise',
+    items: [
+      { to: '/auth', labelKey: 'nav.authUsers', icon: Users },
+      { to: '/iam', labelKey: 'nav.iam', icon: IamIcon },
+    ],
+  },
+  {
+    labelKey: 'nav.groupCloud',
+    items: [
+      { to: '/cloud', labelKey: 'nav.cloudLocalStack', icon: Cloud },
+      { to: '/storage', labelKey: 'nav.storageMinio', icon: HardDrive },
+    ],
+  },
+  {
+    labelKey: 'nav.groupSystem',
+    items: [{ to: '/settings', labelKey: 'nav.settings', icon: Settings }],
+  },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>

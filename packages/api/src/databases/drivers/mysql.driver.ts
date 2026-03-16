@@ -133,7 +133,7 @@ export class MysqlDriver implements DatabaseDriverInterface {
       if (overrides?.username ?? this.user) {
         args.push(`--user=${overrides?.username ?? this.user}`);
       }
-      
+
       // Execute mysqldump
       this.logger.log(`Creating MySQL snapshot: ${database} -> ${filepath}`);
       execFileSync('mysqldump', args, {

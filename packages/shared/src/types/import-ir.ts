@@ -1,4 +1,9 @@
-export type ImportIRFormat = 'har' | 'postman' | 'openapi' | 'swagger' | 'unknown';
+export type ImportIRFormat =
+  | 'har'
+  | 'postman'
+  | 'openapi'
+  | 'swagger'
+  | 'unknown';
 
 export interface ImportIRHeader {
   name: string;

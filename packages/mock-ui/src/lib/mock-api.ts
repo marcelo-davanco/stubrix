@@ -137,7 +137,11 @@ export type CreateWebhookSimulationDto = {
   scheduleMs?: number;
 };
 
-export type TemplateVariable = { name: string; description?: string; default?: string };
+export type TemplateVariable = {
+  name: string;
+  description?: string;
+  default?: string;
+};
 
 export type MockTemplate = {
   id: string;
@@ -187,7 +191,11 @@ export type PerformanceScript = {
   description?: string;
   script: string;
   builtIn: boolean;
-  options?: { vus?: number; duration?: string; thresholds?: Record<string, string[]> };
+  options?: {
+    vus?: number;
+    duration?: string;
+    thresholds?: Record<string, string[]>;
+  };
 };
 
 export type PerformanceBaseline = {
@@ -319,8 +327,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const mockApi = {
   status: {
-    get: (): Promise<StatusResponse> =>
-      request<StatusResponse>('/status'),
+    get: (): Promise<StatusResponse> => request<StatusResponse>('/status'),
   },
 
   engine: {
@@ -329,14 +336,18 @@ export const mockApi = {
   },
 
   projects: {
-    list: (): Promise<Project[]> =>
-      request<Project[]>('/projects'),
-    get: (id: string): Promise<Project> =>
-      request<Project>(`/projects/${id}`),
+    list: (): Promise<Project[]> => request<Project[]>('/projects'),
+    get: (id: string): Promise<Project> => request<Project>(`/projects/${id}`),
     create: (dto: CreateProjectDto): Promise<Project> =>
-      request<Project>('/projects', { method: 'POST', body: JSON.stringify(dto) }),
+      request<Project>('/projects', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     update: (id: string, dto: UpdateProjectDto): Promise<Project> =>
-      request<Project>(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(dto) }),
+      request<Project>(`/projects/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(dto),
+      }),
     delete: (id: string): Promise<void> =>
       request<void>(`/projects/${id}`, { method: 'DELETE' }),
   },
@@ -351,7 +362,11 @@ export const mockApi = {
         method: 'POST',
         body: JSON.stringify(dto),
       }),
-    update: (projectId: string, id: string, dto: UpdateMockDto): Promise<MockDetail> =>
+    update: (
+      projectId: string,
+      id: string,
+      dto: UpdateMockDto,
+    ): Promise<MockDetail> =>
       request<MockDetail>(`/projects/${projectId}/mocks/${id}`, {
         method: 'PUT',
         body: JSON.stringify(dto),
@@ -363,26 +378,41 @@ export const mockApi = {
   recording: {
     status: (projectId: string): Promise<RecordingState> =>
       request<RecordingState>(`/projects/${projectId}/recording/status`),
-    start: (projectId: string, dto: StartRecordingDto): Promise<RecordingState> =>
+    start: (
+      projectId: string,
+      dto: StartRecordingDto,
+    ): Promise<RecordingState> =>
       request<RecordingState>(`/projects/${projectId}/recording/start`, {
         method: 'POST',
         body: JSON.stringify(dto),
       }),
     stop: (projectId: string): Promise<RecordingStopResult> =>
-      request<RecordingStopResult>(`/projects/${projectId}/recording/stop`, { method: 'POST' }),
+      request<RecordingStopResult>(`/projects/${projectId}/recording/stop`, {
+        method: 'POST',
+      }),
     snapshot: (projectId: string): Promise<SnapshotResult> =>
-      request<SnapshotResult>(`/projects/${projectId}/recording/snapshot`, { method: 'POST' }),
+      request<SnapshotResult>(`/projects/${projectId}/recording/snapshot`, {
+        method: 'POST',
+      }),
   },
 
   scenarios: {
-    list: (): Promise<ScenarioMeta[]> =>
-      request<ScenarioMeta[]>('/scenarios'),
+    list: (): Promise<ScenarioMeta[]> => request<ScenarioMeta[]>('/scenarios'),
     get: (id: string): Promise<ScenarioBundle> =>
       request<ScenarioBundle>(`/scenarios/${id}`),
-    capture: (dto: { name: string; description?: string; tags?: string[] }): Promise<ScenarioBundle> =>
-      request<ScenarioBundle>('/scenarios/capture', { method: 'POST', body: JSON.stringify(dto) }),
+    capture: (dto: {
+      name: string;
+      description?: string;
+      tags?: string[];
+    }): Promise<ScenarioBundle> =>
+      request<ScenarioBundle>('/scenarios/capture', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     restore: (id: string): Promise<{ restored: number; name: string }> =>
-      request<{ restored: number; name: string }>(`/scenarios/${id}/restore`, { method: 'POST' }),
+      request<{ restored: number; name: string }>(`/scenarios/${id}/restore`, {
+        method: 'POST',
+      }),
     delete: (id: string): Promise<void> =>
       request<void>(`/scenarios/${id}`, { method: 'DELETE' }),
     diff: (idA: string, idB: string): Promise<ScenarioDiff> =>
@@ -395,13 +425,22 @@ export const mockApi = {
     get: (id: string): Promise<StatefulMock> =>
       request<StatefulMock>(`/stateful/mocks/${id}`),
     create: (dto: CreateStatefulMockDto): Promise<StatefulMock> =>
-      request<StatefulMock>('/stateful/mocks', { method: 'POST', body: JSON.stringify(dto) }),
+      request<StatefulMock>('/stateful/mocks', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     update: (id: string, dto: UpdateStatefulMockDto): Promise<StatefulMock> =>
-      request<StatefulMock>(`/stateful/mocks/${id}`, { method: 'PUT', body: JSON.stringify(dto) }),
+      request<StatefulMock>(`/stateful/mocks/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(dto),
+      }),
     delete: (id: string): Promise<void> =>
       request<void>(`/stateful/mocks/${id}`, { method: 'DELETE' }),
     test: (id: string, requestBody?: unknown): Promise<unknown> =>
-      request<unknown>(`/stateful/mocks/${id}/test`, { method: 'POST', body: JSON.stringify(requestBody ?? {}) }),
+      request<unknown>(`/stateful/mocks/${id}/test`, {
+        method: 'POST',
+        body: JSON.stringify(requestBody ?? {}),
+      }),
     preview: (id: string): Promise<unknown> =>
       request<unknown>(`/stateful/mocks/${id}/preview`),
   },
@@ -410,11 +449,20 @@ export const mockApi = {
     health: (): Promise<{ available: boolean }> =>
       request<{ available: boolean }>('/intelligence/health'),
     query: (question: string): Promise<RagQueryResult> =>
-      request<RagQueryResult>('/intelligence/query', { method: 'POST', body: JSON.stringify({ question }) }),
+      request<RagQueryResult>('/intelligence/query', {
+        method: 'POST',
+        body: JSON.stringify({ question }),
+      }),
     suggestMock: (description: string): Promise<MockSuggestion> =>
-      request<MockSuggestion>('/intelligence/suggest/mock', { method: 'POST', body: JSON.stringify({ description }) }),
+      request<MockSuggestion>('/intelligence/suggest/mock', {
+        method: 'POST',
+        body: JSON.stringify({ description }),
+      }),
     suggestData: (description: string): Promise<DataSuggestion> =>
-      request<DataSuggestion>('/intelligence/suggest/data', { method: 'POST', body: JSON.stringify({ description }) }),
+      request<DataSuggestion>('/intelligence/suggest/data', {
+        method: 'POST',
+        body: JSON.stringify({ description }),
+      }),
     index: (): Promise<{ indexed: number }> =>
       request<{ indexed: number }>('/intelligence/index', { method: 'POST' }),
   },
@@ -423,74 +471,133 @@ export const mockApi = {
     listProfiles: (): Promise<FaultProfile[]> =>
       request<FaultProfile[]>('/chaos/profiles'),
     createProfile: (dto: CreateChaosProfileDto): Promise<FaultProfile> =>
-      request<FaultProfile>('/chaos/profiles', { method: 'POST', body: JSON.stringify(dto) }),
+      request<FaultProfile>('/chaos/profiles', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     toggleProfile: (id: string, enabled: boolean): Promise<FaultProfile> =>
-      request<FaultProfile>(`/chaos/profiles/${id}/toggle`, { method: 'PATCH', body: JSON.stringify({ enabled }) }),
+      request<FaultProfile>(`/chaos/profiles/${id}/toggle`, {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
+      }),
     deleteProfile: (id: string): Promise<void> =>
       request<void>(`/chaos/profiles/${id}`, { method: 'DELETE' }),
     listPresets: (): Promise<ChaosPreset[]> =>
       request<ChaosPreset[]>('/chaos/presets'),
     applyPreset: (preset: string, urlPattern?: string): Promise<FaultProfile> =>
-      request<FaultProfile>('/chaos/presets/apply', { method: 'POST', body: JSON.stringify({ preset, urlPattern }) }),
+      request<FaultProfile>('/chaos/presets/apply', {
+        method: 'POST',
+        body: JSON.stringify({ preset, urlPattern }),
+      }),
   },
 
   coverage: {
     analyze: (content: string, specFile?: string): Promise<CoverageReport> =>
-      request<CoverageReport>('/coverage/analyze', { method: 'POST', body: JSON.stringify({ content, specFile }) }),
-    analyzePostman: (content: string, specFile?: string): Promise<CoverageReport> =>
-      request<CoverageReport>('/coverage/analyze/postman-raw', { method: 'POST', body: JSON.stringify({ content, specFile }) }),
+      request<CoverageReport>('/coverage/analyze', {
+        method: 'POST',
+        body: JSON.stringify({ content, specFile }),
+      }),
+    analyzePostman: (
+      content: string,
+      specFile?: string,
+    ): Promise<CoverageReport> =>
+      request<CoverageReport>('/coverage/analyze/postman-raw', {
+        method: 'POST',
+        body: JSON.stringify({ content, specFile }),
+      }),
     score: (specUrl?: string): Promise<{ coverage: number; summary: string }> =>
-      request<{ coverage: number; summary: string }>(`/coverage/score${specUrl ? `?specUrl=${encodeURIComponent(specUrl)}` : ''}`),
-    textReport: (content: string, specFile?: string): Promise<{ report: string }> =>
-      request<{ report: string }>('/coverage/report/text', { method: 'POST', body: JSON.stringify({ content, specFile }) }),
+      request<{ coverage: number; summary: string }>(
+        `/coverage/score${specUrl ? `?specUrl=${encodeURIComponent(specUrl)}` : ''}`,
+      ),
+    textReport: (
+      content: string,
+      specFile?: string,
+    ): Promise<{ report: string }> =>
+      request<{ report: string }>('/coverage/report/text', {
+        method: 'POST',
+        body: JSON.stringify({ content, specFile }),
+      }),
   },
 
   governance: {
     lint: (content: string): Promise<LintResult> =>
-      request<LintResult>('/governance/lint', { method: 'POST', body: JSON.stringify({ content }) }),
+      request<LintResult>('/governance/lint', {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }),
     rules: (): Promise<{ rules: LintRule[] }> =>
       request<{ rules: LintRule[] }>('/governance/lint/rules'),
   },
 
   webhooks: {
-    listEvents: (limit?: number, endpoint?: string): Promise<WebhookEvent[]> => {
+    listEvents: (
+      limit?: number,
+      endpoint?: string,
+    ): Promise<WebhookEvent[]> => {
       const params = new URLSearchParams();
       if (limit) params.set('limit', String(limit));
       if (endpoint) params.set('endpoint', endpoint);
-      return request<WebhookEvent[]>(`/webhooks/events${params.size ? `?${params}` : ''}`);
+      return request<WebhookEvent[]>(
+        `/webhooks/events${params.size ? `?${params}` : ''}`,
+      );
     },
     getEvent: (id: string): Promise<WebhookEvent> =>
       request<WebhookEvent>(`/webhooks/events/${id}`),
-    replayEvent: (id: string, targetUrl?: string): Promise<{ status: number; ok: boolean }> =>
-      request<{ status: number; ok: boolean }>(`/webhooks/events/${id}/replay${targetUrl ? `?targetUrl=${encodeURIComponent(targetUrl)}` : ''}`, { method: 'POST' }),
+    replayEvent: (
+      id: string,
+      targetUrl?: string,
+    ): Promise<{ status: number; ok: boolean }> =>
+      request<{ status: number; ok: boolean }>(
+        `/webhooks/events/${id}/replay${targetUrl ? `?targetUrl=${encodeURIComponent(targetUrl)}` : ''}`,
+        { method: 'POST' },
+      ),
     clearEvents: (): Promise<void> =>
       request<void>('/webhooks/events', { method: 'DELETE' }),
     listSimulations: (): Promise<WebhookSimulation[]> =>
       request<WebhookSimulation[]>('/webhooks/simulations'),
-    createSimulation: (dto: CreateWebhookSimulationDto): Promise<WebhookSimulation> =>
-      request<WebhookSimulation>('/webhooks/simulations', { method: 'POST', body: JSON.stringify(dto) }),
+    createSimulation: (
+      dto: CreateWebhookSimulationDto,
+    ): Promise<WebhookSimulation> =>
+      request<WebhookSimulation>('/webhooks/simulations', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     fireSimulation: (id: string): Promise<{ status: number; ok: boolean }> =>
-      request<{ status: number; ok: boolean }>(`/webhooks/simulations/${id}/fire`, { method: 'POST' }),
+      request<{ status: number; ok: boolean }>(
+        `/webhooks/simulations/${id}/fire`,
+        { method: 'POST' },
+      ),
   },
 
   templates: {
     list: (builtIn?: boolean): Promise<MockTemplate[]> =>
-      request<MockTemplate[]>(`/templates${builtIn === false ? '?builtIn=false' : ''}`),
+      request<MockTemplate[]>(
+        `/templates${builtIn === false ? '?builtIn=false' : ''}`,
+      ),
     get: (id: string): Promise<MockTemplate> =>
       request<MockTemplate>(`/templates/${id}`),
     create: (dto: CreateTemplateDto): Promise<MockTemplate> =>
-      request<MockTemplate>('/templates', { method: 'POST', body: JSON.stringify(dto) }),
+      request<MockTemplate>('/templates', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     delete: (id: string): Promise<void> =>
       request<void>(`/templates/${id}`, { method: 'DELETE' }),
-    apply: (id: string, variables: Record<string, string>, outputDir?: string): Promise<{ applied: number }> =>
-      request<{ applied: number }>(`/templates/${id}/apply`, { method: 'POST', body: JSON.stringify({ variables, outputDir }) }),
+    apply: (
+      id: string,
+      variables: Record<string, string>,
+      outputDir?: string,
+    ): Promise<{ applied: number }> =>
+      request<{ applied: number }>(`/templates/${id}/apply`, {
+        method: 'POST',
+        body: JSON.stringify({ variables, outputDir }),
+      }),
   },
 
   metrics: {
     summary: (): Promise<MetricsSummary> =>
       request<MetricsSummary>('/metrics/summary'),
-    health: (): Promise<unknown> =>
-      request<unknown>('/metrics/health'),
+    health: (): Promise<unknown> => request<unknown>('/metrics/health'),
     prometheus: (): Promise<string> =>
       fetch(`${_baseUrl}/metrics/prometheus`).then((r) => r.text()),
   },
@@ -511,83 +618,201 @@ export const mockApi = {
   performance: {
     listScripts: (): Promise<PerformanceScript[]> =>
       request<PerformanceScript[]>('/performance/scripts'),
-    createScript: (dto: { name: string; script: string; description?: string; options?: Record<string, unknown> }): Promise<PerformanceScript> =>
-      request<PerformanceScript>('/performance/scripts', { method: 'POST', body: JSON.stringify(dto) }),
-    exportScriptUrl: (id: string): string => `${_baseUrl}/performance/scripts/${id}/export`,
+    createScript: (dto: {
+      name: string;
+      script: string;
+      description?: string;
+      options?: Record<string, unknown>;
+    }): Promise<PerformanceScript> =>
+      request<PerformanceScript>('/performance/scripts', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
+    exportScriptUrl: (id: string): string =>
+      `${_baseUrl}/performance/scripts/${id}/export`,
     listBaselines: (): Promise<PerformanceBaseline[]> =>
       request<PerformanceBaseline[]>('/performance/baselines'),
-    saveBaseline: (dto: { name: string; scriptId: string; metrics: PerformanceBaseline['metrics'] }): Promise<PerformanceBaseline> =>
-      request<PerformanceBaseline>('/performance/baselines', { method: 'POST', body: JSON.stringify(dto) }),
-    compareBaseline: (id: string, current: PerformanceBaseline['metrics']): Promise<unknown> =>
-      request<unknown>(`/performance/baselines/${id}/compare`, { method: 'POST', body: JSON.stringify({ current }) }),
+    saveBaseline: (dto: {
+      name: string;
+      scriptId: string;
+      metrics: PerformanceBaseline['metrics'];
+    }): Promise<PerformanceBaseline> =>
+      request<PerformanceBaseline>('/performance/baselines', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
+    compareBaseline: (
+      id: string,
+      current: PerformanceBaseline['metrics'],
+    ): Promise<unknown> =>
+      request<unknown>(`/performance/baselines/${id}/compare`, {
+        method: 'POST',
+        body: JSON.stringify({ current }),
+      }),
   },
 
   protocols: {
     list: (protocol?: string): Promise<ProtocolMock[]> =>
-      request<ProtocolMock[]>(`/protocols/mocks${protocol ? `?protocol=${protocol}` : ''}`),
-    create: (dto: { protocol: string; name: string; schema?: string; resolvers?: Record<string, unknown>; protoFile?: string; grpcService?: string; endpoint?: string }): Promise<ProtocolMock> =>
-      request<ProtocolMock>('/protocols/mocks', { method: 'POST', body: JSON.stringify(dto) }),
+      request<ProtocolMock[]>(
+        `/protocols/mocks${protocol ? `?protocol=${protocol}` : ''}`,
+      ),
+    create: (dto: {
+      protocol: string;
+      name: string;
+      schema?: string;
+      resolvers?: Record<string, unknown>;
+      protoFile?: string;
+      grpcService?: string;
+      endpoint?: string;
+    }): Promise<ProtocolMock> =>
+      request<ProtocolMock>('/protocols/mocks', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     delete: (id: string): Promise<void> =>
       request<void>(`/protocols/mocks/${id}`, { method: 'DELETE' }),
     parseGraphQL: (schema: string): Promise<unknown> =>
-      request<unknown>('/protocols/graphql/parse', { method: 'POST', body: JSON.stringify({ schema }) }),
-    grpcHealth: (): Promise<unknown> => request<unknown>('/protocols/grpc/health'),
-    listProtos: (): Promise<ProtoFileInfo[]> => request<ProtoFileInfo[]>('/protocols/grpc/protos'),
+      request<unknown>('/protocols/graphql/parse', {
+        method: 'POST',
+        body: JSON.stringify({ schema }),
+      }),
+    grpcHealth: (): Promise<unknown> =>
+      request<unknown>('/protocols/grpc/health'),
+    listProtos: (): Promise<ProtoFileInfo[]> =>
+      request<ProtoFileInfo[]>('/protocols/grpc/protos'),
     getProto: (name: string): Promise<{ name: string; content: string }> =>
-      request<{ name: string; content: string }>(`/protocols/grpc/protos/${encodeURIComponent(name)}`),
+      request<{ name: string; content: string }>(
+        `/protocols/grpc/protos/${encodeURIComponent(name)}`,
+      ),
     saveProto: (name: string, content: string): Promise<ProtoFileInfo> =>
-      request<ProtoFileInfo>('/protocols/grpc/protos', { method: 'PUT', body: JSON.stringify({ name, content }) }),
+      request<ProtoFileInfo>('/protocols/grpc/protos', {
+        method: 'PUT',
+        body: JSON.stringify({ name, content }),
+      }),
     deleteProto: (name: string): Promise<void> =>
-      request<void>(`/protocols/grpc/protos/${encodeURIComponent(name)}`, { method: 'DELETE' }),
-    listStubs: (): Promise<GrpcStub[]> => request<GrpcStub[]>('/protocols/grpc/stubs'),
+      request<void>(`/protocols/grpc/protos/${encodeURIComponent(name)}`, {
+        method: 'DELETE',
+      }),
+    listStubs: (): Promise<GrpcStub[]> =>
+      request<GrpcStub[]>('/protocols/grpc/stubs'),
     addStub: (stub: Record<string, unknown>): Promise<GrpcStub> =>
-      request<GrpcStub>('/protocols/grpc/stubs', { method: 'POST', body: JSON.stringify({ stub }) }),
+      request<GrpcStub>('/protocols/grpc/stubs', {
+        method: 'POST',
+        body: JSON.stringify({ stub }),
+      }),
     clearStubs: (): Promise<void> =>
       request<void>('/protocols/grpc/stubs', { method: 'DELETE' }),
   },
 
   events: {
     health: (): Promise<unknown> => request<unknown>('/events/health'),
-    publish: (dto: { broker: string; topic: string; payload: unknown; headers?: Record<string, string> }): Promise<unknown> =>
-      request<unknown>('/events/publish', { method: 'POST', body: JSON.stringify(dto) }),
+    publish: (dto: {
+      broker: string;
+      topic: string;
+      payload: unknown;
+      headers?: Record<string, string>;
+    }): Promise<unknown> =>
+      request<unknown>('/events/publish', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     listPublished: (limit?: number): Promise<EventRecord[]> =>
-      request<EventRecord[]>(`/events/published${limit ? `?limit=${limit}` : ''}`),
+      request<EventRecord[]>(
+        `/events/published${limit ? `?limit=${limit}` : ''}`,
+      ),
     listTemplates: (): Promise<EventTemplate[]> =>
       request<EventTemplate[]>('/events/templates'),
-    createTemplate: (dto: { name: string; broker: string; topic: string; payload: unknown; headers?: Record<string, string>; scheduleMs?: number }): Promise<EventTemplate> =>
-      request<EventTemplate>('/events/templates', { method: 'POST', body: JSON.stringify(dto) }),
+    createTemplate: (dto: {
+      name: string;
+      broker: string;
+      topic: string;
+      payload: unknown;
+      headers?: Record<string, string>;
+      scheduleMs?: number;
+    }): Promise<EventTemplate> =>
+      request<EventTemplate>('/events/templates', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     fireTemplate: (id: string): Promise<unknown> =>
       request<unknown>(`/events/templates/${id}/fire`, { method: 'POST' }),
   },
 
   chaosNetwork: {
     health: (): Promise<unknown> => request<unknown>('/chaos-network/health'),
-    listProxies: (): Promise<ToxiProxy[]> => request<ToxiProxy[]>('/chaos-network/proxies'),
-    createProxy: (dto: { name: string; listen: string; upstream: string }): Promise<ToxiProxy> =>
-      request<ToxiProxy>('/chaos-network/proxies', { method: 'POST', body: JSON.stringify(dto) }),
+    listProxies: (): Promise<ToxiProxy[]> =>
+      request<ToxiProxy[]>('/chaos-network/proxies'),
+    createProxy: (dto: {
+      name: string;
+      listen: string;
+      upstream: string;
+    }): Promise<ToxiProxy> =>
+      request<ToxiProxy>('/chaos-network/proxies', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     deleteProxy: (name: string): Promise<void> =>
-      request<void>(`/chaos-network/proxies/${encodeURIComponent(name)}`, { method: 'DELETE' }),
-    addToxic: (proxyName: string, dto: { type: string; stream: string; name?: string; toxicity?: number; attributes?: Record<string, unknown> }): Promise<Toxic> =>
-      request<Toxic>(`/chaos-network/proxies/${encodeURIComponent(proxyName)}/toxics`, { method: 'POST', body: JSON.stringify(dto) }),
+      request<void>(`/chaos-network/proxies/${encodeURIComponent(name)}`, {
+        method: 'DELETE',
+      }),
+    addToxic: (
+      proxyName: string,
+      dto: {
+        type: string;
+        stream: string;
+        name?: string;
+        toxicity?: number;
+        attributes?: Record<string, unknown>;
+      },
+    ): Promise<Toxic> =>
+      request<Toxic>(
+        `/chaos-network/proxies/${encodeURIComponent(proxyName)}/toxics`,
+        { method: 'POST', body: JSON.stringify(dto) },
+      ),
     removeToxic: (proxyName: string, toxicName: string): Promise<void> =>
-      request<void>(`/chaos-network/proxies/${encodeURIComponent(proxyName)}/toxics/${encodeURIComponent(toxicName)}`, { method: 'DELETE' }),
-    listPresets: (): Promise<{ id: string; name: string; description: string }[]> =>
-      request<{ id: string; name: string; description: string }[]>('/chaos-network/presets'),
+      request<void>(
+        `/chaos-network/proxies/${encodeURIComponent(proxyName)}/toxics/${encodeURIComponent(toxicName)}`,
+        { method: 'DELETE' },
+      ),
+    listPresets: (): Promise<
+      { id: string; name: string; description: string }[]
+    > =>
+      request<{ id: string; name: string; description: string }[]>(
+        '/chaos-network/presets',
+      ),
     applyPreset: (proxyName: string, preset: string): Promise<Toxic[]> =>
-      request<Toxic[]>(`/chaos-network/proxies/${encodeURIComponent(proxyName)}/presets`, { method: 'POST', body: JSON.stringify({ preset }) }),
+      request<Toxic[]>(
+        `/chaos-network/proxies/${encodeURIComponent(proxyName)}/presets`,
+        { method: 'POST', body: JSON.stringify({ preset }) },
+      ),
   },
 
   auth: {
     listUsers: (workspaceId?: string): Promise<AuthUser[]> =>
-      request<AuthUser[]>(`/auth/users${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ''}`),
-    createUser: (dto: { username: string; email: string; role: string; workspaceId?: string }): Promise<AuthUser> =>
-      request<AuthUser>('/auth/users', { method: 'POST', body: JSON.stringify(dto) }),
+      request<AuthUser[]>(
+        `/auth/users${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ''}`,
+      ),
+    createUser: (dto: {
+      username: string;
+      email: string;
+      role: string;
+      workspaceId?: string;
+    }): Promise<AuthUser> =>
+      request<AuthUser>('/auth/users', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     rotateKey: (id: string): Promise<{ apiKey: string }> =>
-      request<{ apiKey: string }>(`/auth/users/${id}/rotate-key`, { method: 'POST' }),
+      request<{ apiKey: string }>(`/auth/users/${id}/rotate-key`, {
+        method: 'POST',
+      }),
     deactivate: (id: string): Promise<void> =>
       request<void>(`/auth/users/${id}`, { method: 'DELETE' }),
     validate: (apiKey: string): Promise<{ valid: boolean; user?: AuthUser }> =>
-      request<{ valid: boolean; user?: AuthUser }>('/auth/validate', { method: 'POST', body: JSON.stringify({ apiKey }) }),
+      request<{ valid: boolean; user?: AuthUser }>('/auth/validate', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey }),
+      }),
     listWorkspaces: (): Promise<string[]> =>
       request<string[]>('/auth/workspaces'),
     audit: (userId?: string, limit?: number): Promise<AuditEntry[]> => {
@@ -603,11 +828,17 @@ export const mockApi = {
       request<{ keycloak: unknown; zitadel: unknown }>('/iam/health'),
     config: (): Promise<unknown> => request<unknown>('/iam/config'),
     getToken: (username: string, password: string): Promise<IamToken> =>
-      request<IamToken>('/iam/token', { method: 'POST', body: JSON.stringify({ username, password }) }),
+      request<IamToken>('/iam/token', {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+      }),
     clientCredentials: (): Promise<IamToken> =>
       request<IamToken>('/iam/token/client-credentials', { method: 'POST' }),
     introspect: (token: string): Promise<unknown> =>
-      request<unknown>('/iam/token/introspect', { method: 'POST', body: JSON.stringify({ token }) }),
+      request<unknown>('/iam/token/introspect', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      }),
   },
 
   contracts: {
@@ -615,29 +846,54 @@ export const mockApi = {
       request<{ available: boolean }>('/contracts/health'),
     list: (): Promise<PactContract[]> =>
       request<PactContract[]>('/contracts/pacts'),
-    canIDeploy: (pacticipant: string, version: string): Promise<{ deployable: boolean; reason: string }> =>
-      request<{ deployable: boolean; reason: string }>(`/contracts/can-i-deploy?pacticipant=${encodeURIComponent(pacticipant)}&version=${encodeURIComponent(version)}`),
+    canIDeploy: (
+      pacticipant: string,
+      version: string,
+    ): Promise<{ deployable: boolean; reason: string }> =>
+      request<{ deployable: boolean; reason: string }>(
+        `/contracts/can-i-deploy?pacticipant=${encodeURIComponent(pacticipant)}&version=${encodeURIComponent(version)}`,
+      ),
   },
 
   cloud: {
     health: (): Promise<unknown> => request<unknown>('/cloud/health'),
     config: (): Promise<unknown> => request<unknown>('/cloud/config'),
-    listBuckets: (): Promise<S3Bucket[]> => request<S3Bucket[]>('/cloud/s3/buckets'),
+    listBuckets: (): Promise<S3Bucket[]> =>
+      request<S3Bucket[]>('/cloud/s3/buckets'),
     createBucket: (bucket: string): Promise<unknown> =>
-      request<unknown>('/cloud/s3/buckets', { method: 'POST', body: JSON.stringify({ bucket }) }),
-    listQueues: (): Promise<SqsQueue[]> => request<SqsQueue[]>('/cloud/sqs/queues'),
-    publishSns: (topic: string, message: string, subject?: string): Promise<unknown> =>
-      request<unknown>('/cloud/sns/publish', { method: 'POST', body: JSON.stringify({ topic, message, subject }) }),
+      request<unknown>('/cloud/s3/buckets', {
+        method: 'POST',
+        body: JSON.stringify({ bucket }),
+      }),
+    listQueues: (): Promise<SqsQueue[]> =>
+      request<SqsQueue[]>('/cloud/sqs/queues'),
+    publishSns: (
+      topic: string,
+      message: string,
+      subject?: string,
+    ): Promise<unknown> =>
+      request<unknown>('/cloud/sns/publish', {
+        method: 'POST',
+        body: JSON.stringify({ topic, message, subject }),
+      }),
   },
 
   storage: {
     health: (): Promise<unknown> => request<unknown>('/storage/health'),
     config: (): Promise<unknown> => request<unknown>('/storage/config'),
     uploadBody: (filename: string, content: string): Promise<StoredMockBody> =>
-      request<StoredMockBody>('/storage/mock-bodies', { method: 'POST', body: JSON.stringify({ filename, content }) }),
+      request<StoredMockBody>('/storage/mock-bodies', {
+        method: 'POST',
+        body: JSON.stringify({ filename, content }),
+      }),
     archive: (snapshotPath: string, projectId: string): Promise<unknown> =>
-      request<unknown>('/storage/snapshots/archive', { method: 'POST', body: JSON.stringify({ snapshotPath, projectId }) }),
+      request<unknown>('/storage/snapshots/archive', {
+        method: 'POST',
+        body: JSON.stringify({ snapshotPath, projectId }),
+      }),
     getUrl: (bucket: string, key: string): Promise<{ url: string }> =>
-      request<{ url: string }>(`/storage/url/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`),
+      request<{ url: string }>(
+        `/storage/url/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
+      ),
   },
 };

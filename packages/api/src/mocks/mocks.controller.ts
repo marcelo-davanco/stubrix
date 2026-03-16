@@ -20,7 +20,10 @@ export class MocksController {
   constructor(private readonly mocksService: MocksService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List project mocks', description: 'Retrieve all mocks for a specific project' })
+  @ApiOperation({
+    summary: 'List project mocks',
+    description: 'Retrieve all mocks for a specific project',
+  })
   @ApiParam({ name: 'projectId', description: 'Project identifier' })
   @ApiResponse({ status: 200, description: 'Mocks retrieved successfully' })
   findAll(@Param('projectId') projectId: string) {
@@ -28,7 +31,10 @@ export class MocksController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get mock by ID', description: 'Retrieve a specific mock within a project' })
+  @ApiOperation({
+    summary: 'Get mock by ID',
+    description: 'Retrieve a specific mock within a project',
+  })
   @ApiParam({ name: 'projectId', description: 'Project identifier' })
   @ApiParam({ name: 'id', description: 'Mock identifier' })
   @ApiResponse({ status: 200, description: 'Mock retrieved successfully' })
@@ -38,7 +44,10 @@ export class MocksController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create new mock', description: 'Create a new mock within a project' })
+  @ApiOperation({
+    summary: 'Create new mock',
+    description: 'Create a new mock within a project',
+  })
   @ApiParam({ name: 'projectId', description: 'Project identifier' })
   @ApiResponse({ status: 201, description: 'Mock created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid mock data' })
@@ -47,7 +56,10 @@ export class MocksController {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update mock', description: 'Update an existing mock' })
+  @ApiOperation({
+    summary: 'Update mock',
+    description: 'Update an existing mock',
+  })
   @ApiParam({ name: 'projectId', description: 'Project identifier' })
   @ApiParam({ name: 'id', description: 'Mock identifier' })
   @ApiResponse({ status: 200, description: 'Mock updated successfully' })
@@ -63,7 +75,10 @@ export class MocksController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete mock', description: 'Delete a mock from a project' })
+  @ApiOperation({
+    summary: 'Delete mock',
+    description: 'Delete a mock from a project',
+  })
   @ApiParam({ name: 'projectId', description: 'Project identifier' })
   @ApiParam({ name: 'id', description: 'Mock identifier' })
   @ApiResponse({ status: 204, description: 'Mock deleted successfully' })

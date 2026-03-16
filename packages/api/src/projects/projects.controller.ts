@@ -20,14 +20,20 @@ export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all projects', description: 'Retrieve all mock server projects' })
+  @ApiOperation({
+    summary: 'List all projects',
+    description: 'Retrieve all mock server projects',
+  })
   @ApiResponse({ status: 200, description: 'Projects retrieved successfully' })
   findAll() {
     return this.projectsService.findAll();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get project by ID', description: 'Retrieve a specific project by its identifier' })
+  @ApiOperation({
+    summary: 'Get project by ID',
+    description: 'Retrieve a specific project by its identifier',
+  })
   @ApiParam({ name: 'id', description: 'Project identifier' })
   @ApiResponse({ status: 200, description: 'Project retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Project not found' })
@@ -36,7 +42,10 @@ export class ProjectsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create new project', description: 'Create a new mock server project' })
+  @ApiOperation({
+    summary: 'Create new project',
+    description: 'Create a new mock server project',
+  })
   @ApiResponse({ status: 201, description: 'Project created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid project data' })
   create(@Body() dto: CreateProjectDto) {
@@ -44,7 +53,10 @@ export class ProjectsController {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update project', description: 'Update an existing project' })
+  @ApiOperation({
+    summary: 'Update project',
+    description: 'Update an existing project',
+  })
   @ApiParam({ name: 'id', description: 'Project identifier' })
   @ApiResponse({ status: 200, description: 'Project updated successfully' })
   @ApiResponse({ status: 404, description: 'Project not found' })
@@ -55,7 +67,10 @@ export class ProjectsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete project', description: 'Delete a project and all its mocks' })
+  @ApiOperation({
+    summary: 'Delete project',
+    description: 'Delete a project and all its mocks',
+  })
   @ApiParam({ name: 'id', description: 'Project identifier' })
   @ApiResponse({ status: 204, description: 'Project deleted successfully' })
   @ApiResponse({ status: 404, description: 'Project not found' })

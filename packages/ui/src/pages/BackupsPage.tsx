@@ -1,71 +1,81 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, AlertTriangle } from 'lucide-react'
-import { useTranslation } from '../lib/i18n'
-import { BackupCard } from '../components/settings/BackupCard'
-import type { BackupItem } from '../components/settings/BackupCard'
-import { CreateBackupDialog } from '../components/settings/CreateBackupDialog'
-import { RestoreBackupDialog } from '../components/settings/RestoreBackupDialog'
-import { useSettings } from '../hooks/useSettings'
-import type { ServiceOption } from '../components/settings/ServiceSelector'
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus, AlertTriangle } from 'lucide-react';
+import { useTranslation } from '../lib/i18n';
+import { BackupCard } from '../components/settings/BackupCard';
+import type { BackupItem } from '../components/settings/BackupCard';
+import { CreateBackupDialog } from '../components/settings/CreateBackupDialog';
+import { RestoreBackupDialog } from '../components/settings/RestoreBackupDialog';
+import { useSettings } from '../hooks/useSettings';
+import type { ServiceOption } from '../components/settings/ServiceSelector';
 
 export function BackupsPage() {
-  const navigate = useNavigate()
-  const { t } = useTranslation()
-  const { services } = useSettings()
-  const [backups, setBackups] = useState<BackupItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [showCreate, setShowCreate] = useState(false)
-  const [restoreTarget, setRestoreTarget] = useState<{ id: string; name: string } | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { services } = useSettings();
+  const [backups, setBackups] = useState<BackupItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [restoreTarget, setRestoreTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const serviceOptions: ServiceOption[] = services.map((s) => ({
     serviceId: s.serviceId,
     name: s.name,
     category: s.category,
-  }))
+  }));
 
   const fetchBackups = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('/api/settings/backups')
-      if (!res.ok) throw new Error(t('backups.loadFailed'))
-      setBackups((await res.json()) as BackupItem[])
+      const res = await fetch('/api/settings/backups');
+      if (!res.ok) throw new Error(t('backups.loadFailed'));
+      setBackups((await res.json()) as BackupItem[]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
-  useEffect(() => { void fetchBackups() }, [fetchBackups])
+  useEffect(() => {
+    void fetchBackups();
+  }, [fetchBackups]);
 
   const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3000)
-  }
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleDownload = (id: string) => {
-    const a = document.createElement('a')
-    a.href = `/api/settings/backups/${id}/download`
-    a.download = `backup-${id}.json`
-    a.click()
-  }
+    const a = document.createElement('a');
+    a.href = `/api/settings/backups/${id}/download`;
+    a.download = `backup-${id}.json`;
+    a.click();
+  };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(t('backups.deleteConfirm'))) return
-    const res = await fetch(`/api/settings/backups/${id}`, { method: 'DELETE' })
+    if (!window.confirm(t('backups.deleteConfirm'))) return;
+    const res = await fetch(`/api/settings/backups/${id}`, {
+      method: 'DELETE',
+    });
     if (res.ok) {
-      showToast(t('backups.deleted'))
-      await fetchBackups()
+      showToast(t('backups.deleted'));
+      await fetchBackups();
     }
-  }
+  };
 
   const handlePreview = (id: string) => {
-    setRestoreTarget({ id, name: backups.find((b) => b.id === id)?.name ?? id })
-  }
+    setRestoreTarget({
+      id,
+      name: backups.find((b) => b.id === id)?.name ?? id,
+    });
+  };
 
   return (
     <div className="flex flex-col h-full p-6 gap-4 overflow-hidden">
@@ -94,7 +104,9 @@ export function BackupsPage() {
 
       <div className="flex-1 overflow-y-auto space-y-3">
         {loading && (
-          <div className="text-sm text-text-secondary animate-pulse text-center py-8">{t('backups.loading')}</div>
+          <div className="text-sm text-text-secondary animate-pulse text-center py-8">
+            {t('backups.loading')}
+          </div>
         )}
 
         {error && (
@@ -142,9 +154,9 @@ export function BackupsPage() {
         services={serviceOptions}
         onClose={() => setShowCreate(false)}
         onComplete={() => {
-          setShowCreate(false)
-          showToast(t('backups.created'))
-          void fetchBackups()
+          setShowCreate(false);
+          showToast(t('backups.created'));
+          void fetchBackups();
         }}
       />
 
@@ -155,8 +167,8 @@ export function BackupsPage() {
           open={true}
           onClose={() => setRestoreTarget(null)}
           onComplete={() => {
-            setRestoreTarget(null)
-            showToast(t('backups.restored'))
+            setRestoreTarget(null);
+            showToast(t('backups.restored'));
           }}
         />
       )}
@@ -168,5 +180,5 @@ export function BackupsPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

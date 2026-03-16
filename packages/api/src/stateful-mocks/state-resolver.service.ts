@@ -118,7 +118,15 @@ export class StateResolverService {
   private sanitizeQuery(query: string): string {
     const trimmed = query.trim();
     const upper = trimmed.toUpperCase();
-    const forbidden = ['DROP ', 'TRUNCATE ', 'DELETE ', 'INSERT ', 'UPDATE ', 'ALTER ', 'CREATE '];
+    const forbidden = [
+      'DROP ',
+      'TRUNCATE ',
+      'DELETE ',
+      'INSERT ',
+      'UPDATE ',
+      'ALTER ',
+      'CREATE ',
+    ];
     for (const kw of forbidden) {
       if (upper.includes(kw)) {
         throw new BadRequestException(
@@ -149,7 +157,11 @@ export class StateResolverService {
     return { ...entry.result, fromCache: true };
   }
 
-  private setCache(key: string, result: StateQueryResult, ttlSeconds: number): void {
+  private setCache(
+    key: string,
+    result: StateQueryResult,
+    ttlSeconds: number,
+  ): void {
     this.cache.set(key, {
       result,
       expiresAt: Date.now() + ttlSeconds * 1000,
@@ -171,8 +183,14 @@ export class StateResolverService {
       }, timeoutMs);
 
       promise
-        .then((v) => { clearTimeout(timer); resolve(v); })
-        .catch((e) => { clearTimeout(timer); reject(e); });
+        .then((v) => {
+          clearTimeout(timer);
+          resolve(v);
+        })
+        .catch((e) => {
+          clearTimeout(timer);
+          reject(e);
+        });
     });
   }
 }

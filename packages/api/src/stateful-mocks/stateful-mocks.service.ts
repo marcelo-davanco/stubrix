@@ -71,7 +71,10 @@ export class StatefulMocksService {
       .filter((f) => f.endsWith('.json'))
       .flatMap((filename) => {
         try {
-          const raw = fs.readFileSync(path.join(this.storageDir, filename), 'utf-8');
+          const raw = fs.readFileSync(
+            path.join(this.storageDir, filename),
+            'utf-8',
+          );
           return [JSON.parse(raw) as StatefulMock];
         } catch {
           return [];
@@ -88,7 +91,9 @@ export class StatefulMocksService {
   }
 
   create(dto: CreateStatefulMockDto): StatefulMock {
-    const validation = this.templateEngine.validate(dto.stateConfig.stateTemplate);
+    const validation = this.templateEngine.validate(
+      dto.stateConfig.stateTemplate,
+    );
     if (!validation.valid) {
       throw new BadRequestException(
         `Invalid Handlebars template: ${validation.error}`,
@@ -128,7 +133,9 @@ export class StatefulMocksService {
     const existing = this.findOne(id);
 
     if (dto.stateConfig?.stateTemplate) {
-      const validation = this.templateEngine.validate(dto.stateConfig.stateTemplate);
+      const validation = this.templateEngine.validate(
+        dto.stateConfig.stateTemplate,
+      );
       if (!validation.valid) {
         throw new BadRequestException(
           `Invalid Handlebars template: ${validation.error}`,
@@ -161,7 +168,10 @@ export class StatefulMocksService {
     this.stateResolver.invalidateCache(id);
   }
 
-  async test(id: string, request?: ProxyRequest): Promise<{
+  async test(
+    id: string,
+    request?: ProxyRequest,
+  ): Promise<{
     response: { status: number; headers: Record<string, string>; body: string };
     resolvedFromState: boolean;
     stateQueryTimeMs?: number;
@@ -186,7 +196,10 @@ export class StatefulMocksService {
     };
   }
 
-  preview(id: string): { template: string; sampleContext: Record<string, unknown> } {
+  preview(id: string): {
+    template: string;
+    sampleContext: Record<string, unknown>;
+  } {
     const mock = this.findOne(id);
     const sampleContext = {
       state: {
@@ -208,7 +221,10 @@ export class StatefulMocksService {
       sampleContext,
     );
 
-    return { template: mock.stateConfig.stateTemplate, sampleContext: { ...sampleContext, renderedBody } };
+    return {
+      template: mock.stateConfig.stateTemplate,
+      sampleContext: { ...sampleContext, renderedBody },
+    };
   }
 
   private save(mock: StatefulMock): void {

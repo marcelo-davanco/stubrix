@@ -1,16 +1,22 @@
-import { useState } from 'react'
-import { Eye, EyeOff, Lock } from 'lucide-react'
+import { useState } from 'react';
+import { Eye, EyeOff, Lock } from 'lucide-react';
 
 interface SensitiveFieldProps {
-  value: string
-  sessionActive: boolean
-  onChange: (value: string) => void
-  onRequestUnlock: () => void
-  disabled?: boolean
+  value: string;
+  sessionActive: boolean;
+  onChange: (value: string) => void;
+  onRequestUnlock: () => void;
+  disabled?: boolean;
 }
 
-export function SensitiveField({ value, sessionActive, onChange, onRequestUnlock, disabled }: SensitiveFieldProps) {
-  const [revealed, setRevealed] = useState(false)
+export function SensitiveField({
+  value,
+  sessionActive,
+  onChange,
+  onRequestUnlock,
+  disabled,
+}: SensitiveFieldProps) {
+  const [revealed, setRevealed] = useState(false);
 
   if (!sessionActive) {
     return (
@@ -30,7 +36,7 @@ export function SensitiveField({ value, sessionActive, onChange, onRequestUnlock
           Unlock
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -50,5 +56,5 @@ export function SensitiveField({ value, sessionActive, onChange, onRequestUnlock
         {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
       </button>
     </div>
-  )
+  );
 }

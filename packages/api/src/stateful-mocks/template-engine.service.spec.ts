@@ -50,25 +50,35 @@ describe('TemplateEngineService', () => {
     });
 
     it('should render {{pick}} helper — first element', () => {
-      const result = service.render('{{json (pick state.rows 0)}}', sampleContext);
+      const result = service.render(
+        '{{json (pick state.rows 0)}}',
+        sampleContext,
+      );
       const parsed = JSON.parse(result);
       expect(parsed.name).toBe('Alice');
     });
 
     it('should render {{first}} helper', () => {
-      const result = service.render('{{json (first state.rows)}}', sampleContext);
+      const result = service.render(
+        '{{json (first state.rows)}}',
+        sampleContext,
+      );
       const parsed = JSON.parse(result);
       expect(parsed.name).toBe('Alice');
     });
 
     it('should render {{last}} helper', () => {
-      const result = service.render('{{json (last state.rows)}}', sampleContext);
+      const result = service.render(
+        '{{json (last state.rows)}}',
+        sampleContext,
+      );
       const parsed = JSON.parse(result);
       expect(parsed.name).toBe('Bob');
     });
 
     it('should render full JSON object template', () => {
-      const template = '{ "users": {{json state.rows}}, "count": {{state.rowCount}} }';
+      const template =
+        '{ "users": {{json state.rows}}, "count": {{state.rowCount}} }';
       const result = service.render(template, sampleContext);
       const parsed = JSON.parse(result);
       expect(parsed.count).toBe(2);
@@ -76,13 +86,18 @@ describe('TemplateEngineService', () => {
     });
 
     it('should render with empty rows context', () => {
-      const emptyCtx: TemplateContext = { ...sampleContext, state: { ...sampleContext.state, rows: [], rowCount: 0 } };
+      const emptyCtx: TemplateContext = {
+        ...sampleContext,
+        state: { ...sampleContext.state, rows: [], rowCount: 0 },
+      };
       const result = service.render('{{state.rowCount}}', emptyCtx);
       expect(result).toBe('0');
     });
 
     it('should throw BadRequestException for invalid template syntax', () => {
-      expect(() => service.render('{{#if}}broken', sampleContext)).toThrow(BadRequestException);
+      expect(() => service.render('{{#if}}broken', sampleContext)).toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -101,8 +116,16 @@ describe('TemplateEngineService', () => {
 
   describe('buildContext()', () => {
     it('should build context from StateQueryResult and request', () => {
-      const stateResult = { rows: [{ id: 1 }], rowCount: 1, queryTimeMs: 5, fromCache: false };
-      const ctx = service.buildContext(stateResult, { method: 'GET', url: '/test' });
+      const stateResult = {
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        queryTimeMs: 5,
+        fromCache: false,
+      };
+      const ctx = service.buildContext(stateResult, {
+        method: 'GET',
+        url: '/test',
+      });
       expect(ctx.state.rows).toHaveLength(1);
       expect(ctx.request.method).toBe('GET');
     });

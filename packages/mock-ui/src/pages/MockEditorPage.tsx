@@ -2,7 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { mockApi } from '../lib/mock-api.js';
 
-const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
+const HTTP_METHODS = [
+  'GET',
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE',
+  'HEAD',
+  'OPTIONS',
+];
 
 type MockEditorPageProps = {
   t?: (key: string) => string;
@@ -12,8 +20,17 @@ type MockEditorPageProps = {
   onSaved?: () => void;
 };
 
-export function MockEditorPage({ t, projectId, mockId, onBack, onSaved }: MockEditorPageProps) {
-  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
+export function MockEditorPage({
+  t,
+  projectId,
+  mockId,
+  onBack,
+  onSaved,
+}: MockEditorPageProps) {
+  const T = useCallback(
+    (key: string, fallback: string) => (t ? t(key) : fallback),
+    [t],
+  );
   const isNew = !mockId;
 
   const [method, setMethod] = useState('GET');
@@ -31,7 +48,9 @@ export function MockEditorPage({ t, projectId, mockId, onBack, onSaved }: MockEd
       setMethod(mock.mapping.request.method);
       setUrl(mock.mapping.request.url ?? '');
       setStatus(mock.mapping.response.status);
-      setContentType(mock.mapping.response.headers?.['Content-Type'] ?? 'application/json');
+      setContentType(
+        mock.mapping.response.headers?.['Content-Type'] ?? 'application/json',
+      );
       setBody(mock.body ?? mock.mapping.response.body ?? '');
       setLoading(false);
     });
@@ -80,14 +99,21 @@ export function MockEditorPage({ t, projectId, mockId, onBack, onSaved }: MockEd
           >
             <ArrowLeft size={18} />
           </button>
-          <h1 className="text-2xl font-bold">{isNew ? T('mockEditor.newMock', 'New Mock') : T('mockEditor.editMock', 'Edit Mock')}</h1>
+          <h1 className="text-2xl font-bold">
+            {isNew
+              ? T('mockEditor.newMock', 'New Mock')
+              : T('mockEditor.editMock', 'Edit Mock')}
+          </h1>
         </div>
         <button
           onClick={handleSave}
           disabled={saving || !url}
           className="flex items-center gap-2 bg-primary hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium"
         >
-          <Save size={14} /> {saving ? T('mockEditor.saving', 'Saving...') : T('mockEditor.save', 'Save')}
+          <Save size={14} />{' '}
+          {saving
+            ? T('mockEditor.saving', 'Saving...')
+            : T('mockEditor.save', 'Save')}
         </button>
       </div>
 
@@ -98,19 +124,25 @@ export function MockEditorPage({ t, projectId, mockId, onBack, onSaved }: MockEd
           </h3>
           <div className="grid grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs text-text-secondary mb-1">{T('mockEditor.method', 'Method')}</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                {T('mockEditor.method', 'Method')}
+              </label>
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary"
               >
                 {HTTP_METHODS.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="col-span-3">
-              <label className="block text-xs text-text-secondary mb-1">{T('mockEditor.url', 'URL')}</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                {T('mockEditor.url', 'URL')}
+              </label>
               <input
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -127,7 +159,9 @@ export function MockEditorPage({ t, projectId, mockId, onBack, onSaved }: MockEd
           </h3>
           <div className="grid grid-cols-4 gap-3 mb-3">
             <div>
-              <label className="block text-xs text-text-secondary mb-1">{T('mockEditor.status', 'Status')}</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                {T('mockEditor.status', 'Status')}
+              </label>
               <input
                 type="number"
                 value={status}
@@ -136,7 +170,9 @@ export function MockEditorPage({ t, projectId, mockId, onBack, onSaved }: MockEd
               />
             </div>
             <div className="col-span-3">
-              <label className="block text-xs text-text-secondary mb-1">{T('mockEditor.contentType', 'Content-Type')}</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                {T('mockEditor.contentType', 'Content-Type')}
+              </label>
               <input
                 value={contentType}
                 onChange={(e) => setContentType(e.target.value)}
@@ -145,7 +181,9 @@ export function MockEditorPage({ t, projectId, mockId, onBack, onSaved }: MockEd
             </div>
           </div>
           <div>
-            <label className="block text-xs text-text-secondary mb-1">{T('mockEditor.body', 'Body')}</label>
+            <label className="block text-xs text-text-secondary mb-1">
+              {T('mockEditor.body', 'Body')}
+            </label>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
@@ -159,7 +197,8 @@ export function MockEditorPage({ t, projectId, mockId, onBack, onSaved }: MockEd
         {error && <p className="text-red-400 text-sm">{error}</p>}
 
         <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-xs text-text-secondary font-mono">
-          {T('mockEditor.preview', 'Preview')}: {method} http://localhost:8081{url || '/...'} → {status}
+          {T('mockEditor.preview', 'Preview')}: {method} http://localhost:8081
+          {url || '/...'} → {status}
         </div>
       </div>
     </div>

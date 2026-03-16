@@ -1,26 +1,30 @@
-import { useState } from 'react'
-import { cn } from '../../lib/utils'
+import { useState } from 'react';
+import { cn } from '../../lib/utils';
 
 interface ServiceToggleProps {
-  enabled: boolean
-  loading?: boolean
-  onChange: (enabled: boolean) => Promise<void> | void
+  enabled: boolean;
+  loading?: boolean;
+  onChange: (enabled: boolean) => Promise<void> | void;
 }
 
-export function ServiceToggle({ enabled, loading, onChange }: ServiceToggleProps) {
-  const [pending, setPending] = useState(false)
+export function ServiceToggle({
+  enabled,
+  loading,
+  onChange,
+}: ServiceToggleProps) {
+  const [pending, setPending] = useState(false);
 
   const handleClick = async () => {
-    if (pending || loading) return
-    setPending(true)
+    if (pending || loading) return;
+    setPending(true);
     try {
-      await onChange(!enabled)
+      await onChange(!enabled);
     } finally {
-      setPending(false)
+      setPending(false);
     }
-  }
+  };
 
-  const busy = pending || loading
+  const busy = pending || loading;
 
   return (
     <button
@@ -41,5 +45,5 @@ export function ServiceToggle({ enabled, loading, onChange }: ServiceToggleProps
         )}
       />
     </button>
-  )
+  );
 }

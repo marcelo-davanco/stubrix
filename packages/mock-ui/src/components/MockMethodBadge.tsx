@@ -13,7 +13,9 @@ type MockMethodBadgeProps = {
 export function MockMethodBadge({ method }: MockMethodBadgeProps) {
   const colors = METHOD_COLORS[method] ?? 'text-text-secondary bg-white/10';
   return (
-    <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${colors}`}>
+    <span
+      className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${colors}`}
+    >
       {method}
     </span>
   );

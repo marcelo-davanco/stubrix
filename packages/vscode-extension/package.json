@@ -5,10 +5,20 @@
   "version": "2.3.0",
   "publisher": "stubrix",
   "icon": "resources/icon.png",
-  "repository": { "type": "git", "url": "https://github.com/marcelo-davanco/stubrix" },
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other", "Testing"],
-  "activationEvents": ["onStartupFinished"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcelo-davanco/stubrix"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Testing"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -22,18 +32,45 @@
     },
     "views": {
       "stubrix": [
-        { "id": "stubrix.mocks", "name": "Mocks" },
-        { "id": "stubrix.status", "name": "Status" },
-        { "id": "stubrix.scenarios", "name": "Scenarios" }
+        {
+          "id": "stubrix.mocks",
+          "name": "Mocks"
+        },
+        {
+          "id": "stubrix.status",
+          "name": "Status"
+        },
+        {
+          "id": "stubrix.scenarios",
+          "name": "Scenarios"
+        }
       ]
     },
     "commands": [
-      { "command": "stubrix.refreshMocks", "title": "Stubrix: Refresh Mocks" },
-      { "command": "stubrix.startEngine", "title": "Stubrix: Start Mock Engine" },
-      { "command": "stubrix.stopEngine", "title": "Stubrix: Stop Mock Engine" },
-      { "command": "stubrix.captureScenario", "title": "Stubrix: Capture Scenario" },
-      { "command": "stubrix.openDocs", "title": "Stubrix: Open API Docs" },
-      { "command": "stubrix.doctor", "title": "Stubrix: Doctor (Health Check)" }
+      {
+        "command": "stubrix.refreshMocks",
+        "title": "Stubrix: Refresh Mocks"
+      },
+      {
+        "command": "stubrix.startEngine",
+        "title": "Stubrix: Start Mock Engine"
+      },
+      {
+        "command": "stubrix.stopEngine",
+        "title": "Stubrix: Stop Mock Engine"
+      },
+      {
+        "command": "stubrix.captureScenario",
+        "title": "Stubrix: Capture Scenario"
+      },
+      {
+        "command": "stubrix.openDocs",
+        "title": "Stubrix: Open API Docs"
+      },
+      {
+        "command": "stubrix.doctor",
+        "title": "Stubrix: Doctor (Health Check)"
+      }
     ],
     "configuration": {
       "title": "Stubrix",

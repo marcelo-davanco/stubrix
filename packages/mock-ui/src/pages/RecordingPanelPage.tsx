@@ -8,8 +8,15 @@ type RecordingPanelPageProps = {
   onBack?: () => void;
 };
 
-export function RecordingPanelPage({ t, projectId, onBack }: RecordingPanelPageProps) {
-  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
+export function RecordingPanelPage({
+  t,
+  projectId,
+  onBack,
+}: RecordingPanelPageProps) {
+  const T = useCallback(
+    (key: string, fallback: string) => (t ? t(key) : fallback),
+    [t],
+  );
   const {
     currentProject,
     recording,
@@ -37,7 +44,9 @@ export function RecordingPanelPage({ t, projectId, onBack }: RecordingPanelPageP
     setActing(true);
     setError('');
     try {
-      await startRecording(projectId, { proxyTarget: proxyTarget || undefined });
+      await startRecording(projectId, {
+        proxyTarget: proxyTarget || undefined,
+      });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -74,25 +83,32 @@ export function RecordingPanelPage({ t, projectId, onBack }: RecordingPanelPageP
   return (
     <div className="p-6 max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={onBack} className="text-text-secondary hover:text-text-primary">
+        <button
+          onClick={onBack}
+          className="text-text-secondary hover:text-text-primary"
+        >
           <ArrowLeft size={18} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold">{T('recording.title', 'Recording')}</h1>
+          <h1 className="text-2xl font-bold">
+            {T('recording.title', 'Recording')}
+          </h1>
           <p className="text-text-secondary text-sm">{currentProject?.name}</p>
         </div>
       </div>
 
       <div className="bg-white/5 border border-white/10 rounded-lg p-5 mb-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium">{T('recording.statusLabel', 'Recording Status')}</h3>
+          <h3 className="font-medium">
+            {T('recording.statusLabel', 'Recording Status')}
+          </h3>
           {recording?.active ? (
             <span className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-red-400 bg-red-400/10">
-              <CircleDot size={14} />{' '}{T('recording.activeBadge', 'Recording')}
+              <CircleDot size={14} /> {T('recording.activeBadge', 'Recording')}
             </span>
           ) : (
             <span className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-text-secondary bg-white/10">
-              <StopCircle size={14} />{' '}{T('recording.inactiveBadge', 'Stopped')}
+              <StopCircle size={14} /> {T('recording.inactiveBadge', 'Stopped')}
             </span>
           )}
         </div>
@@ -100,16 +116,24 @@ export function RecordingPanelPage({ t, projectId, onBack }: RecordingPanelPageP
         {!recording?.active && (
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-text-secondary mb-1">{T('recording.proxyTargetLabel', 'Proxy Target')}</label>
+              <label className="block text-xs text-text-secondary mb-1">
+                {T('recording.proxyTargetLabel', 'Proxy Target')}
+              </label>
               <input
                 value={proxyTarget}
                 onChange={(e) => setProxyTarget(e.target.value)}
-                placeholder={T('recording.proxyTargetPlaceholder', 'https://api.example.com')}
+                placeholder={T(
+                  'recording.proxyTargetPlaceholder',
+                  'https://api.example.com',
+                )}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary"
               />
               {currentProject?.proxyTarget && (
                 <p className="text-xs text-text-secondary mt-1">
-                  {T('recording.prefilledHint', 'Pre-filled from project settings')}
+                  {T(
+                    'recording.prefilledHint',
+                    'Pre-filled from project settings',
+                  )}
                 </p>
               )}
             </div>
@@ -128,7 +152,10 @@ export function RecordingPanelPage({ t, projectId, onBack }: RecordingPanelPageP
           <div className="space-y-3">
             <div className="text-sm text-text-secondary">
               <p>
-                {T('recording.targetLabel', 'Target')}: <span className="text-text-primary">{recording.proxyTarget}</span>
+                {T('recording.targetLabel', 'Target')}:{' '}
+                <span className="text-text-primary">
+                  {recording.proxyTarget}
+                </span>
               </p>
               {recording.startedAt && (
                 <p>
@@ -160,14 +187,27 @@ export function RecordingPanelPage({ t, projectId, onBack }: RecordingPanelPageP
       </div>
 
       <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-sm text-text-secondary">
-        <p className="font-medium text-text-primary mb-2">{T('recording.howItWorksTitle', 'How it works')}</p>
+        <p className="font-medium text-text-primary mb-2">
+          {T('recording.howItWorksTitle', 'How it works')}
+        </p>
         <ul className="space-y-1 list-disc list-inside">
-          <li>{T('recording.howItWorks1', 'Start recording — all requests are proxied to the target')}</li>
           <li>
-            {T('recording.howItWorks2', 'Make requests against localhost:{port}').replace('{port}', '8081')}
+            {T(
+              'recording.howItWorks1',
+              'Start recording — all requests are proxied to the target',
+            )}
           </li>
           <li>
-            {T('recording.howItWorks3', 'Stop — mocks are saved with metadata.project: "{projectId}"').replace('{projectId}', projectId)}
+            {T(
+              'recording.howItWorks2',
+              'Make requests against localhost:{port}',
+            ).replace('{port}', '8081')}
+          </li>
+          <li>
+            {T(
+              'recording.howItWorks3',
+              'Stop — mocks are saved with metadata.project: "{projectId}"',
+            ).replace('{projectId}', projectId)}
           </li>
         </ul>
       </div>

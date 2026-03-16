@@ -13,8 +13,15 @@ function interpolate(s: string, vars: Record<string, string | number>): string {
 }
 
 export function GovernancePage({ t }: GovernancePageProps) {
-  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
-  const Tvars = (key: string, fallback: string, vars: Record<string, string | number>) => interpolate(T(key, fallback), vars);
+  const T = useCallback(
+    (key: string, fallback: string) => (t ? t(key) : fallback),
+    [t],
+  );
+  const Tvars = (
+    key: string,
+    fallback: string,
+    vars: Record<string, string | number>,
+  ) => interpolate(T(key, fallback), vars);
   const [specContent, setSpecContent] = useState('');
   const [result, setResult] = useState<LintResult | null>(null);
   const [rules, setRules] = useState<LintRule[]>([]);
@@ -26,7 +33,8 @@ export function GovernancePage({ t }: GovernancePageProps) {
   useEffect(() => {
     if (tab === 'rules' && rules.length === 0) {
       setLoadingRules(true);
-      void mockApi.governance.rules()
+      void mockApi.governance
+        .rules()
         .then((res) => setRules(res.rules))
         .catch((e) => setError((e as Error).message))
         .finally(() => setLoadingRules(false));
@@ -63,9 +71,15 @@ export function GovernancePage({ t }: GovernancePageProps) {
       <div className="flex items-center gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ShieldCheck size={22} className="text-blue-400" /> {T('governance.title', 'Governance & Linting')}
+            <ShieldCheck size={22} className="text-blue-400" />{' '}
+            {T('governance.title', 'Governance & Linting')}
           </h1>
-          <p className="text-text-secondary text-sm">{T('governance.subtitle', 'Validate OpenAPI specs with Spectral rules')}</p>
+          <p className="text-text-secondary text-sm">
+            {T(
+              'governance.subtitle',
+              'Validate OpenAPI specs with Spectral rules',
+            )}
+          </p>
         </div>
       </div>
 
@@ -78,10 +92,14 @@ export function GovernancePage({ t }: GovernancePageProps) {
             onClick={() => setTab(tabKey)}
             className={[
               'px-4 py-1.5 rounded-md text-sm capitalize transition-colors',
-              tab === tabKey ? 'bg-blue-400/20 text-blue-400' : 'text-text-secondary hover:text-text-primary',
+              tab === tabKey
+                ? 'bg-blue-400/20 text-blue-400'
+                : 'text-text-secondary hover:text-text-primary',
             ].join(' ')}
           >
-            {tabKey === 'lint' ? T('governance.lintSpec', 'Lint Spec') : T('governance.activeRules', 'Active Rules')}
+            {tabKey === 'lint'
+              ? T('governance.lintSpec', 'Lint Spec')
+              : T('governance.activeRules', 'Active Rules')}
           </button>
         ))}
       </div>
@@ -92,15 +110,31 @@ export function GovernancePage({ t }: GovernancePageProps) {
             <div className="flex items-center gap-3 mb-3">
               <label className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-md">
                 <Upload size={13} /> {T('coverage.uploadFile', 'Upload file')}
-                <input type="file" accept=".yaml,.yml,.json" onChange={onFileChange} className="hidden" />
+                <input
+                  type="file"
+                  accept=".yaml,.yml,.json"
+                  onChange={onFileChange}
+                  className="hidden"
+                />
               </label>
-              {specContent && <span className="text-xs text-blue-400">{Tvars('governance.specLoaded', `Spec loaded (${specContent.length} chars)`, { count: specContent.length })}</span>}
+              {specContent && (
+                <span className="text-xs text-blue-400">
+                  {Tvars(
+                    'governance.specLoaded',
+                    `Spec loaded (${specContent.length} chars)`,
+                    { count: specContent.length },
+                  )}
+                </span>
+              )}
             </div>
             <textarea
               value={specContent}
               onChange={(e) => setSpecContent(e.target.value)}
               rows={10}
-              placeholder={T('governance.specPlaceholder', 'Paste your OpenAPI spec here (YAML or JSON)…')}
+              placeholder={T(
+                'governance.specPlaceholder',
+                'Paste your OpenAPI spec here (YAML or JSON)…',
+              )}
               className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-400 resize-none"
             />
             <button
@@ -108,28 +142,53 @@ export function GovernancePage({ t }: GovernancePageProps) {
               disabled={loading || !specContent.trim()}
               className="mt-3 flex items-center gap-1.5 text-sm bg-blue-400/10 text-blue-400 hover:bg-blue-400/20 disabled:opacity-50 px-4 py-2 rounded-md"
             >
-              <ShieldCheck size={13} /> {loading ? T('governance.linting', 'Linting…') : T('governance.lintSpec', 'Lint Spec')}
+              <ShieldCheck size={13} />{' '}
+              {loading
+                ? T('governance.linting', 'Linting…')
+                : T('governance.lintSpec', 'Lint Spec')}
             </button>
           </div>
 
           {result && (
             <div className="space-y-4">
-              <div className={`flex items-center gap-3 p-4 rounded-lg border ${result.valid ? 'border-green-500/20 bg-green-500/10' : 'border-red-500/20 bg-red-500/10'}`}>
-                <ShieldCheck size={18} className={result.valid ? 'text-green-400' : 'text-red-400'} />
-                <span className={`font-medium ${result.valid ? 'text-green-300' : 'text-red-300'}`}>
-                  {result.valid ? T('governance.validNoIssues', 'Spec is valid — no issues found') : Tvars('governance.errorsWarnings', `${errors.length} error(s), ${warnings.length} warning(s)`, { errors: errors.length, warnings: warnings.length })}
+              <div
+                className={`flex items-center gap-3 p-4 rounded-lg border ${result.valid ? 'border-green-500/20 bg-green-500/10' : 'border-red-500/20 bg-red-500/10'}`}
+              >
+                <ShieldCheck
+                  size={18}
+                  className={result.valid ? 'text-green-400' : 'text-red-400'}
+                />
+                <span
+                  className={`font-medium ${result.valid ? 'text-green-300' : 'text-red-300'}`}
+                >
+                  {result.valid
+                    ? T(
+                        'governance.validNoIssues',
+                        'Spec is valid — no issues found',
+                      )
+                    : Tvars(
+                        'governance.errorsWarnings',
+                        `${errors.length} error(s), ${warnings.length} warning(s)`,
+                        { errors: errors.length, warnings: warnings.length },
+                      )}
                 </span>
               </div>
 
               {errors.length > 0 && (
                 <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
                   <div className="px-4 py-2 border-b border-white/10 flex items-center gap-2 text-sm font-medium text-red-400">
-                    <AlertTriangle size={14} /> {T('governance.errors', 'Errors')} ({errors.length})
+                    <AlertTriangle size={14} />{' '}
+                    {T('governance.errors', 'Errors')} ({errors.length})
                   </div>
                   {errors.map((e, i) => (
-                    <div key={i} className="px-4 py-3 border-b border-white/5 last:border-0">
+                    <div
+                      key={i}
+                      className="px-4 py-3 border-b border-white/5 last:border-0"
+                    >
                       <div className="text-sm">{e.message}</div>
-                      <div className="text-xs text-text-secondary mt-0.5 font-mono">{e.path}</div>
+                      <div className="text-xs text-text-secondary mt-0.5 font-mono">
+                        {e.path}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -138,12 +197,18 @@ export function GovernancePage({ t }: GovernancePageProps) {
               {warnings.length > 0 && (
                 <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
                   <div className="px-4 py-2 border-b border-white/10 flex items-center gap-2 text-sm font-medium text-yellow-400">
-                    <AlertTriangle size={14} /> {T('governance.warnings', 'Warnings')} ({warnings.length})
+                    <AlertTriangle size={14} />{' '}
+                    {T('governance.warnings', 'Warnings')} ({warnings.length})
                   </div>
                   {warnings.map((w, i) => (
-                    <div key={i} className="px-4 py-3 border-b border-white/5 last:border-0">
+                    <div
+                      key={i}
+                      className="px-4 py-3 border-b border-white/5 last:border-0"
+                    >
                       <div className="text-sm">{w.message}</div>
-                      <div className="text-xs text-text-secondary mt-0.5 font-mono">{w.path}</div>
+                      <div className="text-xs text-text-secondary mt-0.5 font-mono">
+                        {w.path}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -156,22 +221,37 @@ export function GovernancePage({ t }: GovernancePageProps) {
       {tab === 'rules' && (
         <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
           {loadingRules ? (
-            <div className="text-center text-text-secondary py-12">{T('governance.loadingRules', 'Loading rules…')}</div>
+            <div className="text-center text-text-secondary py-12">
+              {T('governance.loadingRules', 'Loading rules…')}
+            </div>
           ) : rules.length === 0 ? (
-            <div className="text-center text-text-secondary py-12">{T('governance.noRules', 'No rules found')}</div>
+            <div className="text-center text-text-secondary py-12">
+              {T('governance.noRules', 'No rules found')}
+            </div>
           ) : (
             rules.map((rule, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-0">
-                <span className={[
-                  'shrink-0 text-xs px-1.5 py-0.5 rounded font-mono uppercase',
-                  rule.severity === 'error' ? 'bg-red-400/10 text-red-400' :
-                    rule.severity === 'warn' ? 'bg-yellow-400/10 text-yellow-400' :
-                      'bg-blue-400/10 text-blue-400',
-                ].join(' ')}>{rule.severity}</span>
+              <div
+                key={i}
+                className="flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-0"
+              >
+                <span
+                  className={[
+                    'shrink-0 text-xs px-1.5 py-0.5 rounded font-mono uppercase',
+                    rule.severity === 'error'
+                      ? 'bg-red-400/10 text-red-400'
+                      : rule.severity === 'warn'
+                        ? 'bg-yellow-400/10 text-yellow-400'
+                        : 'bg-blue-400/10 text-blue-400',
+                  ].join(' ')}
+                >
+                  {rule.severity}
+                </span>
                 <div className="min-w-0">
                   <span className="text-sm font-mono">{rule.code}</span>
                   {rule.description && (
-                    <p className="text-xs text-text-secondary truncate">{rule.description}</p>
+                    <p className="text-xs text-text-secondary truncate">
+                      {rule.description}
+                    </p>
                   )}
                 </div>
               </div>

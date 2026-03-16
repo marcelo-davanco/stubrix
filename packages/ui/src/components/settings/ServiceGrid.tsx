@@ -1,5 +1,5 @@
-import type { ServiceStatus } from '../../hooks/useSettings'
-import { ServiceCard } from './ServiceCard'
+import type { ServiceStatus } from '../../hooks/useSettings';
+import { ServiceCard } from './ServiceCard';
 
 const CATEGORY_LABELS: Record<string, string> = {
   mock_engines: 'Mock Engines',
@@ -16,15 +16,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   chaos: 'Chaos',
   ai: 'AI / Intelligence',
   api_clients: 'API Clients',
-}
+};
 
 interface ServiceGridProps {
-  services: ServiceStatus[]
-  selectedCategory: string | null
-  onToggle: (serviceId: string, enabled: boolean) => Promise<void> | void
-  onToggleAutoStart: (serviceId: string, autoStart: boolean) => void
-  onRestart: (serviceId: string) => void
-  onViewLogs: (serviceId: string) => void
+  services: ServiceStatus[];
+  selectedCategory: string | null;
+  onToggle: (serviceId: string, enabled: boolean) => Promise<void> | void;
+  onToggleAutoStart: (serviceId: string, autoStart: boolean) => void;
+  onRestart: (serviceId: string) => void;
+  onViewLogs: (serviceId: string) => void;
 }
 
 export function ServiceGrid({
@@ -37,21 +37,24 @@ export function ServiceGrid({
 }: ServiceGridProps) {
   const filtered = selectedCategory
     ? services.filter((s) => s.category === selectedCategory)
-    : services
+    : services;
 
-  const byCategory = filtered.reduce<Record<string, ServiceStatus[]>>((acc, svc) => {
-    const cat = svc.category
-    if (!acc[cat]) acc[cat] = []
-    acc[cat].push(svc)
-    return acc
-  }, {})
+  const byCategory = filtered.reduce<Record<string, ServiceStatus[]>>(
+    (acc, svc) => {
+      const cat = svc.category;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(svc);
+      return acc;
+    },
+    {},
+  );
 
   if (filtered.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-text-secondary text-sm">
         No services found.
       </div>
-    )
+    );
   }
 
   return (
@@ -76,5 +79,5 @@ export function ServiceGrid({
         </section>
       ))}
     </div>
-  )
+  );
 }

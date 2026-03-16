@@ -6,7 +6,11 @@ type InlineAlertProps = {
   retryLabel?: string;
 };
 
-export function InlineAlert({ message, onRetry, retryLabel = 'Retry' }: InlineAlertProps) {
+export function InlineAlert({
+  message,
+  onRetry,
+  retryLabel = 'Retry',
+}: InlineAlertProps) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4">
       <AlertCircle size={16} className="mt-0.5 shrink-0 text-red-400" />

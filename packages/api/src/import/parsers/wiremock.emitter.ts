@@ -31,12 +31,21 @@ export function emitWireMockMappings(
   ir: ImportIR,
   options: EmitterOptions = {},
 ): WireMockMapping[] {
-  const { projectId, useUrlPath = true, includeRequestHeaders = false } = options;
+  const {
+    projectId,
+    useUrlPath = true,
+    includeRequestHeaders = false,
+  } = options;
 
-  return ir.entries.map((entry) => toMapping(entry, { projectId, useUrlPath, includeRequestHeaders }));
+  return ir.entries.map((entry) =>
+    toMapping(entry, { projectId, useUrlPath, includeRequestHeaders }),
+  );
 }
 
-function toMapping(entry: ImportIREntry, options: EmitterOptions): WireMockMapping {
+function toMapping(
+  entry: ImportIREntry,
+  options: EmitterOptions,
+): WireMockMapping {
   const { projectId, useUrlPath, includeRequestHeaders } = options;
 
   const requestHeaders: Record<string, { equalTo: string }> = {};
@@ -98,7 +107,9 @@ function toMapping(entry: ImportIREntry, options: EmitterOptions): WireMockMappi
 
   const mapping: WireMockMapping = {
     id: uuidv4(),
-    name: entry.name ?? `${entry.request.method} ${entry.request.path} → ${entry.response.status}`,
+    name:
+      entry.name ??
+      `${entry.request.method} ${entry.request.path} → ${entry.response.status}`,
     request: requestBlock,
     response: responseBlock,
   };

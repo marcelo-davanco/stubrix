@@ -74,10 +74,10 @@ TypeScript compiles to `dist/extension.js`. The `.vsix` is generated at the pack
 
 ## Configuration
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `stubrix.apiUrl` | `http://localhost:9090` | Stubrix API base URL |
-| `stubrix.showStatusBar` | `true` | Show status in the status bar |
+| Setting                 | Default                 | Description                   |
+| ----------------------- | ----------------------- | ----------------------------- |
+| `stubrix.apiUrl`        | `http://localhost:9090` | Stubrix API base URL          |
+| `stubrix.showStatusBar` | `true`                  | Show status in the status bar |
 
 Change via `Settings → Extensions → Stubrix` or `settings.json`:
 

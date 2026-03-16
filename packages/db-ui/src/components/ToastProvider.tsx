@@ -1,27 +1,33 @@
-import { createContext, useCallback, useContext, useState } from 'react'
-import type { ReactNode } from 'react'
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react'
+import { createContext, useCallback, useContext, useState } from 'react';
+import type { ReactNode } from 'react';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
-export type ToastType = 'success' | 'error' | 'info'
+export type ToastType = 'success' | 'error' | 'info';
 
 type ToastMessage = {
-  id: string
-  type: ToastType
-  title: string
-  description?: string
-}
+  id: string;
+  type: ToastType;
+  title: string;
+  description?: string;
+};
 
 type ToastContextData = {
-  toast: (message: Omit<ToastMessage, 'id'>) => void
-}
+  toast: (message: Omit<ToastMessage, 'id'>) => void;
+};
 
-const ToastContext = createContext<ToastContextData>({} as ToastContextData)
+const ToastContext = createContext<ToastContextData>({} as ToastContextData);
 
 export function useToast() {
-  return useContext(ToastContext)
+  return useContext(ToastContext);
 }
 
-function ToastItem({ toast, onClose }: { toast: ToastMessage; onClose: () => void }) {
+function ToastItem({
+  toast,
+  onClose,
+}: {
+  toast: ToastMessage;
+  onClose: () => void;
+}) {
   const styles = {
     success: {
       icon: <CheckCircle2 size={18} className="text-green-400" />,
@@ -38,7 +44,7 @@ function ToastItem({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
       border: 'border-blue-500/25',
       accent: 'bg-blue-500/8',
     },
-  }[toast.type]
+  }[toast.type];
 
   return (
     <div
@@ -49,7 +55,9 @@ function ToastItem({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
       <div className="flex-1">
         <p className="text-sm font-semibold text-text-primary">{toast.title}</p>
         {toast.description && (
-          <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">{toast.description}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">
+            {toast.description}
+          </p>
         )}
       </div>
       <button
@@ -59,24 +67,24 @@ function ToastItem({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
         <X size={14} />
       </button>
     </div>
-  )
+  );
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<ToastMessage[]>([])
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
-  }, [])
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const toast = useCallback(
     ({ type, title, description }: Omit<ToastMessage, 'id'>) => {
-      const id = Math.random().toString(36).substring(2, 9)
-      setToasts((prev) => [...prev, { id, type, title, description }])
-      setTimeout(() => removeToast(id), 5000)
+      const id = Math.random().toString(36).substring(2, 9);
+      setToasts((prev) => [...prev, { id, type, title, description }]);
+      setTimeout(() => removeToast(id), 5000);
     },
     [removeToast],
-  )
+  );
 
   return (
     <ToastContext.Provider value={{ toast }}>
@@ -87,5 +95,5 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         ))}
       </div>
     </ToastContext.Provider>
-  )
+  );
 }

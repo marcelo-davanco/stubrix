@@ -1,200 +1,225 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { DatabaseInfo, Engine, Project, Snapshot } from '@stubrix/shared'
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { DatabaseInfo, Engine, Project, Snapshot } from '@stubrix/shared';
 import {
   dbApi,
   type ProjectDatabaseConfigItem,
   type UpsertProjectDatabaseConfigPayload,
-} from '../lib/db-api'
+} from '../lib/db-api';
 
 type CreateSnapshotPayload = {
-  label: string
-  database: string
-  category?: null | string
-  connectionId?: string
-}
+  label: string;
+  database: string;
+  category?: null | string;
+  connectionId?: string;
+};
 
 export function useDbManager() {
-  const [projects, setProjects] = useState([] as Array<Project>)
-  const [selectedProjectId, setSelectedProjectId] = useState('default')
-  const [engines, setEngines] = useState([] as Array<Engine>)
-  const [selectedEngine, setSelectedEngine] = useState<string | null>(null)
-  const [databases, setDatabases] = useState([] as Array<string>)
-  const [loadingDatabases, setLoadingDatabases] = useState(false)
+  const [projects, setProjects] = useState([] as Array<Project>);
+  const [selectedProjectId, setSelectedProjectId] = useState('default');
+  const [engines, setEngines] = useState([] as Array<Engine>);
+  const [selectedEngine, setSelectedEngine] = useState<string | null>(null);
+  const [databases, setDatabases] = useState([] as Array<string>);
+  const [loadingDatabases, setLoadingDatabases] = useState(false);
   const [projectDatabaseConfigs, setProjectDatabaseConfigs] = useState(
     [] as Array<ProjectDatabaseConfigItem>,
-  )
-  const [snapshots, setSnapshots] = useState([] as Array<Snapshot>)
-  const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null)
-  const [selectedConnectionId, setSelectedConnectionId] = useState('')
+  );
+  const [snapshots, setSnapshots] = useState([] as Array<Snapshot>);
+  const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null);
+  const [selectedConnectionId, setSelectedConnectionId] = useState('');
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const selectConnection = useCallback((id: string) => {
-    setDatabases([])
-    setLoadingDatabases(true)
-    setSelectedConnectionId(id)
-  }, [])
+    setDatabases([]);
+    setLoadingDatabases(true);
+    setSelectedConnectionId(id);
+  }, []);
 
   const loadProjects = useCallback(async () => {
-    const response = await dbApi.getProjects()
-    setProjects(response)
-    setSelectedProjectId((current) => current || response[0]?.id || 'default')
-  }, [])
+    const response = await dbApi.getProjects();
+    setProjects(response);
+    setSelectedProjectId((current) => current || response[0]?.id || 'default');
+  }, []);
 
   const loadEngines = useCallback(async () => {
-    const response = await dbApi.getEngines()
-    setEngines(response.engines)
-    const firstActive = response.engines.find((engine) => engine.status === 'active')
-    setSelectedEngine((current) => current || firstActive?.name || null)
-  }, [])
+    const response = await dbApi.getEngines();
+    setEngines(response.engines);
+    const firstActive = response.engines.find(
+      (engine) => engine.status === 'active',
+    );
+    setSelectedEngine((current) => current || firstActive?.name || null);
+  }, []);
 
   const loadSnapshots = useCallback(async (projectId?: string) => {
-    const response = await dbApi.getSnapshots(projectId)
-    setSnapshots(response.snapshots)
-  }, [])
+    const response = await dbApi.getSnapshots(projectId);
+    setSnapshots(response.snapshots);
+  }, []);
 
   const loadProjectDatabaseConfigs = useCallback(async (projectId: string) => {
-    const response = await dbApi.getProjectDatabaseConfigs(projectId)
-    setProjectDatabaseConfigs(response)
-  }, [])
+    const response = await dbApi.getProjectDatabaseConfigs(projectId);
+    setProjectDatabaseConfigs(response);
+  }, []);
 
   const loadDatabases = useCallback(
-    async (engine?: string | null, projectId?: string, connectionId?: string) => {
+    async (
+      engine?: string | null,
+      projectId?: string,
+      connectionId?: string,
+    ) => {
       if (!engine) {
-        setDatabases([])
-        return
+        setDatabases([]);
+        return;
       }
-      setLoadingDatabases(true)
+      setLoadingDatabases(true);
       try {
-        const response = await dbApi.getDatabases(engine, projectId, connectionId || undefined)
-        setDatabases(response.databases)
+        const response = await dbApi.getDatabases(
+          engine,
+          projectId,
+          connectionId || undefined,
+        );
+        setDatabases(response.databases);
       } finally {
-        setLoadingDatabases(false)
+        setLoadingDatabases(false);
       }
     },
     [],
-  )
+  );
 
   const refreshAll = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      await loadProjects()
-      await loadEngines()
-      await loadSnapshots(selectedProjectId)
-      await loadProjectDatabaseConfigs(selectedProjectId)
+      await loadProjects();
+      await loadEngines();
+      await loadSnapshots(selectedProjectId);
+      await loadProjectDatabaseConfigs(selectedProjectId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [loadEngines, loadProjectDatabaseConfigs, loadProjects, loadSnapshots, selectedProjectId])
+  }, [
+    loadEngines,
+    loadProjectDatabaseConfigs,
+    loadProjects,
+    loadSnapshots,
+    selectedProjectId,
+  ]);
 
   useEffect(() => {
-    void refreshAll()
-  }, [refreshAll])
+    void refreshAll();
+  }, [refreshAll]);
 
   useEffect(() => {
-    void loadSnapshots(selectedProjectId)
-  }, [loadSnapshots, selectedProjectId])
+    void loadSnapshots(selectedProjectId);
+  }, [loadSnapshots, selectedProjectId]);
 
   useEffect(() => {
-    void loadProjectDatabaseConfigs(selectedProjectId)
-  }, [loadProjectDatabaseConfigs, selectedProjectId])
+    void loadProjectDatabaseConfigs(selectedProjectId);
+  }, [loadProjectDatabaseConfigs, selectedProjectId]);
 
   useEffect(() => {
-    void loadDatabases(selectedEngine, selectedProjectId, selectedConnectionId)
-  }, [loadDatabases, selectedEngine, selectedProjectId, selectedConnectionId])
+    void loadDatabases(selectedEngine, selectedProjectId, selectedConnectionId);
+  }, [loadDatabases, selectedEngine, selectedProjectId, selectedConnectionId]);
 
   const activeEngines = useMemo(
     () => engines.filter((engine) => engine.status === 'active'),
     [engines],
-  )
+  );
 
   const preferredProjectConfig = useMemo(
     () =>
       projectDatabaseConfigs.find(
         (config) => !selectedEngine || config.engine === selectedEngine,
-      ) ?? projectDatabaseConfigs[0] ?? null,
+      ) ??
+      projectDatabaseConfigs[0] ??
+      null,
     [projectDatabaseConfigs, selectedEngine],
-  )
+  );
 
   const filteredSnapshots = useMemo(
-    () => snapshots.filter((snapshot) => !selectedEngine || snapshot.engine === selectedEngine),
+    () =>
+      snapshots.filter(
+        (snapshot) => !selectedEngine || snapshot.engine === selectedEngine,
+      ),
     [selectedEngine, snapshots],
-  )
+  );
 
   useEffect(() => {
     if (!preferredProjectConfig) {
-      return
+      return;
     }
 
-    setSelectedEngine((current) => current ?? preferredProjectConfig.engine)
-  }, [preferredProjectConfig])
+    setSelectedEngine((current) => current ?? preferredProjectConfig.engine);
+  }, [preferredProjectConfig]);
 
   const getDatabaseInfo = useCallback(
     async (name: string) => {
-      if (!selectedEngine) return null
+      if (!selectedEngine) return null;
       const info = await dbApi.getDatabaseInfo(
         name,
         selectedEngine,
         selectedProjectId,
         selectedConnectionId || undefined,
-      )
-      setDatabaseInfo(info)
-      return info
+      );
+      setDatabaseInfo(info);
+      return info;
     },
     [selectedEngine, selectedProjectId, selectedConnectionId],
-  )
+  );
 
   const createSnapshot = useCallback(
     async (payload: CreateSnapshotPayload) => {
-      if (!selectedEngine) throw new Error('No engine selected')
+      if (!selectedEngine) throw new Error('No engine selected');
       await dbApi.createSnapshot(selectedEngine, {
         ...payload,
         projectId: selectedProjectId || undefined,
         connectionId: payload.connectionId || undefined,
-      })
-      await loadSnapshots(selectedProjectId)
+      });
+      await loadSnapshots(selectedProjectId);
     },
     [loadSnapshots, selectedEngine, selectedProjectId],
-  )
+  );
 
   const restoreSnapshot = useCallback(
-    async (name: string, database: string, options?: { connectionId?: string }) => {
-      if (!selectedEngine) throw new Error('No engine selected')
+    async (
+      name: string,
+      database: string,
+      options?: { connectionId?: string },
+    ) => {
+      if (!selectedEngine) throw new Error('No engine selected');
       await dbApi.restoreSnapshot(selectedEngine, name, database, {
         projectId: selectedProjectId || undefined,
         connectionId: options?.connectionId || undefined,
-      })
+      });
     },
     [selectedEngine, selectedProjectId],
-  )
+  );
 
   const deleteSnapshot = useCallback(
     async (name: string) => {
-      await dbApi.deleteSnapshot(name)
-      await loadSnapshots(selectedProjectId)
+      await dbApi.deleteSnapshot(name);
+      await loadSnapshots(selectedProjectId);
     },
     [loadSnapshots, selectedProjectId],
-  )
+  );
 
   const saveProjectDatabaseConfig = useCallback(
     async (payload: UpsertProjectDatabaseConfigPayload) => {
-      await dbApi.upsertProjectDatabaseConfig(selectedProjectId, payload)
-      await loadProjectDatabaseConfigs(selectedProjectId)
+      await dbApi.upsertProjectDatabaseConfig(selectedProjectId, payload);
+      await loadProjectDatabaseConfigs(selectedProjectId);
     },
     [loadProjectDatabaseConfigs, selectedProjectId],
-  )
+  );
 
   const deleteProjectDatabaseConfig = useCallback(
     async (id: string) => {
-      await dbApi.deleteProjectDatabaseConfig(selectedProjectId, id)
-      await loadProjectDatabaseConfigs(selectedProjectId)
+      await dbApi.deleteProjectDatabaseConfig(selectedProjectId, id);
+      await loadProjectDatabaseConfigs(selectedProjectId);
     },
     [loadProjectDatabaseConfigs, selectedProjectId],
-  )
+  );
 
   return {
     projects,
@@ -222,5 +247,5 @@ export function useDbManager() {
     deleteSnapshot,
     saveProjectDatabaseConfig,
     deleteProjectDatabaseConfig,
-  }
+  };
 }

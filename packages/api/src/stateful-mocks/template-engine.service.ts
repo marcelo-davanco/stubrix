@@ -74,37 +74,23 @@ export class TemplateEngineService {
         new Handlebars.SafeString(JSON.stringify(value, null, 2)),
     );
 
-    this.handlebars.registerHelper(
-      'pick',
-      (arr: unknown[], index: number) => {
-        if (!Array.isArray(arr)) return '';
-        return arr[index] ?? '';
-      },
+    this.handlebars.registerHelper('pick', (arr: unknown[], index: number) => {
+      if (!Array.isArray(arr)) return '';
+      return arr[index] ?? '';
+    });
+
+    this.handlebars.registerHelper('first', (arr: unknown[]) =>
+      Array.isArray(arr) ? (arr[0] ?? '') : '',
     );
 
-    this.handlebars.registerHelper(
-      'first',
-      (arr: unknown[]) => (Array.isArray(arr) ? (arr[0] ?? '') : ''),
+    this.handlebars.registerHelper('last', (arr: unknown[]) =>
+      Array.isArray(arr) ? (arr[arr.length - 1] ?? '') : '',
     );
 
-    this.handlebars.registerHelper(
-      'last',
-      (arr: unknown[]) => (Array.isArray(arr) ? (arr[arr.length - 1] ?? '') : ''),
-    );
+    this.handlebars.registerHelper('eq', (a: unknown, b: unknown) => a === b);
 
-    this.handlebars.registerHelper(
-      'eq',
-      (a: unknown, b: unknown) => a === b,
-    );
+    this.handlebars.registerHelper('gt', (a: number, b: number) => a > b);
 
-    this.handlebars.registerHelper(
-      'gt',
-      (a: number, b: number) => a > b,
-    );
-
-    this.handlebars.registerHelper(
-      'lt',
-      (a: number, b: number) => a < b,
-    );
+    this.handlebars.registerHelper('lt', (a: number, b: number) => a < b);
   }
 }

@@ -1,5 +1,12 @@
 import { useCallback, useEffect } from 'react';
-import { ArrowLeft, Plus, Video, RefreshCw, CircleDot, StopCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Plus,
+  Video,
+  RefreshCw,
+  CircleDot,
+  StopCircle,
+} from 'lucide-react';
 import { useMockManager } from '../hooks/useMockManager.js';
 import { StatCard } from '../components/StatCard.js';
 
@@ -20,7 +27,10 @@ export function ProjectDashboardPage({
   onNavigateToRecording,
   onNavigateToNewMock,
 }: ProjectDashboardPageProps) {
-  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
+  const T = useCallback(
+    (key: string, fallback: string) => (t ? t(key) : fallback),
+    [t],
+  );
   const {
     currentProject,
     status,
@@ -45,7 +55,11 @@ export function ProjectDashboardPage({
   }
 
   if (error || !currentProject) {
-    return <div className="p-6 text-red-400">{error ?? T('dashboard.notFound', 'Project not found')}</div>;
+    return (
+      <div className="p-6 text-red-400">
+        {error ?? T('dashboard.notFound', 'Project not found')}
+      </div>
+    );
   }
 
   const mocksCount = status?.mocks.byProject[projectId] ?? 0;
@@ -61,18 +75,33 @@ export function ProjectDashboardPage({
         </button>
         <div>
           <h1 className="text-2xl font-bold">{currentProject.name}</h1>
-          <p className="text-text-secondary text-sm">{T('dashboard.title', 'Dashboard')}</p>
+          <p className="text-text-secondary text-sm">
+            {T('dashboard.title', 'Dashboard')}
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <StatCard label={T('projects.statEngine', 'Engine')} value={status?.engine ?? '—'} />
+        <StatCard
+          label={T('projects.statEngine', 'Engine')}
+          value={status?.engine ?? '—'}
+        />
         <StatCard
           label={T('projects.statStatus', 'Status')}
-          value={status?.engineStatus === 'running' ? `🟢 ${T('projects.statOnline', 'Online')}` : `🔴 ${T('projects.statOffline', 'Offline')}`}
+          value={
+            status?.engineStatus === 'running'
+              ? `🟢 ${T('projects.statOnline', 'Online')}`
+              : `🔴 ${T('projects.statOffline', 'Offline')}`
+          }
         />
-        <StatCard label={T('dashboard.mocksLabel', 'Mocks')} value={String(mocksCount)} />
-        <StatCard label={T('projects.statPort', 'Port')} value={String(status?.port ?? '—')} />
+        <StatCard
+          label={T('dashboard.mocksLabel', 'Mocks')}
+          value={String(mocksCount)}
+        />
+        <StatCard
+          label={T('projects.statPort', 'Port')}
+          value={String(status?.port ?? '—')}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -84,7 +113,8 @@ export function ProjectDashboardPage({
           {recording?.active ? (
             <div>
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-red-400 bg-red-400/10">
-                <CircleDot size={14} />{' '}{T('dashboard.recordingActive', 'Recording')}
+                <CircleDot size={14} />{' '}
+                {T('dashboard.recordingActive', 'Recording')}
               </span>
               <p className="text-sm text-text-secondary mt-2">
                 {T('dashboard.targetLabel', 'Target')}: {recording.proxyTarget}
@@ -102,7 +132,8 @@ export function ProjectDashboardPage({
             <div>
               <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary bg-white/10">
-                  <StopCircle size={14} />{' '}{T('dashboard.recordingStopped', 'Stopped')}
+                  <StopCircle size={14} />{' '}
+                  {T('dashboard.recordingStopped', 'Stopped')}
                 </span>
                 <button
                   onClick={() => onNavigateToRecording?.(projectId)}
@@ -113,7 +144,8 @@ export function ProjectDashboardPage({
               </div>
               {currentProject.proxyTarget && (
                 <p className="text-xs text-text-secondary mt-2">
-                  {T('dashboard.targetLabel', 'Target')}: {currentProject.proxyTarget}
+                  {T('dashboard.targetLabel', 'Target')}:{' '}
+                  {currentProject.proxyTarget}
                 </p>
               )}
             </div>
@@ -121,7 +153,9 @@ export function ProjectDashboardPage({
         </div>
 
         <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-          <h3 className="font-medium mb-3">{T('dashboard.quickActions', 'Quick Actions')}</h3>
+          <h3 className="font-medium mb-3">
+            {T('dashboard.quickActions', 'Quick Actions')}
+          </h3>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => onNavigateToNewMock?.(projectId)}

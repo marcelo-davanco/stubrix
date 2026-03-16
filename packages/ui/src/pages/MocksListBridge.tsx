@@ -15,7 +15,9 @@ export function MocksListBridge() {
       projectId={projectId}
       onBack={() => navigate(`/projects/${projectId}`)}
       onNavigateToNewMock={(id) => navigate(`/projects/${id}/mocks/new`)}
-      onNavigateToEditMock={(id, mockId) => navigate(`/projects/${id}/mocks/${mockId}/edit`)}
+      onNavigateToEditMock={(id, mockId) =>
+        navigate(`/projects/${id}/mocks/${mockId}/edit`)
+      }
     />
   );
 }

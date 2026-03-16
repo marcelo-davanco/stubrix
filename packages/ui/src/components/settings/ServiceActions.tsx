@@ -1,22 +1,27 @@
-import { Settings, RefreshCw, ScrollText, ExternalLink } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useTranslation } from '../../lib/i18n'
-import { cn } from '../../lib/utils'
+import { Settings, RefreshCw, ScrollText, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../../lib/i18n';
+import { cn } from '../../lib/utils';
 
 interface ServiceActionsProps {
-  serviceId: string
-  externalUrl?: string
-  onRestart: () => void
-  onViewLogs: () => void
+  serviceId: string;
+  externalUrl?: string;
+  onRestart: () => void;
+  onViewLogs: () => void;
 }
 
 const btnClass = cn(
   'p-1.5 rounded text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors',
-)
+);
 
-export function ServiceActions({ serviceId, externalUrl, onRestart, onViewLogs }: ServiceActionsProps) {
-  const navigate = useNavigate()
-  const { t } = useTranslation()
+export function ServiceActions({
+  serviceId,
+  externalUrl,
+  onRestart,
+  onViewLogs,
+}: ServiceActionsProps) {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="flex items-center gap-1">
@@ -28,10 +33,20 @@ export function ServiceActions({ serviceId, externalUrl, onRestart, onViewLogs }
       >
         <Settings size={13} />
       </button>
-      <button type="button" title={t('settings.restart')} className={btnClass} onClick={onRestart}>
+      <button
+        type="button"
+        title={t('settings.restart')}
+        className={btnClass}
+        onClick={onRestart}
+      >
         <RefreshCw size={13} />
       </button>
-      <button type="button" title={t('settings.logs')} className={btnClass} onClick={onViewLogs}>
+      <button
+        type="button"
+        title={t('settings.logs')}
+        className={btnClass}
+        onClick={onViewLogs}
+      >
         <ScrollText size={13} />
       </button>
       {externalUrl && (
@@ -46,5 +61,5 @@ export function ServiceActions({ serviceId, externalUrl, onRestart, onViewLogs }
         </a>
       )}
     </div>
-  )
+  );
 }

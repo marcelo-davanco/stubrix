@@ -13,35 +13,35 @@ The Stubrix API is the NestJS 11 control plane for the entire platform. It expos
 
 ## Module Index
 
-| Tag | Module | Base path |
-|-----|--------|-----------|
-| `projects` | Project CRUD | `/api/projects` |
-| `mocks` | Mock definitions | `/api/projects/:id/mocks` |
-| `recording` | Traffic recording | `/api/projects/:id/recording` |
-| `import` | HAR / Postman / OpenAPI import | `/api/import` |
-| `databases` | DB snapshots + configs | `/api/db`, `/api/projects/:id/databases` |
-| `stateful-mocks` | Stateful scenario machine | `/api/stateful-mocks` |
-| `governance` | Spectral OpenAPI linting | `/api/governance` |
-| `coverage` | Mock hit/miss analysis | `/api/coverage` |
-| `intelligence` | AI/RAG mock generation | `/api/intelligence` |
-| `scenarios` | Time machine: capture & restore | `/api/scenarios` |
-| `contracts` | Pact Broker contract testing | `/api/contracts` |
-| `chaos` | Fault injection | `/api/chaos` |
-| `chaos-network` | Toxiproxy network chaos | `/api/chaos-network` |
-| `webhooks` | Webhook receiver + replay | `/api/webhooks` |
-| `events` | Kafka + RabbitMQ publishing | `/api/events` |
-| `protocols` | GraphQL + gRPC mocking | `/api/protocols` |
-| `auth` | API keys, RBAC, multi-tenancy | `/api/auth` |
-| `templates` | Environment templates | `/api/templates` |
-| `metrics` | Prometheus metrics | `/api/metrics` |
-| `performance` | k6 scripts + baselines | `/api/performance` |
-| `tracing` | Jaeger/OpenTelemetry tracing | `/api/tracing` |
-| `cloud` | LocalStack AWS mocking | `/api/cloud` |
-| `storage` | MinIO object storage | `/api/storage` |
-| `iam` | Keycloak + Zitadel IAM | `/api/iam` |
-| `status` | Engine health | `/api/status` |
-| `logs` | Real-time logs | `/api/logs`, `/ws/logs` |
-| `engine` | WireMock reset | `/api/engine` |
+| Tag              | Module                          | Base path                                |
+| ---------------- | ------------------------------- | ---------------------------------------- |
+| `projects`       | Project CRUD                    | `/api/projects`                          |
+| `mocks`          | Mock definitions                | `/api/projects/:id/mocks`                |
+| `recording`      | Traffic recording               | `/api/projects/:id/recording`            |
+| `import`         | HAR / Postman / OpenAPI import  | `/api/import`                            |
+| `databases`      | DB snapshots + configs          | `/api/db`, `/api/projects/:id/databases` |
+| `stateful-mocks` | Stateful scenario machine       | `/api/stateful-mocks`                    |
+| `governance`     | Spectral OpenAPI linting        | `/api/governance`                        |
+| `coverage`       | Mock hit/miss analysis          | `/api/coverage`                          |
+| `intelligence`   | AI/RAG mock generation          | `/api/intelligence`                      |
+| `scenarios`      | Time machine: capture & restore | `/api/scenarios`                         |
+| `contracts`      | Pact Broker contract testing    | `/api/contracts`                         |
+| `chaos`          | Fault injection                 | `/api/chaos`                             |
+| `chaos-network`  | Toxiproxy network chaos         | `/api/chaos-network`                     |
+| `webhooks`       | Webhook receiver + replay       | `/api/webhooks`                          |
+| `events`         | Kafka + RabbitMQ publishing     | `/api/events`                            |
+| `protocols`      | GraphQL + gRPC mocking          | `/api/protocols`                         |
+| `auth`           | API keys, RBAC, multi-tenancy   | `/api/auth`                              |
+| `templates`      | Environment templates           | `/api/templates`                         |
+| `metrics`        | Prometheus metrics              | `/api/metrics`                           |
+| `performance`    | k6 scripts + baselines          | `/api/performance`                       |
+| `tracing`        | Jaeger/OpenTelemetry tracing    | `/api/tracing`                           |
+| `cloud`          | LocalStack AWS mocking          | `/api/cloud`                             |
+| `storage`        | MinIO object storage            | `/api/storage`                           |
+| `iam`            | Keycloak + Zitadel IAM          | `/api/iam`                               |
+| `status`         | Engine health                   | `/api/status`                            |
+| `logs`           | Real-time logs                  | `/api/logs`, `/ws/logs`                  |
+| `engine`         | WireMock reset                  | `/api/engine`                            |
 
 ---
 
@@ -336,14 +336,14 @@ Events emitted: `log` with `{ timestamp, level, message, projectId? }`
 
 ## HTTP Status Codes
 
-| Code | Meaning |
-|------|---------|
-| 200 | OK |
-| 201 | Created |
-| 204 | No Content |
-| 400 | Bad Request (validation) |
-| 404 | Not Found |
-| 500 | Internal Server Error |
+| Code | Meaning                  |
+| ---- | ------------------------ |
+| 200  | OK                       |
+| 201  | Created                  |
+| 204  | No Content               |
+| 400  | Bad Request (validation) |
+| 404  | Not Found                |
+| 500  | Internal Server Error    |
 
 ---
 

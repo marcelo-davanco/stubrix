@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Param, Body, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Query,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsObject } from 'class-validator';
 import { EventsService } from './events.service';
@@ -54,7 +63,12 @@ export class EventsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Publish an event to Kafka or RabbitMQ' })
   publish(@Body() dto: PublishEventDto) {
-    return this.service.publish(dto.broker, dto.topic, dto.payload, dto.headers);
+    return this.service.publish(
+      dto.broker,
+      dto.topic,
+      dto.payload,
+      dto.headers,
+    );
   }
 
   @Get('published')

@@ -42,7 +42,9 @@ export class ProjectDatabaseContextService {
       };
     }
 
-    const projectConfigs = this.configs.list(projectId).filter((c) => c.enabled);
+    const projectConfigs = this.configs
+      .list(projectId)
+      .filter((c) => c.enabled);
     const selected = engine
       ? projectConfigs.find((item) => item.engine === engine)
       : projectConfigs[0];

@@ -1,121 +1,127 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react';
 
 export interface ServiceStatus {
-  serviceId: string
-  name: string
-  category: string
-  enabled: boolean
-  autoStart: boolean
-  healthStatus: 'healthy' | 'unhealthy' | 'error' | 'unknown' | 'disabled'
-  port?: number
-  externalUrl?: string
-  dockerProfile?: string
-  dockerService?: string
+  serviceId: string;
+  name: string;
+  category: string;
+  enabled: boolean;
+  autoStart: boolean;
+  healthStatus: 'healthy' | 'unhealthy' | 'error' | 'unknown' | 'disabled';
+  port?: number;
+  externalUrl?: string;
+  dockerProfile?: string;
+  dockerService?: string;
 }
 
 export interface CryptoStatus {
-  configured: boolean
-  sessionActive: boolean
-  sessionExpiresIn: number
+  configured: boolean;
+  sessionActive: boolean;
+  sessionExpiresIn: number;
 }
 
-const API = '/api/settings'
+const API = '/api/settings';
 
 export function useSettings() {
-  const [services, setServices] = useState<ServiceStatus[]>([])
-  const [cryptoStatus, setCryptoStatus] = useState<CryptoStatus | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [services, setServices] = useState<ServiceStatus[]>([]);
+  const [cryptoStatus, setCryptoStatus] = useState<CryptoStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchServices = useCallback(async () => {
     try {
-      setError(null)
-      const res = await fetch(`${API}/services`)
-      if (!res.ok) throw new Error(`Failed to load services: ${res.statusText}`)
-      const data = (await res.json()) as ServiceStatus[]
-      setServices(data)
+      setError(null);
+      const res = await fetch(`${API}/services`);
+      if (!res.ok)
+        throw new Error(`Failed to load services: ${res.statusText}`);
+      const data = (await res.json()) as ServiceStatus[];
+      setServices(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   const fetchCryptoStatus = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/master-password/status`)
+      const res = await fetch(`${API}/master-password/status`);
       if (res.ok) {
-        setCryptoStatus((await res.json()) as CryptoStatus)
+        setCryptoStatus((await res.json()) as CryptoStatus);
       }
     } catch {
       // non-critical
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    void fetchServices()
-    void fetchCryptoStatus()
-    const timer = setInterval(() => void fetchServices(), 15_000)
-    return () => clearInterval(timer)
-  }, [fetchServices, fetchCryptoStatus])
+    void fetchServices();
+    void fetchCryptoStatus();
+    const timer = setInterval(() => void fetchServices(), 15_000);
+    return () => clearInterval(timer);
+  }, [fetchServices, fetchCryptoStatus]);
 
   const toggleService = async (serviceId: string, enabled: boolean) => {
-    const endpoint = enabled ? 'enable' : 'disable'
-    const res = await fetch(`${API}/services/${serviceId}/${endpoint}`, { method: 'POST' })
+    const endpoint = enabled ? 'enable' : 'disable';
+    const res = await fetch(`${API}/services/${serviceId}/${endpoint}`, {
+      method: 'POST',
+    });
     if (!res.ok) {
-      await fetchServices()
-      throw new Error(`Failed to ${endpoint} service: ${res.statusText}`)
+      await fetchServices();
+      throw new Error(`Failed to ${endpoint} service: ${res.statusText}`);
     }
-    await fetchServices()
-  }
+    await fetchServices();
+  };
 
   const toggleAutoStart = async (serviceId: string, autoStart: boolean) => {
     await fetch(`${API}/services/${serviceId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ autoStart }),
-    })
-    await fetchServices()
-  }
+    });
+    await fetchServices();
+  };
 
   const restartService = async (serviceId: string) => {
-    await fetch(`${API}/services/${serviceId}/restart`, { method: 'POST' })
-    await fetchServices()
-  }
+    await fetch(`${API}/services/${serviceId}/restart`, { method: 'POST' });
+    await fetchServices();
+  };
 
-  const getServiceLogs = async (serviceId: string, tail = 100): Promise<string> => {
-    const res = await fetch(`${API}/services/${serviceId}/logs?tail=${tail}`)
-    if (!res.ok) return 'Failed to load logs.'
-    const data = (await res.json()) as { logs: string }
-    return data.logs
-  }
+  const getServiceLogs = async (
+    serviceId: string,
+    tail = 100,
+  ): Promise<string> => {
+    const res = await fetch(`${API}/services/${serviceId}/logs?tail=${tail}`);
+    if (!res.ok) return 'Failed to load logs.';
+    const data = (await res.json()) as { logs: string };
+    return data.logs;
+  };
 
   const setupMasterPassword = async (password: string): Promise<void> => {
     const res = await fetch(`${API}/master-password/setup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
-    })
-    if (!res.ok) throw new Error('Failed to setup password')
-    await fetchCryptoStatus()
-  }
+    });
+    if (!res.ok) throw new Error('Failed to setup password');
+    await fetchCryptoStatus();
+  };
 
   const verifyMasterPassword = async (password: string): Promise<boolean> => {
     const res = await fetch(`${API}/master-password/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
-    })
-    if (!res.ok) return false
-    const data = (await res.json()) as { success: boolean }
-    await fetchCryptoStatus()
-    return data.success
-  }
+    });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { success: boolean };
+    await fetchCryptoStatus();
+    return data.success;
+  };
 
   const lockSession = async (): Promise<void> => {
-    await fetch(`${API}/master-password/lock`, { method: 'POST' })
-    await fetchCryptoStatus()
-  }
+    await fetch(`${API}/master-password/lock`, { method: 'POST' });
+    await fetchCryptoStatus();
+  };
 
   return {
     services,
@@ -131,5 +137,5 @@ export function useSettings() {
     lockSession,
     refetch: fetchServices,
     refetchCrypto: fetchCryptoStatus,
-  }
+  };
 }

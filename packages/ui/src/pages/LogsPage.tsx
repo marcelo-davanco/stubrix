@@ -47,14 +47,21 @@ export function LogsPage() {
     setLogs([]);
   };
 
-  if (loading) return <div className="flex items-center justify-center h-full text-text-secondary">{t('common.loading')}</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-full text-text-secondary">
+        {t('common.loading')}
+      </div>
+    );
 
   return (
     <div className="flex flex-col h-full p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold">{t('logs.title')}</h1>
-          <p className="text-text-secondary text-sm">{logs.length} {t('logs.entriesLabel')}</p>
+          <p className="text-text-secondary text-sm">
+            {logs.length} {t('logs.entriesLabel')}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {!paused && (
@@ -109,16 +116,29 @@ export function LogsPage() {
                   <td className="px-4 py-2 text-text-secondary">
                     {new Date(log.timestamp).toLocaleTimeString()}
                   </td>
-                  <td className={cn('px-4 py-2 font-bold', METHOD_COLORS[log.method] ?? 'text-text-secondary')}>
+                  <td
+                    className={cn(
+                      'px-4 py-2 font-bold',
+                      METHOD_COLORS[log.method] ?? 'text-text-secondary',
+                    )}
+                  >
                     {log.method}
                   </td>
-                  <td className="px-4 py-2 text-text-primary truncate max-w-xs">{log.url}</td>
+                  <td className="px-4 py-2 text-text-primary truncate max-w-xs">
+                    {log.url}
+                  </td>
                   <td className="px-4 py-2">
-                    <span className={cn(log.status < 400 ? 'text-green-400' : 'text-red-400')}>
+                    <span
+                      className={cn(
+                        log.status < 400 ? 'text-green-400' : 'text-red-400',
+                      )}
+                    >
                       {log.status}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-text-secondary">{log.responseTime}</td>
+                  <td className="px-4 py-2 text-text-secondary">
+                    {log.responseTime}
+                  </td>
                   <td className="px-4 py-2">
                     {log.matched ? (
                       <span className="text-green-400">✓</span>

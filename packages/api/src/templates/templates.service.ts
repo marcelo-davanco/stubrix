@@ -33,23 +33,49 @@ const BUILT_IN_TEMPLATES: EnvironmentTemplate[] = [
     tags: ['rest', 'crud'],
     builtIn: true,
     variables: [
-      { name: 'RESOURCE', description: 'Resource name (e.g. users)', required: true, default: 'items' },
-      { name: 'BASE_PATH', description: 'Base URL path', required: false, default: '/api' },
+      {
+        name: 'RESOURCE',
+        description: 'Resource name (e.g. users)',
+        required: true,
+        default: 'items',
+      },
+      {
+        name: 'BASE_PATH',
+        description: 'Base URL path',
+        required: false,
+        default: '/api',
+      },
     ],
     mocks: [
       {
         filename: '{{RESOURCE}}_list.json',
-        content: JSON.stringify({
-          request: { method: 'GET', urlPath: '{{BASE_PATH}}/{{RESOURCE}}' },
-          response: { status: 200, headers: { 'Content-Type': 'application/json' }, body: '[]' },
-        }, null, 2),
+        content: JSON.stringify(
+          {
+            request: { method: 'GET', urlPath: '{{BASE_PATH}}/{{RESOURCE}}' },
+            response: {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+              body: '[]',
+            },
+          },
+          null,
+          2,
+        ),
       },
       {
         filename: '{{RESOURCE}}_create.json',
-        content: JSON.stringify({
-          request: { method: 'POST', urlPath: '{{BASE_PATH}}/{{RESOURCE}}' },
-          response: { status: 201, headers: { 'Content-Type': 'application/json' }, body: '{"id":"1"}' },
-        }, null, 2),
+        content: JSON.stringify(
+          {
+            request: { method: 'POST', urlPath: '{{BASE_PATH}}/{{RESOURCE}}' },
+            response: {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+              body: '{"id":"1"}',
+            },
+          },
+          null,
+          2,
+        ),
       },
     ],
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -61,29 +87,54 @@ const BUILT_IN_TEMPLATES: EnvironmentTemplate[] = [
     tags: ['auth', 'jwt'],
     builtIn: true,
     variables: [
-      { name: 'AUTH_PATH', description: 'Auth base path', required: false, default: '/api/auth' },
+      {
+        name: 'AUTH_PATH',
+        description: 'Auth base path',
+        required: false,
+        default: '/api/auth',
+      },
     ],
     mocks: [
       {
         filename: 'auth_login.json',
-        content: JSON.stringify({
-          request: { method: 'POST', urlPath: '{{AUTH_PATH}}/login' },
-          response: { status: 200, headers: { 'Content-Type': 'application/json' }, body: '{"token":"mock-jwt-token","expiresIn":3600}' },
-        }, null, 2),
+        content: JSON.stringify(
+          {
+            request: { method: 'POST', urlPath: '{{AUTH_PATH}}/login' },
+            response: {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+              body: '{"token":"mock-jwt-token","expiresIn":3600}',
+            },
+          },
+          null,
+          2,
+        ),
       },
       {
         filename: 'auth_refresh.json',
-        content: JSON.stringify({
-          request: { method: 'POST', urlPath: '{{AUTH_PATH}}/refresh' },
-          response: { status: 200, headers: { 'Content-Type': 'application/json' }, body: '{"token":"mock-refreshed-token"}' },
-        }, null, 2),
+        content: JSON.stringify(
+          {
+            request: { method: 'POST', urlPath: '{{AUTH_PATH}}/refresh' },
+            response: {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+              body: '{"token":"mock-refreshed-token"}',
+            },
+          },
+          null,
+          2,
+        ),
       },
       {
         filename: 'auth_logout.json',
-        content: JSON.stringify({
-          request: { method: 'POST', urlPath: '{{AUTH_PATH}}/logout' },
-          response: { status: 204 },
-        }, null, 2),
+        content: JSON.stringify(
+          {
+            request: { method: 'POST', urlPath: '{{AUTH_PATH}}/logout' },
+            response: { status: 204 },
+          },
+          null,
+          2,
+        ),
       },
     ],
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -95,20 +146,34 @@ const BUILT_IN_TEMPLATES: EnvironmentTemplate[] = [
     tags: ['pagination', 'rest'],
     builtIn: true,
     variables: [
-      { name: 'RESOURCE', description: 'Resource name', required: true, default: 'items' },
-      { name: 'BASE_PATH', description: 'Base path', required: false, default: '/api' },
+      {
+        name: 'RESOURCE',
+        description: 'Resource name',
+        required: true,
+        default: 'items',
+      },
+      {
+        name: 'BASE_PATH',
+        description: 'Base path',
+        required: false,
+        default: '/api',
+      },
     ],
     mocks: [
       {
         filename: '{{RESOURCE}}_paginated.json',
-        content: JSON.stringify({
-          request: { method: 'GET', urlPath: '{{BASE_PATH}}/{{RESOURCE}}' },
-          response: {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-            body: '{"data":[],"meta":{"page":1,"pageSize":20,"total":0}}',
+        content: JSON.stringify(
+          {
+            request: { method: 'GET', urlPath: '{{BASE_PATH}}/{{RESOURCE}}' },
+            response: {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+              body: '{"data":[],"meta":{"page":1,"pageSize":20,"total":0}}',
+            },
           },
-        }, null, 2),
+          null,
+          2,
+        ),
       },
     ],
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -120,24 +185,69 @@ const BUILT_IN_TEMPLATES: EnvironmentTemplate[] = [
     tags: ['errors', 'testing'],
     builtIn: true,
     variables: [
-      { name: 'RESOURCE_PATH', description: 'Resource path', required: true, default: '/api/resource' },
+      {
+        name: 'RESOURCE_PATH',
+        description: 'Resource path',
+        required: true,
+        default: '/api/resource',
+      },
     ],
     mocks: [
       {
         filename: 'error_400.json',
-        content: JSON.stringify({ request: { method: 'GET', urlPath: '{{RESOURCE_PATH}}/bad-request' }, response: { status: 400, body: '{"error":"Bad Request"}' } }, null, 2),
+        content: JSON.stringify(
+          {
+            request: {
+              method: 'GET',
+              urlPath: '{{RESOURCE_PATH}}/bad-request',
+            },
+            response: { status: 400, body: '{"error":"Bad Request"}' },
+          },
+          null,
+          2,
+        ),
       },
       {
         filename: 'error_401.json',
-        content: JSON.stringify({ request: { method: 'GET', urlPath: '{{RESOURCE_PATH}}/unauthorized' }, response: { status: 401, body: '{"error":"Unauthorized"}' } }, null, 2),
+        content: JSON.stringify(
+          {
+            request: {
+              method: 'GET',
+              urlPath: '{{RESOURCE_PATH}}/unauthorized',
+            },
+            response: { status: 401, body: '{"error":"Unauthorized"}' },
+          },
+          null,
+          2,
+        ),
       },
       {
         filename: 'error_404.json',
-        content: JSON.stringify({ request: { method: 'GET', urlPath: '{{RESOURCE_PATH}}/not-found' }, response: { status: 404, body: '{"error":"Not Found"}' } }, null, 2),
+        content: JSON.stringify(
+          {
+            request: { method: 'GET', urlPath: '{{RESOURCE_PATH}}/not-found' },
+            response: { status: 404, body: '{"error":"Not Found"}' },
+          },
+          null,
+          2,
+        ),
       },
       {
         filename: 'error_500.json',
-        content: JSON.stringify({ request: { method: 'GET', urlPath: '{{RESOURCE_PATH}}/server-error' }, response: { status: 500, body: '{"error":"Internal Server Error"}' } }, null, 2),
+        content: JSON.stringify(
+          {
+            request: {
+              method: 'GET',
+              urlPath: '{{RESOURCE_PATH}}/server-error',
+            },
+            response: {
+              status: 500,
+              body: '{"error":"Internal Server Error"}',
+            },
+          },
+          null,
+          2,
+        ),
       },
     ],
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -152,7 +262,8 @@ export class TemplatesService {
 
   constructor(private readonly config: ConfigService) {
     const mocksDir =
-      this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
     this.storageDir = path.join(mocksDir, 'templates');
     this.templatesFile = path.join(this.storageDir, 'custom.json');
     fs.mkdirSync(this.storageDir, { recursive: true });
@@ -240,13 +351,20 @@ export class TemplatesService {
       created.push(filename);
     }
 
-    this.logger.log(`Template "${template.name}" applied: ${created.length} files created`);
+    this.logger.log(
+      `Template "${template.name}" applied: ${created.length} files created`,
+    );
     return { created, warnings };
   }
 
   private loadCustom(): EnvironmentTemplate[] {
     if (!fs.existsSync(this.templatesFile)) return [];
-    try { return JSON.parse(fs.readFileSync(this.templatesFile, 'utf-8')) as EnvironmentTemplate[]; }
-    catch { return []; }
+    try {
+      return JSON.parse(
+        fs.readFileSync(this.templatesFile, 'utf-8'),
+      ) as EnvironmentTemplate[];
+    } catch {
+      return [];
+    }
   }
 }

@@ -3,7 +3,10 @@ import { useTranslation } from '../lib/i18n';
 import { MockEditorPage } from '@stubrix/mock-ui';
 
 export function MockEditorBridge() {
-  const { projectId, mockId } = useParams<{ projectId: string; mockId: string }>();
+  const { projectId, mockId } = useParams<{
+    projectId: string;
+    mockId: string;
+  }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
 

@@ -22,7 +22,10 @@ export function ProjectCard({
   onRecording,
   onDelete,
 }: ProjectCardProps) {
-  const T = useCallback((key: string, fallback: string) => (t ? t(key) : fallback), [t]);
+  const T = useCallback(
+    (key: string, fallback: string) => (t ? t(key) : fallback),
+    [t],
+  );
   return (
     <div className="bg-white/5 border border-white/10 rounded-lg p-4 hover:border-primary/30 transition-colors">
       <div className="flex items-start justify-between">
@@ -34,28 +37,44 @@ export function ProjectCard({
             </span>
           </div>
           {project.description && (
-            <p className="text-text-secondary text-sm mt-1">{project.description}</p>
+            <p className="text-text-secondary text-sm mt-1">
+              {project.description}
+            </p>
           )}
           {project.proxyTarget && (
             <p className="text-xs text-text-secondary mt-1">
-              {T('dashboard.targetLabel', 'Target')}: <span className="text-primary">{project.proxyTarget}</span>
+              {T('dashboard.targetLabel', 'Target')}:{' '}
+              <span className="text-primary">{project.proxyTarget}</span>
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <ActionBtn onClick={onDashboard} title={T('projects.actionDashboard', 'Dashboard')}>
+          <ActionBtn
+            onClick={onDashboard}
+            title={T('projects.actionDashboard', 'Dashboard')}
+          >
             <LayoutDashboard size={14} />
           </ActionBtn>
-          <ActionBtn onClick={onMocks} title={T('projects.actionMocks', 'Simulations')}>
+          <ActionBtn
+            onClick={onMocks}
+            title={T('projects.actionMocks', 'Simulations')}
+          >
             <FolderOpen size={14} />
           </ActionBtn>
           {project.proxyTarget && (
-            <ActionBtn onClick={onRecording} title={T('projects.actionRecording', 'Recording')}>
+            <ActionBtn
+              onClick={onRecording}
+              title={T('projects.actionRecording', 'Recording')}
+            >
               <Video size={14} />
             </ActionBtn>
           )}
           {project.id !== 'default' && (
-            <ActionBtn onClick={onDelete} title={T('projects.actionDelete', 'Delete')} danger>
+            <ActionBtn
+              onClick={onDelete}
+              title={T('projects.actionDelete', 'Delete')}
+              danger
+            >
               <Trash2 size={14} />
             </ActionBtn>
           )}
