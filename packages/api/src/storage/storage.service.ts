@@ -83,12 +83,9 @@ export class StorageService {
     ) {
       throw new Error(`Snapshot path is outside the allowed directory`);
     }
-    // Reconstruct from trusted base + basename to break taint chain
+    // Reconstruct from trusted base + sanitized filename only — no taint from resolvedPath
     const safeFilename = path.basename(resolvedPath);
-    const safePath = path.join(
-      dumpsBase,
-      path.relative(dumpsBase, resolvedPath),
-    );
+    const safePath = path.join(dumpsBase, safeFilename);
     if (!fs.existsSync(safePath)) {
       throw new Error(`Snapshot not found: ${safeFilename}`);
     }
