@@ -339,7 +339,11 @@ export class ServiceLifecycleService implements OnModuleInit {
 
     this.configDb.updateHealthStatus(serviceId, 'unknown');
 
-    const result = await this.docker.restartService(def.dockerService);
+    const envOverrides = this.buildEnvOverrides(serviceId);
+    const result = await this.docker.restartService(
+      def.dockerService,
+      envOverrides,
+    );
     if (!result.success) {
       return this.errorResult(
         serviceId,
