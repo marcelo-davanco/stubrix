@@ -102,6 +102,7 @@ export class ChaosService {
     };
     const rawFilename = `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${profile.id}.json`;
     const filename = path.basename(rawFilename);
+    // lgtm[js/http-to-file-access] - intentional: API request body (chaos profile definition) is persisted to storage
     fs.writeFileSync(
       path.join(this.profilesDir, filename),
       JSON.stringify(profile, null, 2),

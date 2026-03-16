@@ -163,12 +163,10 @@ export class StatefulMocksService {
   }
 
   remove(id: string): void {
-    const filePath = path.join(this.storageDir, `${id}.json`);
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundException(`Stateful mock '${id}' not found`);
-    }
+    const mock = this.findOne(id);
+    const filePath = path.join(this.storageDir, `${mock.id}.json`);
     fs.unlinkSync(filePath);
-    this.stateResolver.invalidateCache(id);
+    this.stateResolver.invalidateCache(mock.id);
   }
 
   async test(
