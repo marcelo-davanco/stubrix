@@ -265,9 +265,24 @@ export class DbSnapshotsService {
       password: string;
     }>,
   ): Promise<void> {
+    const host = envOverrides?.host ?? this.postgresHost ?? 'localhost';
+    const port = envOverrides?.port ?? this.postgresPort;
+    const user = envOverrides?.user ?? this.postgresUser;
     await this.execFileAsync(
       'pg_dump',
-      ['--clean', '--if-exists', '--file', filepath, database],
+      [
+        '-h',
+        host,
+        '-p',
+        port,
+        '-U',
+        user,
+        '--clean',
+        '--if-exists',
+        '--file',
+        filepath,
+        database,
+      ],
       {
         env: this.getPostgresEnv(database, envOverrides),
       },
@@ -284,9 +299,16 @@ export class DbSnapshotsService {
       password: string;
     }>,
   ): Promise<void> {
-    await this.execFileAsync('psql', ['--file', filepath, database], {
-      env: this.getPostgresEnv(database, envOverrides),
-    });
+    const host = envOverrides?.host ?? this.postgresHost ?? 'localhost';
+    const port = envOverrides?.port ?? this.postgresPort;
+    const user = envOverrides?.user ?? this.postgresUser;
+    await this.execFileAsync(
+      'psql',
+      ['-h', host, '-p', port, '-U', user, '--file', filepath, database],
+      {
+        env: this.getPostgresEnv(database, envOverrides),
+      },
+    );
   }
 
   list(projectId?: string): ListSnapshotsResponse {

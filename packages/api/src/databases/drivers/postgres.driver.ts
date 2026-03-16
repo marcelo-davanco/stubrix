@@ -54,8 +54,11 @@ export class PostgresDriver implements DatabaseDriverInterface {
   }
 
   listDatabases(overrides?: ConnectionOverrides): Promise<string[]> {
+    const host = overrides?.host ?? this.host;
+    const port = overrides?.port ?? this.port;
+    const user = overrides?.username ?? this.user;
     const output = execSync(
-      `psql -t -A -c "SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;"`,
+      `psql -h ${host} -p ${port} -U ${user} -t -A -c "SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;"`,
       { env: this.getEnv(undefined, overrides), encoding: 'utf-8' },
     );
     return Promise.resolve(output.trim().split('\n').filter(Boolean));
