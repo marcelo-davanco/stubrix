@@ -105,6 +105,21 @@ export class WebhooksService {
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       throw new Error(`URL scheme not allowed: ${parsed.protocol}`);
     }
+    const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (
+      hostname === 'localhost' ||
+      hostname === '0.0.0.0' ||
+      hostname === '::1' ||
+      /^127\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^169\.254\./.test(hostname) ||
+      hostname.endsWith('.internal') ||
+      hostname.endsWith('.local')
+    ) {
+      throw new Error(`URL hostname not allowed: ${hostname}`);
+    }
     return parsed.href;
   }
 
