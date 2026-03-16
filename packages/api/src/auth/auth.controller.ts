@@ -8,7 +8,6 @@ import {
   HttpCode,
   HttpStatus,
   Query,
-  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { IsString, IsEmail, IsOptional } from 'class-validator';

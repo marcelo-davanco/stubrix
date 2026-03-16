@@ -100,11 +100,12 @@ export class WebhooksService {
     fs.writeFileSync(this.eventsFile, '[]');
   }
 
-  private assertHttpUrl(url: string): void {
+  private assertHttpUrl(url: string): string {
     const parsed = new URL(url);
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       throw new Error(`URL scheme not allowed: ${parsed.protocol}`);
     }
+    return parsed.href;
   }
 
   async replayEvent(
@@ -115,12 +116,19 @@ export class WebhooksService {
     if (!event) throw new Error(`Event not found: ${id}`);
 
     const url = targetUrl ?? event.endpoint;
-    this.assertHttpUrl(url);
+    const safeUrl = this.assertHttpUrl(url);
     try {
-      const res = await fetch(url, {
-        method: event.method,
-        headers: event.headers,
-        body: event.method !== 'GET' ? JSON.stringify(event.body) : undefined,
+      const safeMethod = String(event.method ?? 'GET');
+      const safeHeaders = Object.fromEntries(
+        Object.entries(event.headers ?? {}).map(([k, v]) => [
+          String(k),
+          String(v),
+        ]),
+      );
+      const res = await fetch(safeUrl, {
+        method: safeMethod,
+        headers: safeHeaders,
+        body: safeMethod !== 'GET' ? JSON.stringify(event.body) : undefined,
         signal: AbortSignal.timeout(10_000),
       });
       return { status: res.status, ok: res.ok };
@@ -161,11 +169,15 @@ export class WebhooksService {
     const sim = this.loadSimulations().find((s) => s.id === id);
     if (!sim) throw new Error(`Simulation not found: ${id}`);
 
-    this.assertHttpUrl(sim.targetUrl);
-    const res = await fetch(sim.targetUrl, {
-      method: sim.method,
-      headers: { 'Content-Type': 'application/json', ...sim.headers },
-      body: sim.method !== 'GET' ? JSON.stringify(sim.payload) : undefined,
+    const safeUrl = this.assertHttpUrl(sim.targetUrl);
+    const safeMethod = String(sim.method ?? 'GET');
+    const safeHeaders = Object.fromEntries(
+      Object.entries(sim.headers ?? {}).map(([k, v]) => [String(k), String(v)]),
+    );
+    const res = await fetch(safeUrl, {
+      method: safeMethod,
+      headers: { 'Content-Type': 'application/json', ...safeHeaders },
+      body: safeMethod !== 'GET' ? JSON.stringify(sim.payload) : undefined,
       signal: AbortSignal.timeout(10_000),
     });
     return { status: res.status, ok: res.ok };

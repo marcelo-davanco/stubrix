@@ -145,21 +145,25 @@ export class AuthService {
   }
 
   private ensureDefaultAdmin(): void {
-    if (!fs.existsSync(this.usersFile)) {
-      const admin: User = {
-        id: uuidv4(),
-        username: 'admin',
-        email: 'admin@stubrix.local',
-        role: 'admin',
-        workspaceId: 'default',
-        apiKey:
-          this.masterKey !== 'stubrix-dev-key'
-            ? this.generateApiKey()
-            : 'sbx_dev_default_admin_key',
-        createdAt: new Date().toISOString(),
-        active: true,
-      };
-      fs.writeFileSync(this.usersFile, JSON.stringify([admin], null, 2));
+    const admin: User = {
+      id: uuidv4(),
+      username: 'admin',
+      email: 'admin@stubrix.local',
+      role: 'admin',
+      workspaceId: 'default',
+      apiKey:
+        this.masterKey !== 'stubrix-dev-key'
+          ? this.generateApiKey()
+          : 'sbx_dev_default_admin_key',
+      createdAt: new Date().toISOString(),
+      active: true,
+    };
+    try {
+      fs.writeFileSync(this.usersFile, JSON.stringify([admin], null, 2), {
+        flag: 'wx',
+      });
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
     }
   }
 

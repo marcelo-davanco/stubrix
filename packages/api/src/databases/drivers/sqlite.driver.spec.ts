@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { SqliteDriver } from './sqlite.driver';
 import * as fs from 'fs';
-import Database from 'better-sqlite3';
 
 // Mock dependencies
 jest.mock('fs');
@@ -10,10 +9,9 @@ jest.mock('better-sqlite3', () => {
   return {
     default: jest.fn().mockImplementation(() => ({
       prepare: jest.fn().mockReturnValue({
-        all: jest.fn().mockReturnValue([
-          { name: 'table1' },
-          { name: 'table2' },
-        ]),
+        all: jest
+          .fn()
+          .mockReturnValue([{ name: 'table1' }, { name: 'table2' }]),
       }),
       close: jest.fn(),
     })),
@@ -71,7 +69,7 @@ describe('SqliteDriver', () => {
       const noConfigDriver = new SqliteDriver({
         get: jest.fn().mockReturnValue(undefined),
       } as any);
-      
+
       expect(noConfigDriver.isConfigured()).toBe(false);
     });
   });
@@ -102,7 +100,7 @@ describe('SqliteDriver', () => {
     it('should return database name when configured and file exists', async () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.statSync.mockReturnValue({ size: 1024 } as fs.Stats);
-      
+
       const result = await driver.listDatabases();
       expect(result).toEqual(['test.db']);
     });
@@ -138,7 +136,7 @@ describe('SqliteDriver', () => {
 
       expect(mockFs.copyFileSync).toHaveBeenCalledWith(
         '/path/to/test.db',
-        '/path/to/snapshot.db'
+        '/path/to/snapshot.db',
       );
     });
 
@@ -155,15 +153,15 @@ describe('SqliteDriver', () => {
 
       expect(mockFs.copyFileSync).toHaveBeenCalledWith(
         '/path/to/test.db',
-        '/path/to/snapshot.db'
+        '/path/to/snapshot.db',
       );
       expect(mockFs.copyFileSync).toHaveBeenCalledWith(
         '/path/to/test.db-wal',
-        '/path/to/snapshot.db-wal'
+        '/path/to/snapshot.db-wal',
       );
       expect(mockFs.copyFileSync).toHaveBeenCalledWith(
         '/path/to/test.db-shm',
-        '/path/to/snapshot.db-shm'
+        '/path/to/snapshot.db-shm',
       );
     });
 
@@ -171,9 +169,10 @@ describe('SqliteDriver', () => {
       const noConfigDriver = new SqliteDriver({
         get: jest.fn().mockReturnValue(undefined),
       } as any);
-      
-      await expect(noConfigDriver.createSnapshot('testdb', '/path/to/snapshot.db'))
-        .rejects.toThrow('SQLite driver is not configured');
+
+      await expect(
+        noConfigDriver.createSnapshot('testdb', '/path/to/snapshot.db'),
+      ).rejects.toThrow('SQLite driver is not configured');
     });
 
     it('should throw error when source database does not exist', async () => {
@@ -181,8 +180,9 @@ describe('SqliteDriver', () => {
         return path !== '/path/to/test.db';
       });
 
-      await expect(driver.createSnapshot('testdb', '/path/to/snapshot.db'))
-        .rejects.toThrow('Source database file not found: /path/to/test.db');
+      await expect(
+        driver.createSnapshot('testdb', '/path/to/snapshot.db'),
+      ).rejects.toThrow('Source database file not found: /path/to/test.db');
     });
   });
 
@@ -197,7 +197,7 @@ describe('SqliteDriver', () => {
 
       expect(mockFs.copyFileSync).toHaveBeenCalledWith(
         '/path/to/snapshot.db',
-        '/path/to/test.db'
+        '/path/to/test.db',
       );
     });
 
@@ -214,11 +214,11 @@ describe('SqliteDriver', () => {
 
       expect(mockFs.copyFileSync).toHaveBeenCalledWith(
         '/path/to/snapshot.db',
-        '/path/to/test.db'
+        '/path/to/test.db',
       );
       expect(mockFs.copyFileSync).toHaveBeenCalledWith(
         '/path/to/snapshot.db-wal',
-        '/path/to/test.db-wal'
+        '/path/to/test.db-wal',
       );
     });
 
@@ -242,16 +242,18 @@ describe('SqliteDriver', () => {
       const noConfigDriver = new SqliteDriver({
         get: jest.fn().mockReturnValue(undefined),
       } as any);
-      
-      await expect(noConfigDriver.restoreSnapshot('testdb', '/path/to/snapshot.db'))
-        .rejects.toThrow('SQLite driver is not configured');
+
+      await expect(
+        noConfigDriver.restoreSnapshot('testdb', '/path/to/snapshot.db'),
+      ).rejects.toThrow('SQLite driver is not configured');
     });
 
     it('should throw error when snapshot file does not exist', async () => {
       mockFs.existsSync.mockReturnValue(false);
 
-      await expect(driver.restoreSnapshot('testdb', '/path/to/snapshot.db'))
-        .rejects.toThrow('Snapshot file not found: /path/to/snapshot.db');
+      await expect(
+        driver.restoreSnapshot('testdb', '/path/to/snapshot.db'),
+      ).rejects.toThrow('Snapshot file not found: /path/to/snapshot.db');
     });
   });
 });

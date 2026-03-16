@@ -228,7 +228,7 @@ export class UniversalImportService {
     }
     let content: string;
     try {
-      const res = await fetch(url);
+      const res = await fetch(parsed.href);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }

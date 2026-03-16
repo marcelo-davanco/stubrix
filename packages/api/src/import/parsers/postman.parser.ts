@@ -65,7 +65,7 @@ interface PostmanCollection {
   item?: PostmanItem[];
 }
 
-const POSTMAN_VAR_RE = /\{\{([^}]+)\}\}/g;
+const POSTMAN_VAR_RE = /\{\{([^}]{0,256})\}\}/g;
 
 export function parsePostman(content: string, deduplicate = true): ImportIR {
   let collection: PostmanCollection;
@@ -76,7 +76,9 @@ export function parsePostman(content: string, deduplicate = true): ImportIR {
   }
 
   if (!collection.item && !(collection as PostmanItem).request) {
-    throw new BadRequestException('Invalid Postman collection format: missing item array');
+    throw new BadRequestException(
+      'Invalid Postman collection format: missing item array',
+    );
   }
 
   const seen = new Set<string>();
@@ -112,10 +114,15 @@ function flattenItems(items: PostmanItem[], parentName = ''): PostmanItem[] {
   const result: PostmanItem[] = [];
   for (const item of items) {
     if (item.item && item.item.length > 0) {
-      const folderName = parentName ? `${parentName}/${item.name ?? ''}` : (item.name ?? '');
+      const folderName = parentName
+        ? `${parentName}/${item.name ?? ''}`
+        : (item.name ?? '');
       result.push(...flattenItems(item.item, folderName));
     } else {
-      result.push({ ...item, name: parentName ? `${parentName}/${item.name ?? ''}` : item.name });
+      result.push({
+        ...item,
+        name: parentName ? `${parentName}/${item.name ?? ''}` : item.name,
+      });
     }
   }
   return result;
@@ -138,15 +145,18 @@ function convertItem(item: PostmanItem): ImportIREntry | null {
   const mimeType = detectMimeType(req.body);
 
   const firstResponse = item.response?.[0];
-  const responseHeaders: ImportIRHeader[] = (firstResponse?.header ?? []).map((h) => ({
-    name: h.key,
-    value: h.value,
-  }));
+  const responseHeaders: ImportIRHeader[] = (firstResponse?.header ?? []).map(
+    (h) => ({
+      name: h.key,
+      value: h.value,
+    }),
+  );
 
   return {
     id: uuidv4(),
     name: item.name,
-    description: typeof req.description === 'string' ? req.description : undefined,
+    description:
+      typeof req.description === 'string' ? req.description : undefined,
     request: {
       method: req.method.toUpperCase(),
       url: urlObj.raw,
@@ -165,7 +175,9 @@ function convertItem(item: PostmanItem): ImportIREntry | null {
   };
 }
 
-function resolveUrl(url: PostmanUrl | string): { raw: string; path: string; query: PostmanQueryParam[] } | null {
+function resolveUrl(
+  url: PostmanUrl | string,
+): { raw: string; path: string; query: PostmanQueryParam[] } | null {
   if (typeof url === 'string') {
     const raw = resolveVars(url);
     try {
@@ -180,9 +192,14 @@ function resolveUrl(url: PostmanUrl | string): { raw: string; path: string; quer
   const pathParts = Array.isArray(url.path)
     ? url.path
     : typeof url.path === 'string'
-    ? url.path.split('/')
-    : [];
-  const path = '/' + pathParts.map((p) => resolveVars(p)).join('/').replace(/^\//, '');
+      ? url.path.split('/')
+      : [];
+  const path =
+    '/' +
+    pathParts
+      .map((p) => resolveVars(p))
+      .join('/')
+      .replace(/^\//, '');
   const query = url.query ?? [];
 
   return { raw, path, query };
@@ -199,13 +216,18 @@ function resolveBody(body?: PostmanBody): string | undefined {
       return body.raw;
     case 'graphql':
       if (body.graphql) {
-        return JSON.stringify({ query: body.graphql.query, variables: body.graphql.variables });
+        return JSON.stringify({
+          query: body.graphql.query,
+          variables: body.graphql.variables,
+        });
       }
       return undefined;
     case 'urlencoded':
       return (body.urlencoded ?? [])
         .filter((f) => !f.disabled)
-        .map((f) => `${encodeURIComponent(f.key)}=${encodeURIComponent(f.value)}`)
+        .map(
+          (f) => `${encodeURIComponent(f.key)}=${encodeURIComponent(f.value)}`,
+        )
         .join('&');
     default:
       return undefined;

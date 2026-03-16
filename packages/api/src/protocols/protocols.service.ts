@@ -141,7 +141,7 @@ export class ProtocolsService {
     while ((m = typeRegex.exec(schema)) !== null) {
       const typeName = m[1];
       if (typeName === 'Query') {
-        const block = schema.slice(m.index).match(/\{([^}]+)\}/);
+        const block = schema.slice(m.index).match(/\{([^}]{0,10000})\}/);
         if (block)
           queries.push(
             ...block[1]
@@ -151,7 +151,7 @@ export class ProtocolsService {
               .filter(Boolean),
           );
       } else if (typeName === 'Mutation') {
-        const block = schema.slice(m.index).match(/\{([^}]+)\}/);
+        const block = schema.slice(m.index).match(/\{([^}]{0,10000})\}/);
         if (block)
           mutations.push(
             ...block[1]
@@ -161,7 +161,7 @@ export class ProtocolsService {
               .filter(Boolean),
           );
       } else if (typeName === 'Subscription') {
-        const block = schema.slice(m.index).match(/\{([^}]+)\}/);
+        const block = schema.slice(m.index).match(/\{([^}]{0,10000})\}/);
         if (block)
           subscriptions.push(
             ...block[1]
@@ -180,7 +180,9 @@ export class ProtocolsService {
 
   async gripMockHealth(): Promise<{ available: boolean; url: string }> {
     try {
-      const res = await fetch(`${this.gripMockUrl}/`, { signal: AbortSignal.timeout(3_000) });
+      const res = await fetch(`${this.gripMockUrl}/`, {
+        signal: AbortSignal.timeout(3_000),
+      });
       return { available: res.ok, url: this.gripMockUrl };
     } catch {
       return { available: false, url: this.gripMockUrl };
@@ -244,11 +246,14 @@ export class ProtocolsService {
   // ─── GripMock stub proxy ──────────────────────────────────────
 
   async listGrpcStubs(): Promise<GrpcStub[]> {
-    const res = await fetch(`${this.gripMockUrl}/`, { signal: AbortSignal.timeout(5_000) });
+    const res = await fetch(`${this.gripMockUrl}/`, {
+      signal: AbortSignal.timeout(5_000),
+    });
     if (!res.ok) throw new Error(`GripMock error: ${res.status}`);
     const data = (await res.json()) as Record<string, unknown> | GrpcStub[];
     if (Array.isArray(data)) return data;
-    if (data && typeof data === 'object') return Object.values(data) as GrpcStub[];
+    if (data && typeof data === 'object')
+      return Object.values(data) as GrpcStub[];
     return [];
   }
 
@@ -267,7 +272,9 @@ export class ProtocolsService {
   }
 
   async clearGrpcStubs(): Promise<void> {
-    const res = await fetch(`${this.gripMockUrl}/clear`, { signal: AbortSignal.timeout(5_000) });
+    const res = await fetch(`${this.gripMockUrl}/clear`, {
+      signal: AbortSignal.timeout(5_000),
+    });
     if (!res.ok) throw new Error(`GripMock error: ${res.status}`);
   }
 }

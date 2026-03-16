@@ -16,7 +16,7 @@ export class DbEnginesService {
 
     for (const driver of drivers) {
       if (!driver.isConfigured()) continue;
-      let status: Engine['status'] = 'inactive';
+      let status: Engine['status'];
       try {
         const healthy = await driver.healthCheck();
         status = healthy ? 'active' : 'inactive';

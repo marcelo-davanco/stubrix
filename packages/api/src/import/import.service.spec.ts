@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { WireMockClientService } from '../common/wiremock-client.service';
 import { ProjectsService } from '../projects/projects.service';
-import { ImportService, ImportResult } from './import.service';
+import { ImportService } from './import.service';
 
 describe('ImportService', () => {
   let service: ImportService;
@@ -34,8 +34,12 @@ describe('ImportService', () => {
     }).compile();
 
     service = module.get<ImportService>(ImportService);
-    wireMock = module.get<WireMockClientService>(WireMockClientService) as jest.Mocked<WireMockClientService>;
-    projects = module.get<ProjectsService>(ProjectsService) as jest.Mocked<ProjectsService>;
+    wireMock = module.get<WireMockClientService>(
+      WireMockClientService,
+    ) as jest.Mocked<WireMockClientService>;
+    projects = module.get<ProjectsService>(
+      ProjectsService,
+    ) as jest.Mocked<ProjectsService>;
   });
 
   describe('HAR Import', () => {
@@ -72,7 +76,10 @@ describe('ImportService', () => {
       expect(result.created).toBe(1);
       expect(result.skipped).toBe(0);
       expect(result.errors).toHaveLength(0);
-      expect(wireMock.post).toHaveBeenCalledWith('/mappings', expect.any(Object));
+      expect(wireMock.post).toHaveBeenCalledWith(
+        '/mappings',
+        expect.any(Object),
+      );
     });
 
     it('should skip duplicate mappings', async () => {
@@ -113,8 +120,9 @@ describe('ImportService', () => {
       const projectId = 'test-project';
       const invalidHarContent = '{ invalid json }';
 
-      await expect(service.importFromHar(projectId, invalidHarContent))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.importFromHar(projectId, invalidHarContent),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should handle HAR with query parameters', async () => {
@@ -148,11 +156,14 @@ describe('ImportService', () => {
       const result = await service.importFromHar(projectId, harContent);
 
       expect(result.created).toBe(1);
-      expect(wireMock.post).toHaveBeenCalledWith('/mappings', expect.objectContaining({
-        request: expect.objectContaining({
-          url: 'http://api.example.com/users?page=1&limit=10',
+      expect(wireMock.post).toHaveBeenCalledWith(
+        '/mappings',
+        expect.objectContaining({
+          request: expect.objectContaining({
+            url: 'http://api.example.com/users?page=1&limit=10',
+          }),
         }),
-      }));
+      );
     });
   });
 
@@ -160,7 +171,11 @@ describe('ImportService', () => {
     it('should import valid Postman collection successfully', async () => {
       const projectId = 'test-project';
       const postmanContent = JSON.stringify({
-        info: { name: 'Test API', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+        info: {
+          name: 'Test API',
+          schema:
+            'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+        },
         item: [
           {
             request: {
@@ -193,13 +208,20 @@ describe('ImportService', () => {
       expect(result.created).toBe(1);
       expect(result.skipped).toBe(0);
       expect(result.errors).toHaveLength(0);
-      expect(wireMock.post).toHaveBeenCalledWith('/mappings', expect.any(Object));
+      expect(wireMock.post).toHaveBeenCalledWith(
+        '/mappings',
+        expect.any(Object),
+      );
     });
 
     it('should handle Postman collection with GraphQL', async () => {
       const projectId = 'test-project';
       const postmanContent = JSON.stringify({
-        info: { name: 'GraphQL API', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+        info: {
+          name: 'GraphQL API',
+          schema:
+            'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+        },
         item: [
           {
             request: {
@@ -224,28 +246,38 @@ describe('ImportService', () => {
       const result = await service.importFromPostman(projectId, postmanContent);
 
       expect(result.created).toBe(1);
-      expect(wireMock.post).toHaveBeenCalledWith('/mappings', expect.objectContaining({
-        request: expect.objectContaining({
-          bodyPatterns: [{ 
-            equalTo: expect.stringContaining('users { id name }'),
-            caseInsensitive: false,
-          }],
+      expect(wireMock.post).toHaveBeenCalledWith(
+        '/mappings',
+        expect.objectContaining({
+          request: expect.objectContaining({
+            bodyPatterns: [
+              {
+                equalTo: expect.stringContaining('users { id name }'),
+                caseInsensitive: false,
+              },
+            ],
+          }),
         }),
-      }));
+      );
     });
 
     it('should handle invalid Postman format', async () => {
       const projectId = 'test-project';
       const invalidPostmanContent = '{ invalid json }';
 
-      await expect(service.importFromPostman(projectId, invalidPostmanContent))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.importFromPostman(projectId, invalidPostmanContent),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should build URL from Postman URL object', async () => {
       const projectId = 'test-project';
       const postmanContent = JSON.stringify({
-        info: { name: 'Test API', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+        info: {
+          name: 'Test API',
+          schema:
+            'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+        },
         item: [
           {
             request: {
@@ -267,11 +299,14 @@ describe('ImportService', () => {
       const result = await service.importFromPostman(projectId, postmanContent);
 
       expect(result.created).toBe(1);
-      expect(wireMock.post).toHaveBeenCalledWith('/mappings', expect.objectContaining({
-        request: expect.objectContaining({
-          url: 'https://api.example.com/users/123',
+      expect(wireMock.post).toHaveBeenCalledWith(
+        '/mappings',
+        expect.objectContaining({
+          request: expect.objectContaining({
+            url: 'https://api.example.com/users/123',
+          }),
         }),
-      }));
+      );
     });
   });
 
@@ -283,7 +318,11 @@ describe('ImportService', () => {
           entries: [
             {
               request: { method: 'GET', url: 'http://api.example.com/test' },
-              response: { status: 200, headers: [], content: { mimeType: 'text/plain', text: 'test' } },
+              response: {
+                status: 200,
+                headers: [],
+                content: { mimeType: 'text/plain', text: 'test' },
+              },
             },
           ],
         },
@@ -291,7 +330,9 @@ describe('ImportService', () => {
 
       (projects.findOne as jest.Mock).mockReturnValue({ id: projectId });
       (wireMock.get as jest.Mock).mockResolvedValue([]);
-      (wireMock.post as jest.Mock).mockRejectedValue(new Error('WireMock error'));
+      (wireMock.post as jest.Mock).mockRejectedValue(
+        new Error('WireMock error'),
+      );
 
       const result = await service.importFromHar(projectId, harContent);
 
@@ -326,19 +367,14 @@ describe('ImportService', () => {
       (projects.findOne as jest.Mock).mockReturnValue({ id: projectId });
       (wireMock.get as jest.Mock).mockResolvedValue([]);
 
-      let result = await service.importFromHar(projectId, harContent);
+      const result = await service.importFromHar(projectId, harContent);
       expect(result.summary).toBe('No changes');
 
       // Mock some results to test summary generation
-      const mockResult: ImportResult = {
-        created: 5,
-        skipped: 2,
-        errors: ['Error 1', 'Error 2'],
-        summary: '',
-      };
-
       // Test private method through public API behavior
-      expect(service.importFromHar(projectId, harContent)).resolves.toBeDefined();
+      expect(
+        service.importFromHar(projectId, harContent),
+      ).resolves.toBeDefined();
     });
   });
 });

@@ -115,7 +115,7 @@ export class CoverageController {
           `URL scheme not allowed: ${parsedUrl.protocol}`,
         );
       }
-      const res = await fetch(specUrl);
+      const res = await fetch(parsedUrl.href);
       const content = await res.text();
       const report = await this.coverageService.analyze(content);
       return {

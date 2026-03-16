@@ -36,7 +36,9 @@ export class WireMockTransformerProxyService {
   ): Promise<ProxyResponse> {
     const { stateConfig, response } = mock;
     const defaultStatus = response?.status ?? 200;
-    const defaultHeaders = response?.headers ?? { 'Content-Type': 'application/json' };
+    const defaultHeaders = response?.headers ?? {
+      'Content-Type': 'application/json',
+    };
 
     try {
       const stateResult = await this.stateResolver.resolve({
@@ -56,8 +58,14 @@ export class WireMockTransformerProxyService {
         body: request.body,
       };
 
-      const context = this.templateEngine.buildContext(stateResult, requestContext);
-      const renderedBody = this.templateEngine.render(stateConfig.stateTemplate, context);
+      const context = this.templateEngine.buildContext(
+        stateResult,
+        requestContext,
+      );
+      const renderedBody = this.templateEngine.render(
+        stateConfig.stateTemplate,
+        context,
+      );
 
       return {
         status: defaultStatus,
@@ -72,7 +80,8 @@ export class WireMockTransformerProxyService {
         `State resolution failed for mock '${mock.id}', falling back to static response. Reason: ${(err as Error).message}`,
       );
 
-      const fallbackBody = response?.fallbackBody ?? '{"error":"state_unavailable"}';
+      const fallbackBody =
+        response?.fallbackBody ?? '{"error":"state_unavailable"}';
       return {
         status: defaultStatus,
         headers: { 'Content-Type': 'application/json', ...defaultHeaders },
@@ -86,7 +95,15 @@ export class WireMockTransformerProxyService {
     try {
       const url = new URL(request.url, 'http://localhost');
       const params: Record<string, unknown> = {};
-      url.searchParams.forEach((value, key) => { params[key] = value; });
+      url.searchParams.forEach((value, key) => {
+        if (
+          key !== '__proto__' &&
+          key !== 'constructor' &&
+          key !== 'prototype'
+        ) {
+          params[key] = value;
+        }
+      });
       return params;
     } catch {
       return request.query ?? {};

@@ -3,7 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import type { FaultProfile, FaultRule, ChaosPreset, ChaosResult } from './chaos.types';
+import type {
+  FaultProfile,
+  FaultRule,
+  ChaosPreset,
+  ChaosResult,
+} from './chaos.types';
 
 const PRESETS: Record<string, ChaosPreset> = {
   'slow-network': {
@@ -15,16 +20,28 @@ const PRESETS: Record<string, ChaosPreset> = {
     name: 'Flaky Service',
     description: '30% chance of 500 error, 20% chance of 1s delay',
     faults: [
-      { type: 'random_error', probability: 0.3, errorStatus: 500, errorMessage: 'Internal Server Error' },
+      {
+        type: 'random_error',
+        probability: 0.3,
+        errorStatus: 500,
+        errorMessage: 'Internal Server Error',
+      },
       { type: 'delay', probability: 0.2, delayMs: 1000 },
     ],
   },
   'total-outage': {
     name: 'Total Outage',
     description: '100% of requests fail with 503',
-    faults: [{ type: 'error', probability: 1.0, errorStatus: 503, errorMessage: 'Service Unavailable' }],
+    faults: [
+      {
+        type: 'error',
+        probability: 1.0,
+        errorStatus: 503,
+        errorMessage: 'Service Unavailable',
+      },
+    ],
   },
-  'timeout': {
+  timeout: {
     name: 'Request Timeout',
     description: 'All requests timeout after 30s',
     faults: [{ type: 'timeout', probability: 1.0, delayMs: 30000 }],
@@ -38,7 +55,8 @@ export class ChaosService {
 
   constructor(private readonly config: ConfigService) {
     const mocksDir =
-      this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
     this.profilesDir = path.join(mocksDir, 'chaos');
     fs.mkdirSync(this.profilesDir, { recursive: true });
   }
@@ -49,7 +67,11 @@ export class ChaosService {
       .filter((f) => f.endsWith('.json'))
       .flatMap((f) => {
         try {
-          return [JSON.parse(fs.readFileSync(path.join(this.profilesDir, f), 'utf-8')) as FaultProfile];
+          return [
+            JSON.parse(
+              fs.readFileSync(path.join(this.profilesDir, f), 'utf-8'),
+            ) as FaultProfile,
+          ];
         } catch {
           return [];
         }
@@ -78,8 +100,12 @@ export class ChaosService {
       faults,
       createdAt: new Date().toISOString(),
     };
-    const filename = `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${profile.id}.json`;
-    fs.writeFileSync(path.join(this.profilesDir, filename), JSON.stringify(profile, null, 2));
+    const rawFilename = `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${profile.id}.json`;
+    const filename = path.basename(rawFilename);
+    fs.writeFileSync(
+      path.join(this.profilesDir, filename),
+      JSON.stringify(profile, null, 2),
+    );
     this.logger.log(`Chaos profile created: ${name} (${profile.id})`);
     return profile;
   }
@@ -94,10 +120,14 @@ export class ChaosService {
   }
 
   deleteProfile(id: string): void {
-    const files = fs.readdirSync(this.profilesDir).filter((f) => f.endsWith('.json'));
+    const files = fs
+      .readdirSync(this.profilesDir)
+      .filter((f) => f.endsWith('.json'));
     for (const f of files) {
       try {
-        const p = JSON.parse(fs.readFileSync(path.join(this.profilesDir, f), 'utf-8')) as FaultProfile;
+        const p = JSON.parse(
+          fs.readFileSync(path.join(this.profilesDir, f), 'utf-8'),
+        ) as FaultProfile;
         if (p.id === id) {
           fs.unlinkSync(path.join(this.profilesDir, f));
           return;
@@ -116,7 +146,12 @@ export class ChaosService {
   applyPreset(presetName: string, urlPattern?: string): FaultProfile {
     const preset = PRESETS[presetName];
     if (!preset) throw new Error(`Unknown preset: ${presetName}`);
-    return this.createProfile(preset.name, preset.faults, preset.description, urlPattern);
+    return this.createProfile(
+      preset.name,
+      preset.faults,
+      preset.description,
+      urlPattern,
+    );
   }
 
   evaluate(urlPath: string, method: string): ChaosResult {
@@ -129,7 +164,11 @@ export class ChaosService {
           continue;
         }
       }
-      if (profile.methods?.length && !profile.methods.includes(method.toUpperCase())) continue;
+      if (
+        profile.methods?.length &&
+        !profile.methods.includes(method.toUpperCase())
+      )
+        continue;
 
       for (const fault of profile.faults) {
         if (Math.random() < fault.probability) {
@@ -141,12 +180,19 @@ export class ChaosService {
   }
 
   private saveProfile(profile: FaultProfile): void {
-    const files = fs.readdirSync(this.profilesDir).filter((f) => f.endsWith('.json'));
+    const files = fs
+      .readdirSync(this.profilesDir)
+      .filter((f) => f.endsWith('.json'));
     for (const f of files) {
       try {
-        const p = JSON.parse(fs.readFileSync(path.join(this.profilesDir, f), 'utf-8')) as FaultProfile;
+        const p = JSON.parse(
+          fs.readFileSync(path.join(this.profilesDir, f), 'utf-8'),
+        ) as FaultProfile;
         if (p.id === profile.id) {
-          fs.writeFileSync(path.join(this.profilesDir, f), JSON.stringify(profile, null, 2));
+          fs.writeFileSync(
+            path.join(this.profilesDir, f),
+            JSON.stringify(profile, null, 2),
+          );
           return;
         }
       } catch {

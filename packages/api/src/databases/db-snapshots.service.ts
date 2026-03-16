@@ -161,10 +161,17 @@ export class DbSnapshotsService {
     return projectId;
   }
 
+  private isSafeKey(key: string): boolean {
+    return key !== '__proto__' && key !== 'constructor' && key !== 'prototype';
+  }
+
   private setSnapshotMeta(
     name: string,
     updates: Partial<SnapshotMeta>,
   ): SnapshotMeta {
+    if (!this.isSafeKey(name)) {
+      throw new ForbiddenException('Invalid snapshot name');
+    }
     const meta = this.readMetadata();
     meta[name] = { ...this.getSnapshotMeta(name), ...updates };
     this.writeMetadata(meta);
@@ -345,8 +352,8 @@ export class DbSnapshotsService {
       throw new NotFoundException('No active database engine found');
     }
 
-    const label = dto.label ?? 'snapshot';
-    const database = dto.database ?? 'default';
+    const label = path.basename(dto.label ?? 'snapshot');
+    const database = path.basename(dto.database ?? 'default');
     const projectId = this.resolveProjectId(dto.projectId);
     const extension = driver.engine === 'sqlite' ? 'db' : 'sql';
     const filename = `${label}-${database}-${this.getTimestamp()}.${extension}`;
@@ -413,26 +420,26 @@ export class DbSnapshotsService {
     if (!snapshot) throw new NotFoundException('Snapshot not found');
 
     let currentName = name;
-    let currentPath = snapshot.filepath;
+    const currentPath = snapshot.filepath;
 
     if (dto.newName && dto.newName !== name) {
       const ext = path.extname(name);
-      const newName = dto.newName.endsWith(ext)
+      const rawName = dto.newName.endsWith(ext)
         ? dto.newName
         : `${dto.newName}${ext}`;
+      const newName = path.basename(rawName);
       const newPath = path.join(path.dirname(currentPath), newName);
       if (fs.existsSync(newPath)) {
         throw new ConflictException('A snapshot with this name already exists');
       }
       fs.renameSync(currentPath, newPath);
       const meta = this.readMetadata();
-      if (meta[currentName]) {
+      if (meta[currentName] && this.isSafeKey(newName)) {
         meta[newName] = meta[currentName];
         delete meta[currentName];
         this.writeMetadata(meta);
       }
       currentName = newName;
-      currentPath = newPath;
     }
 
     const allowed: Array<keyof SnapshotMeta> = [
@@ -468,7 +475,9 @@ export class DbSnapshotsService {
 
     fs.unlinkSync(snapshot.filepath);
     const allMeta = this.readMetadata();
-    delete allMeta[name];
+    if (this.isSafeKey(name)) {
+      delete allMeta[name];
+    }
     this.writeMetadata(allMeta);
 
     return { message: `Snapshot "${name}" deleted` };

@@ -1,6 +1,14 @@
-import { Controller, Get, Post, Body, HttpCode, HttpStatus, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Param,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString } from 'class-validator';
 import { StorageService } from './storage.service';
 
 export class UploadMockBodyDto {

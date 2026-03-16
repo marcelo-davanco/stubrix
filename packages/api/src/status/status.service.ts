@@ -32,7 +32,7 @@ export class StatusService {
     );
     const proxyTarget = this.config.get<string>('PROXY_TARGET') ?? null;
 
-    let engineStatus: 'running' | 'stopped' | 'error' = 'stopped';
+    let engineStatus: 'running' | 'stopped' | 'error';
     let recordMode = false;
 
     try {

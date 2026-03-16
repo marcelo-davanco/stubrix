@@ -185,11 +185,13 @@ export class SettingsConfigService {
         errors.push(`Unknown config key: "${update.key}"`);
         continue;
       }
+      const safeKey = String(update.key).replace(
+        /^__proto__|^constructor$|^prototype$/,
+        '',
+      );
       const validation: ValidationResult = this.registry.validateConfig(
         serviceId,
-        {
-          [update.key]: update.value,
-        },
+        { [safeKey]: update.value },
       );
       if (!validation.valid) {
         errors.push(

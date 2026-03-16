@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -109,12 +113,16 @@ export class MocksService {
 
     const id = uuidv4();
     const method = (dto.request.method ?? 'GET').toLowerCase();
-    const rawUrl = dto.request.url ?? dto.request.urlPattern ?? dto.request.urlPath ?? dto.request.urlPathPattern!;
+    const rawUrl =
+      dto.request.url ??
+      dto.request.urlPattern ??
+      dto.request.urlPath ??
+      dto.request.urlPathPattern!;
     const urlSlug = String(rawUrl)
       .replace(/[^a-z0-9]/gi, '_')
       .toLowerCase()
       .slice(0, 40);
-    const filename = `${urlSlug}_${method}_${id}.json`;
+    const filename = path.basename(`${urlSlug}_${method}_${id}.json`);
 
     const mapping: Mock = {
       id,
@@ -151,7 +159,10 @@ export class MocksService {
       metadata: { project: projectId },
     };
 
-    const filePath = path.join(this.mappingsDir, existing.filename);
+    const filePath = path.join(
+      this.mappingsDir,
+      path.basename(existing.filename),
+    );
     fs.writeFileSync(filePath, JSON.stringify(updated, null, 2));
 
     try {
@@ -165,7 +176,10 @@ export class MocksService {
 
   async remove(projectId: string, id: string): Promise<void> {
     const existing = this.findOne(projectId, id);
-    const filePath = path.join(this.mappingsDir, existing.filename);
+    const filePath = path.join(
+      this.mappingsDir,
+      path.basename(existing.filename),
+    );
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
     try {

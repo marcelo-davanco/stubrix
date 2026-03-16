@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WireMockClientService } from '../common/wiremock-client.service';
 import { ProjectsService } from '../projects/projects.service';
@@ -46,9 +45,15 @@ describe('RecordingService - URL Pattern Filters', () => {
     }).compile();
 
     service = module.get<RecordingService>(RecordingService);
-    configService = module.get<ConfigService>(ConfigService) as jest.Mocked<ConfigService>;
-    wireMock = module.get<WireMockClientService>(WireMockClientService) as jest.Mocked<WireMockClientService>;
-    projects = module.get<ProjectsService>(ProjectsService) as jest.Mocked<ProjectsService>;
+    configService = module.get<ConfigService>(
+      ConfigService,
+    ) as jest.Mocked<ConfigService>;
+    wireMock = module.get<WireMockClientService>(
+      WireMockClientService,
+    ) as jest.Mocked<WireMockClientService>;
+    projects = module.get<ProjectsService>(
+      ProjectsService,
+    ) as jest.Mocked<ProjectsService>;
   });
 
   describe('start with filters', () => {
@@ -59,13 +64,22 @@ describe('RecordingService - URL Pattern Filters', () => {
         includePatterns: ['/api/users/*', '/api/orders/**'],
       };
 
-      (projects.findOne as jest.Mock).mockReturnValue({ id: projectId, proxyTarget: 'https://api.example.com' });
+      (projects.findOne as jest.Mock).mockReturnValue({
+        id: projectId,
+        proxyTarget: 'https://api.example.com',
+      });
       (wireMock.post as jest.Mock).mockResolvedValue({});
 
       const result = await service.start(projectId, dto);
 
-      expect(result.includePatterns).toEqual(['/api/users/*', '/api/orders/**']);
-      expect(wireMock.post).toHaveBeenCalledWith('/recordings/start', expect.any(Object));
+      expect(result.includePatterns).toEqual([
+        '/api/users/*',
+        '/api/orders/**',
+      ]);
+      expect(wireMock.post).toHaveBeenCalledWith(
+        '/recordings/start',
+        expect.any(Object),
+      );
     });
 
     it('should start recording with exclude patterns', async () => {
@@ -75,7 +89,10 @@ describe('RecordingService - URL Pattern Filters', () => {
         excludePatterns: ['/api/health', '/api/metrics/*'],
       };
 
-      (projects.findOne as jest.Mock).mockReturnValue({ id: projectId, proxyTarget: 'https://api.example.com' });
+      (projects.findOne as jest.Mock).mockReturnValue({
+        id: projectId,
+        proxyTarget: 'https://api.example.com',
+      });
       (wireMock.post as jest.Mock).mockResolvedValue({});
 
       const result = await service.start(projectId, dto);
@@ -91,7 +108,10 @@ describe('RecordingService - URL Pattern Filters', () => {
         excludePatterns: ['/api/health'],
       };
 
-      (projects.findOne as jest.Mock).mockReturnValue({ id: projectId, proxyTarget: 'https://api.example.com' });
+      (projects.findOne as jest.Mock).mockReturnValue({
+        id: projectId,
+        proxyTarget: 'https://api.example.com',
+      });
       (wireMock.post as jest.Mock).mockResolvedValue({});
 
       const result = await service.start(projectId, dto);
@@ -104,8 +124,6 @@ describe('RecordingService - URL Pattern Filters', () => {
   describe('stop with filters', () => {
     it('should stop recording and apply include filters', async () => {
       const projectId = 'test-project';
-      const mappingIds = ['mapping1', 'mapping2', 'mapping3'];
-
       (projects.findOne as jest.Mock).mockReturnValue({ id: projectId });
       (wireMock.post as jest.Mock).mockResolvedValue({
         mappings: [{ id: 'mapping1' }, { id: 'mapping2' }, { id: 'mapping3' }],
@@ -127,8 +145,6 @@ describe('RecordingService - URL Pattern Filters', () => {
 
     it('should stop recording and apply exclude filters', async () => {
       const projectId = 'test-project';
-      const mappingIds = ['mapping1', 'mapping2'];
-
       (projects.findOne as jest.Mock).mockReturnValue({ id: projectId });
       (wireMock.post as jest.Mock).mockResolvedValue({
         mappings: [{ id: 'mapping1' }, { id: 'mapping2' }],
@@ -178,7 +194,11 @@ describe('RecordingService - URL Pattern Filters', () => {
 
       (wireMock.delete as jest.Mock).mockResolvedValue({});
 
-      const result = await service.snapshot(projectId, ['/api/users/*'], undefined);
+      const result = await service.snapshot(
+        projectId,
+        ['/api/users/*'],
+        undefined,
+      );
 
       expect(result.message).toContain('filtered');
       expect(result.newMocks).toBe(1); // Only one mapping should remain
@@ -194,7 +214,9 @@ describe('RecordingService - URL Pattern Filters', () => {
         mappings: [{ id: 'mapping1' }],
       });
 
-      (wireMock.get as jest.Mock).mockRejectedValue(new Error('Mapping not found'));
+      (wireMock.get as jest.Mock).mockRejectedValue(
+        new Error('Mapping not found'),
+      );
 
       const result = await service.stop(projectId, ['/api/users/*'], undefined);
 
@@ -209,8 +231,12 @@ describe('RecordingService - URL Pattern Filters', () => {
         mappings: [{ id: 'mapping1' }],
       });
 
-      (wireMock.get as jest.Mock).mockResolvedValue({ request: { url: '/api/orders/456' } });
-      (wireMock.delete as jest.Mock).mockRejectedValue(new Error('Delete failed'));
+      (wireMock.get as jest.Mock).mockResolvedValue({
+        request: { url: '/api/orders/456' },
+      });
+      (wireMock.delete as jest.Mock).mockRejectedValue(
+        new Error('Delete failed'),
+      );
 
       const result = await service.stop(projectId, ['/api/users/*'], undefined);
 

@@ -98,7 +98,7 @@ export class ImportService {
 
     // Decrypt if needed
     let services: Record<string, ParsedServiceConfig>;
-    if (payload.meta.encrypted) {
+    if (payload.meta.encrypted === true) {
       if (!password) {
         throw new BadRequestException(
           'masterPassword is required to decrypt this file.',
@@ -264,9 +264,8 @@ export class ImportService {
       }
 
       const hasChanges = changes.some((c) => c.action !== 'skip');
-      const status = !isRegistered
-        ? 'unknown-service'
-        : currentCfgs.length === 0
+      const status =
+        currentCfgs.length === 0
           ? 'new'
           : hasChanges
             ? 'modified'

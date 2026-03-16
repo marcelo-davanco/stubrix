@@ -15,12 +15,20 @@ export function registerInitCommand(program: Command): void {
       }
 
       const envFile = path.join(process.cwd(), '.env');
-      if (!fs.existsSync(envFile)) {
-        fs.writeFileSync(envFile, `STUBRIX_PROJECT=${opts.name}\nMOCK_PORT=8081\nAPI_PORT=9090\n`);
+      try {
+        fs.writeFileSync(
+          envFile,
+          `STUBRIX_PROJECT=${opts.name}\nMOCK_PORT=8081\nAPI_PORT=9090\n`,
+          { flag: 'wx' },
+        );
         console.log('  created .env');
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
       }
 
       console.log(`\nStubrix project "${opts.name}" initialized.`);
-      console.log('Run: make wiremock   or   docker compose --profile wiremock up -d');
+      console.log(
+        'Run: make wiremock   or   docker compose --profile wiremock up -d',
+      );
     });
 }

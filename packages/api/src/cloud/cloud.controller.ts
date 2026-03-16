@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Body, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
 import { CloudService } from './cloud.service';
@@ -26,7 +33,9 @@ export class CloudController {
   constructor(private readonly service: CloudService) {}
 
   @Get('health')
-  @ApiOperation({ summary: 'Check LocalStack availability and running services' })
+  @ApiOperation({
+    summary: 'Check LocalStack availability and running services',
+  })
   health() {
     return this.service.health();
   }
