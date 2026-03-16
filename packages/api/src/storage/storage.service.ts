@@ -83,11 +83,17 @@ export class StorageService {
     ) {
       throw new Error(`Snapshot path is outside the allowed directory`);
     }
-    if (!fs.existsSync(resolvedPath)) {
-      throw new Error(`Snapshot not found: ${resolvedPath}`);
+    // Reconstruct from trusted base + basename to break taint chain
+    const safeFilename = path.basename(resolvedPath);
+    const safePath = path.join(
+      dumpsBase,
+      path.relative(dumpsBase, resolvedPath),
+    );
+    if (!fs.existsSync(safePath)) {
+      throw new Error(`Snapshot not found: ${safeFilename}`);
     }
-    const content = fs.readFileSync(resolvedPath);
-    const filename = path.basename(resolvedPath);
+    const content = fs.readFileSync(safePath);
+    const filename = safeFilename;
     const key = `snapshots/${projectId}/${filename}`;
 
     await this.uploadFile(
