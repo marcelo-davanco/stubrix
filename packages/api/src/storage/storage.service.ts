@@ -70,28 +70,21 @@ export class StorageService {
   }
 
   async archiveSnapshot(
-    snapshotPath: string,
+    engine: string,
+    filename: string,
     projectId: string,
   ): Promise<StorageObject> {
-    const resolvedPath = path.resolve(snapshotPath);
+    const safeEngine = path.basename(engine);
+    const safeFilename = path.basename(filename);
     const dumpsBase = path.resolve(
       process.env['DUMPS_DIR'] ?? path.join(process.cwd(), 'dumps'),
     );
-    if (
-      resolvedPath !== dumpsBase &&
-      !resolvedPath.startsWith(dumpsBase + path.sep)
-    ) {
-      throw new Error(`Snapshot path is outside the allowed directory`);
-    }
-    // Reconstruct from trusted base + sanitized filename only — no taint from resolvedPath
-    const safeFilename = path.basename(resolvedPath);
-    const safePath = path.join(dumpsBase, safeFilename);
+    const safePath = path.join(dumpsBase, safeEngine, safeFilename);
     if (!fs.existsSync(safePath)) {
       throw new Error(`Snapshot not found: ${safeFilename}`);
     }
     const content = fs.readFileSync(safePath);
-    const filename = safeFilename;
-    const key = `snapshots/${projectId}/${filename}`;
+    const key = `snapshots/${projectId}/${safeFilename}`;
 
     await this.uploadFile(
       this.defaultBucket,
