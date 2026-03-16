@@ -161,15 +161,16 @@ export class DbSnapshotsService {
     return projectId;
   }
 
-  private isSafeKey(key: string): boolean {
-    return key !== '__proto__' && key !== 'constructor' && key !== 'prototype';
-  }
-
   private setSnapshotMeta(
     name: string,
     updates: Partial<SnapshotMeta>,
   ): SnapshotMeta {
-    if (!this.isSafeKey(name)) {
+    const baseName = path.basename(name, path.extname(name));
+    if (
+      baseName === '__proto__' ||
+      baseName === 'constructor' ||
+      baseName === 'prototype'
+    ) {
       throw new ForbiddenException('Invalid snapshot name');
     }
     const meta = this.readMetadata();
@@ -182,9 +183,13 @@ export class DbSnapshotsService {
     const files: SnapshotFile[] = [];
     for (const engine of ['postgres', 'mysql', 'sqlite']) {
       const engineDir = path.join(this.dumpsDir, engine);
-      if (!fs.existsSync(engineDir)) continue;
-      const engineFiles = fs
-        .readdirSync(engineDir)
+      let dirEntries: string[];
+      try {
+        dirEntries = fs.readdirSync(engineDir) as unknown as string[];
+      } catch {
+        continue;
+      }
+      const engineFiles = dirEntries
         .filter((f: string) => f.endsWith('.sql') || f.endsWith('.db'))
         .map((file: string) => {
           const filepath = path.join(engineDir, file);
@@ -360,6 +365,14 @@ export class DbSnapshotsService {
     const targetDir = path.join(this.dumpsDir, driver.engine);
     this.ensureDir(targetDir);
     const filepath = path.join(targetDir, filename);
+    const resolvedFilepath = path.resolve(filepath);
+    const resolvedTargetDir = path.resolve(targetDir);
+    if (
+      resolvedFilepath !== resolvedTargetDir &&
+      !resolvedFilepath.startsWith(resolvedTargetDir + path.sep)
+    ) {
+      throw new Error('Snapshot path is outside the allowed directory');
+    }
 
     if (driver.engine === 'postgres') {
       const envOverrides = this.resolveConnectionOverrides(
@@ -386,9 +399,11 @@ export class DbSnapshotsService {
         throw new Error('SQLite driver does not support snapshots');
       }
     } else {
+      const safeEngine = String(driver.engine).replace(/[^a-z0-9_-]/gi, '');
+      const safeDatabase = String(database).replace(/[^a-z0-9_-]/gi, '');
       fs.writeFileSync(
         filepath,
-        `-- placeholder snapshot for ${driver.engine}:${database}\n`,
+        `-- placeholder snapshot for ${safeEngine}:${safeDatabase}\n`,
         'utf-8',
       );
     }
@@ -434,7 +449,15 @@ export class DbSnapshotsService {
       }
       fs.renameSync(currentPath, newPath);
       const meta = this.readMetadata();
-      if (meta[currentName] && this.isSafeKey(newName)) {
+      if (
+        meta[currentName] &&
+        newName !== '__proto__' &&
+        newName !== 'constructor' &&
+        newName !== 'prototype' &&
+        currentName !== '__proto__' &&
+        currentName !== 'constructor' &&
+        currentName !== 'prototype'
+      ) {
         meta[newName] = meta[currentName];
         delete meta[currentName];
         this.writeMetadata(meta);
@@ -475,7 +498,11 @@ export class DbSnapshotsService {
 
     fs.unlinkSync(snapshot.filepath);
     const allMeta = this.readMetadata();
-    if (this.isSafeKey(name)) {
+    if (
+      name !== '__proto__' &&
+      name !== 'constructor' &&
+      name !== 'prototype'
+    ) {
       delete allMeta[name];
     }
     this.writeMetadata(allMeta);

@@ -1,25 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { TemplateEngineService } from './template-engine.service';
-import type { TemplateContext } from './template-engine.service';
+import { TemplateContextBuilder } from '../test/builders';
 
-const sampleContext: TemplateContext = {
-  state: {
-    rows: [
-      { id: 1, name: 'Alice', active: true },
-      { id: 2, name: 'Bob', active: false },
-    ],
-    rowCount: 2,
-    queryTimeMs: 8,
-    fromCache: false,
-  },
-  request: {
-    method: 'GET',
-    url: '/api/users',
-    query: { page: '1' },
-    headers: { accept: 'application/json' },
-  },
-};
+const sampleContext = TemplateContextBuilder.create()
+  .withRows([
+    { id: 1, name: 'Alice', active: true },
+    { id: 2, name: 'Bob', active: false },
+  ])
+  .withQueryTimeMs(8)
+  .withRequestMethod('GET')
+  .withRequestUrl('/api/users')
+  .withRequestQuery({ page: '1' })
+  .withRequestHeaders({ accept: 'application/json' })
+  .build();
 
 describe('TemplateEngineService', () => {
   let service: TemplateEngineService;
@@ -86,10 +80,10 @@ describe('TemplateEngineService', () => {
     });
 
     it('should render with empty rows context', () => {
-      const emptyCtx: TemplateContext = {
-        ...sampleContext,
-        state: { ...sampleContext.state, rows: [], rowCount: 0 },
-      };
+      const emptyCtx = TemplateContextBuilder.create()
+        .withRows([])
+        .withRowCount(0)
+        .build();
       const result = service.render('{{state.rowCount}}', emptyCtx);
       expect(result).toBe('0');
     });

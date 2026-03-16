@@ -2,6 +2,20 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { WireMockClientService } from '../common/wiremock-client.service';
 import { ProjectsService } from '../projects/projects.service';
 
+interface WireMockMappingDraft {
+  request: {
+    method: string;
+    url?: string;
+    headers?: Record<string, string>;
+    bodyPatterns?: Array<{ equalTo: string; caseInsensitive: boolean }>;
+  };
+  response: {
+    status: number;
+    headers: Record<string, string>;
+    body: string;
+  };
+}
+
 export interface ImportResult {
   created: number;
   skipped: number;
@@ -38,7 +52,7 @@ export interface PostmanItem {
     body?: {
       mode: string;
       raw?: string;
-      graphql?: any;
+      graphql?: { query?: string; variables?: Record<string, unknown> };
     };
     url: {
       raw: string;
@@ -115,7 +129,7 @@ export class ImportService {
           existingUrls.add(mappingKey);
           this.logger.debug(`Created mapping: ${mappingKey}`);
         } catch (error) {
-          const errorMsg = `Failed to import entry ${entry.request.url}: ${error.message}`;
+          const errorMsg = `Failed to import entry ${entry.request.url}: ${(error as Error).message}`;
           result.errors.push(errorMsg);
           this.logger.error(errorMsg);
         }
@@ -125,7 +139,9 @@ export class ImportService {
       return result;
     } catch (error) {
       this.logger.error('HAR import failed:', error);
-      throw new BadRequestException(`HAR import failed: ${error.message}`);
+      throw new BadRequestException(
+        `HAR import failed: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -171,7 +187,7 @@ export class ImportService {
           existingUrls.add(mappingKey);
           this.logger.debug(`Created mapping: ${mappingKey}`);
         } catch (error) {
-          const errorMsg = `Failed to import item ${item.request?.url?.raw || 'unknown'}: ${error.message}`;
+          const errorMsg = `Failed to import item ${item.request?.url?.raw || 'unknown'}: ${(error as Error).message}`;
           result.errors.push(errorMsg);
           this.logger.error(errorMsg);
         }
@@ -181,13 +197,16 @@ export class ImportService {
       return result;
     } catch (error) {
       this.logger.error('Postman import failed:', error);
-      throw new BadRequestException(`Postman import failed: ${error.message}`);
+      throw new BadRequestException(
+        `Postman import failed: ${(error as Error).message}`,
+      );
     }
   }
 
-  private async getExistingMappings() {
+  private async getExistingMappings(): Promise<WireMockMappingDraft[]> {
     try {
-      const mappings = await this.wireMock.get<any[]>('/mappings');
+      const mappings =
+        await this.wireMock.get<WireMockMappingDraft[]>('/mappings');
       return mappings || [];
     } catch {
       return [];
@@ -200,8 +219,8 @@ export class ImportService {
     );
   }
 
-  private convertHarEntryToWireMock(entry: HarEntry): any {
-    const headers: { [key: string]: string } = {};
+  private convertHarEntryToWireMock(entry: HarEntry): WireMockMappingDraft {
+    const headers = Object.create(null) as Record<string, string>;
     entry.request.headers?.forEach((header) => {
       if (this.isSafeHeaderName(header.name)) {
         headers[header.name] = header.value;
@@ -217,7 +236,7 @@ export class ImportService {
       url += (url.includes('?') ? '&' : '?') + queryParams;
     }
 
-    const mapping: any = {
+    const mapping: WireMockMappingDraft = {
       request: {
         method: entry.request.method,
         url: url,
@@ -225,7 +244,7 @@ export class ImportService {
       },
       response: {
         status: entry.response.status,
-        headers: {},
+        headers: Object.create(null) as Record<string, string>,
         body: entry.response.content.text || '',
       },
     };
@@ -246,8 +265,10 @@ export class ImportService {
     return mapping;
   }
 
-  private convertPostmanItemToWireMock(item: PostmanItem): any {
-    const headers: { [key: string]: string } = {};
+  private convertPostmanItemToWireMock(
+    item: PostmanItem,
+  ): WireMockMappingDraft {
+    const headers = Object.create(null) as Record<string, string>;
     item.request.header?.forEach((header) => {
       if (this.isSafeHeaderName(header.key)) {
         headers[header.key] = header.value;
@@ -292,7 +313,7 @@ export class ImportService {
       status = item.response[0].code || 200;
     }
 
-    const mapping: any = {
+    const mapping: WireMockMappingDraft = {
       request: {
         method: item.request.method,
         url: url,
@@ -308,9 +329,9 @@ export class ImportService {
       },
       response: {
         status: status,
-        headers: {
+        headers: Object.assign(Object.create(null), {
           'Content-Type': contentType,
-        },
+        }) as Record<string, string>,
         body: '',
       },
     };

@@ -13,7 +13,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'fs';
-import { join, resolve } from 'path';
+import { basename, join, resolve } from 'path';
 import { randomUUID } from 'crypto';
 import { ConfigDatabaseService } from '../database/config-database.service';
 import { CryptoService } from '../crypto/crypto.service';
@@ -220,7 +220,7 @@ export class BackupService {
     const name =
       options.name ??
       `backup-${new Date().toISOString().slice(0, 10)}-${scope}`;
-    const filename = `${name}-${id.slice(0, 8)}.json`;
+    const filename = basename(`${name}-${id.slice(0, 8)}.json`);
     const filePath = join(dir, filename);
 
     const content = JSON.stringify(fileContents, null, 2);
@@ -504,12 +504,10 @@ export class BackupService {
     contents: BackupFileContents,
     masterPassword?: string,
   ): Promise<Record<string, BackupServiceEntry>> {
-    if (!contents.meta.encrypted) {
+    const isEncrypted =
+      typeof contents.payload === 'string' && contents.payload.length > 0;
+    if (!isEncrypted) {
       return contents.services ?? {};
-    }
-
-    if (!contents.payload) {
-      throw new BadRequestException('Encrypted backup has no payload.');
     }
 
     if (!masterPassword) {
@@ -525,7 +523,8 @@ export class BackupService {
       );
     }
 
-    const decrypted = this.crypto.decrypt(contents.payload);
+    // payload is guaranteed non-empty string by the isEncrypted guard above
+    const decrypted = this.crypto.decrypt(contents.payload!);
     return JSON.parse(decrypted) as Record<string, BackupServiceEntry>;
   }
 }

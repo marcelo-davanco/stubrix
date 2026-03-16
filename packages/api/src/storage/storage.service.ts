@@ -70,15 +70,21 @@ export class StorageService {
   }
 
   async archiveSnapshot(
-    snapshotPath: string,
+    engine: string,
+    filename: string,
     projectId: string,
   ): Promise<StorageObject> {
-    if (!fs.existsSync(snapshotPath)) {
-      throw new Error(`Snapshot not found: ${snapshotPath}`);
+    const safeEngine = path.basename(engine);
+    const safeFilename = path.basename(filename);
+    const dumpsBase = path.resolve(
+      process.env['DUMPS_DIR'] ?? path.join(process.cwd(), 'dumps'),
+    );
+    const safePath = path.join(dumpsBase, safeEngine, safeFilename);
+    if (!fs.existsSync(safePath)) {
+      throw new Error(`Snapshot not found: ${safeFilename}`);
     }
-    const content = fs.readFileSync(snapshotPath);
-    const filename = path.basename(snapshotPath);
-    const key = `snapshots/${projectId}/${filename}`;
+    const content = fs.readFileSync(safePath);
+    const key = `snapshots/${projectId}/${safeFilename}`;
 
     await this.uploadFile(
       this.defaultBucket,

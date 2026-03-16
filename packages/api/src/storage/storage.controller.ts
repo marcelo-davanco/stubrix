@@ -21,7 +21,10 @@ export class UploadMockBodyDto {
 
 export class ArchiveSnapshotDto {
   @IsString()
-  snapshotPath: string;
+  engine: string;
+
+  @IsString()
+  filename: string;
 
   @IsString()
   projectId: string;
@@ -55,7 +58,11 @@ export class StorageController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Archive a database snapshot to MinIO' })
   archive(@Body() dto: ArchiveSnapshotDto) {
-    return this.service.archiveSnapshot(dto.snapshotPath, dto.projectId);
+    return this.service.archiveSnapshot(
+      dto.engine,
+      dto.filename,
+      dto.projectId,
+    );
   }
 
   @Get('url/:bucket/*key')

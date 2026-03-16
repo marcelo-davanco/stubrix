@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { MysqlDriver } from './mysql.driver';
 import * as fs from 'fs';
 import { execFileSync } from 'child_process';
@@ -28,7 +29,7 @@ jest.mock('mysql2/promise', () => ({
 
 describe('MysqlDriver', () => {
   let driver: MysqlDriver;
-  let configService: ConfigService;
+  let configService: DeepMocked<ConfigService>;
   let mockFs: jest.Mocked<typeof fs>;
   let mockExecFileSync: jest.MockedFunction<typeof execFileSync>;
   let mockMysql: jest.Mocked<typeof mysql>;
@@ -38,29 +39,27 @@ describe('MysqlDriver', () => {
     mockExecFileSync = execFileSync as jest.MockedFunction<typeof execFileSync>;
     mockMysql = mysql as jest.Mocked<typeof mysql>;
 
+    const mockConfigService = createMock<ConfigService>();
+    mockConfigService.get.mockImplementation((key: string) => {
+      const env: Record<string, string> = {
+        MYSQL_HOST: 'localhost',
+        MYSQL_PORT: '3306',
+        MYSQL_USER: 'testuser',
+        MYSQL_PASSWORD: 'testpass',
+        MYSQL_DATABASE: 'testdb',
+      };
+      return env[key];
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MysqlDriver,
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn((key: string) => {
-              const env: Record<string, string> = {
-                MYSQL_HOST: 'localhost',
-                MYSQL_PORT: '3306',
-                MYSQL_USER: 'testuser',
-                MYSQL_PASSWORD: 'testpass',
-                MYSQL_DATABASE: 'testdb',
-              };
-              return env[key];
-            }),
-          },
-        },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
     driver = module.get<MysqlDriver>(MysqlDriver);
-    configService = module.get<ConfigService>(ConfigService);
+    configService = module.get<DeepMocked<ConfigService>>(ConfigService);
   });
 
   afterEach(() => {
@@ -94,7 +93,10 @@ describe('MysqlDriver', () => {
         query: jest.fn().mockResolvedValue([]),
         end: jest.fn().mockResolvedValue(undefined),
       };
-      mockMysql.createConnection.mockResolvedValue(mockConnection as any);
+      // partial mock — only query and end are exercised by healthCheck
+      mockMysql.createConnection.mockResolvedValue(
+        mockConnection as unknown as mysql.Connection,
+      );
 
       const result = await driver.healthCheck();
       expect(result).toBe(true);
@@ -112,26 +114,26 @@ describe('MysqlDriver', () => {
     });
 
     it('should return false when not configured', async () => {
-      jest.spyOn(configService, 'get').mockReturnValue(undefined);
+      configService.get.mockReturnValue(undefined);
       const result = await driver.healthCheck();
       expect(result).toBe(false);
     });
   });
 
   describe('listDatabases', () => {
-    it('should return list of databases', async () => {
+    it('should return list of databases', () => {
       // Skip complex mocking for now - basic functionality test
       expect(driver.listDatabases).toBeDefined();
     });
 
-    it('should use connection overrides', async () => {
+    it('should use connection overrides', () => {
       // Skip complex mocking for now - basic functionality test
       expect(driver.listDatabases).toBeDefined();
     });
   });
 
   describe('getDatabaseInfo', () => {
-    it('should return database information', async () => {
+    it('should return database information', () => {
       // Skip complex mocking for now - basic functionality test
       expect(driver.getDatabaseInfo).toBeDefined();
     });
@@ -202,10 +204,9 @@ describe('MysqlDriver', () => {
     });
 
     it('should throw error when not configured', async () => {
-      // Create a new driver instance with no config
-      const noConfigDriver = new MysqlDriver({
-        get: jest.fn().mockReturnValue(undefined),
-      } as any);
+      const noConfig = createMock<ConfigService>();
+      noConfig.get.mockReturnValue(undefined);
+      const noConfigDriver = new MysqlDriver(noConfig);
 
       await expect(
         noConfigDriver.createSnapshot('testdb', '/path/to/snapshot.sql'),
@@ -282,10 +283,9 @@ describe('MysqlDriver', () => {
     });
 
     it('should throw error when not configured', async () => {
-      // Create a new driver instance with no config
-      const noConfigDriver = new MysqlDriver({
-        get: jest.fn().mockReturnValue(undefined),
-      } as any);
+      const noConfig = createMock<ConfigService>();
+      noConfig.get.mockReturnValue(undefined);
+      const noConfigDriver = new MysqlDriver(noConfig);
 
       await expect(
         noConfigDriver.restoreSnapshot('testdb', '/path/to/snapshot.sql'),

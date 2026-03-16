@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, INestApplication } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -35,7 +35,7 @@ import { IamModule } from './iam/iam.module';
 import { SettingsModule } from './settings/settings.module';
 import { JobsModule } from './jobs/jobs.module';
 
-export function setupSwagger(app: any) {
+export function setupSwagger(app: INestApplication) {
   const config = new DocumentBuilder()
     .setTitle('Stubrix API')
     .setDescription('Professional mock server platform control plane')
