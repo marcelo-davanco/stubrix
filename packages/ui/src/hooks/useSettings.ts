@@ -100,7 +100,7 @@ export function useSettings() {
     const res = await fetch(`${API}/master-password/setup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password, confirmPassword: password }),
     });
     if (!res.ok) throw new Error('Failed to setup password');
     await fetchCryptoStatus();
