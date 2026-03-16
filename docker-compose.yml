@@ -333,7 +333,9 @@ services:
   # Access: http://localhost:8083
   # --------------------------------------------------------------------------
   cloudbeaver:
-    image: dbeaver/cloudbeaver:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.cloudbeaver
     profiles: ['cloudbeaver', 'db-viewer']
     container_name: stubrix-cloudbeaver
     ports:
@@ -349,7 +351,6 @@ services:
       CLOUDBEAVER_CUSTOM_CONNECTIONS: ${CLOUDBEAVER_CUSTOM_CONNECTIONS:-true}
     volumes:
       - cloudbeaver_data:/opt/cloudbeaver/workspace
-      - ./config/cloudbeaver:/opt/cloudbeaver/conf:ro
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
@@ -720,8 +721,6 @@ services:
       db-postgres:
         condition: service_healthy
         required: false
-      hoppscotch-migrate:
-        condition: service_completed_successfully
     restart: unless-stopped
 
 volumes:
