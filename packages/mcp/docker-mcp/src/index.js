@@ -52,10 +52,6 @@ function docker(...args) {
   return run('docker', args);
 }
 
-function compose(...args) {
-  return run('docker', ['compose', ...args]);
-}
-
 // ---------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------
