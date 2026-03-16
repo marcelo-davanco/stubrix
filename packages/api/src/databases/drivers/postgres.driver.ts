@@ -11,14 +11,14 @@ import type {
 export class PostgresDriver implements DatabaseDriverInterface {
   readonly engine = 'postgres';
 
-  private readonly host: string | undefined;
+  private readonly host: string;
   private readonly port: string;
   private readonly user: string;
   private readonly password: string;
   private readonly database: string;
 
   constructor(private readonly config: ConfigService) {
-    this.host = this.config.get<string>('PG_HOST');
+    this.host = this.config.get<string>('PG_HOST') ?? 'localhost';
     this.port = this.config.get<string>('PG_PORT') ?? '5432';
     this.user = this.config.get<string>('PG_USER') ?? 'postgres';
     this.password = this.config.get<string>('PG_PASSWORD') ?? 'postgres';
