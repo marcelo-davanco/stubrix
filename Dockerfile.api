@@ -26,7 +26,7 @@ COPY packages/mock-ui/package.json  ./packages/mock-ui/
 COPY packages/cli/package.json             ./packages/cli/
 COPY packages/vscode-extension/package.json ./packages/vscode-extension/
 
-RUN npm ci && \
+RUN npm install && \
   npm rebuild
 
 # ---------------------------------------------------------------------------
