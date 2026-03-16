@@ -137,7 +137,7 @@ export function Layout() {
           ))}
         </nav>
         <div className="border-t border-white/10 px-4 py-3 text-xs text-text-secondary">
-          v1.0.0
+          v{__APP_VERSION__}
         </div>
       </aside>
 
