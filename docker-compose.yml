@@ -265,13 +265,18 @@ services:
       POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
       POSTGRES_DB: ${PG_DATABASE:-postgres}
       PGDATA: ${PGDATA:-/var/lib/postgresql/data/pgdata}
+      PGPORT: ${PG_EXTERNAL_PORT:-5542}
     ports:
-      - '${PG_EXTERNAL_PORT:-5442}:5432'
+      - '${PG_EXTERNAL_PORT:-5542}:${PG_EXTERNAL_PORT:-5542}'
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./dumps/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_USER:-postgres}']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${PG_USER:-postgres} -p ${PG_EXTERNAL_PORT:-5542}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
