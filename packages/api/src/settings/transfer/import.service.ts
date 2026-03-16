@@ -96,9 +96,15 @@ export class ImportService {
       );
     }
 
-    // Determine encryption from actual content structure, not user-controlled flag
-    const isEncrypted =
+    // Determine encryption from actual content structure:
+    // encrypted files have a string payload and no plain services object
+    const hasStringPayload =
       typeof payload.payload === 'string' && payload.payload.length > 0;
+    const hasPlainServices =
+      payload.services !== null &&
+      payload.services !== undefined &&
+      typeof payload.services === 'object';
+    const isEncrypted = hasStringPayload && !hasPlainServices;
     let services: Record<string, ParsedServiceConfig>;
     if (isEncrypted) {
       if (!password) {

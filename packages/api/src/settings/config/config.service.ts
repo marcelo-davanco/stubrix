@@ -195,7 +195,7 @@ export class SettingsConfigService {
       }
       const validation: ValidationResult = this.registry.validateConfig(
         serviceId,
-        { [update.key]: update.value },
+        { [field.key]: update.value },
       );
       if (!validation.valid) {
         errors.push(
@@ -215,11 +215,12 @@ export class SettingsConfigService {
 
     for (const update of updates) {
       const field = schemaMap.get(update.key)!;
-      const existing = this.configDb.getConfig(serviceId, update.key);
+      const safeKey = field.key;
+      const existing = this.configDb.getConfig(serviceId, safeKey);
       const oldValue = existing?.value ?? '';
       const checksum = computeChecksum(update.value);
 
-      this.configDb.setConfig(serviceId, update.key, update.value, {
+      this.configDb.setConfig(serviceId, safeKey, update.value, {
         is_sensitive: field.sensitive ? 1 : 0,
         description: field.description ?? field.label,
         data_type: field.dataType,
@@ -228,7 +229,7 @@ export class SettingsConfigService {
 
       this.configDb.addHistory({
         service_id: serviceId,
-        key: update.key,
+        key: safeKey,
         old_value: oldValue || undefined,
         new_value: update.value,
         action: existing ? 'update' : 'create',
@@ -239,7 +240,7 @@ export class SettingsConfigService {
       const historyId = (history[0] as HistoryEntry & { id?: number })?.id ?? 0;
 
       changes.push({
-        key: update.key,
+        key: safeKey,
         oldValue,
         newValue: update.value,
         historyId,

@@ -365,6 +365,14 @@ export class DbSnapshotsService {
     const targetDir = path.join(this.dumpsDir, driver.engine);
     this.ensureDir(targetDir);
     const filepath = path.join(targetDir, filename);
+    const resolvedFilepath = path.resolve(filepath);
+    const resolvedTargetDir = path.resolve(targetDir);
+    if (
+      resolvedFilepath !== resolvedTargetDir &&
+      !resolvedFilepath.startsWith(resolvedTargetDir + path.sep)
+    ) {
+      throw new Error('Snapshot path is outside the allowed directory');
+    }
 
     if (driver.engine === 'postgres') {
       const envOverrides = this.resolveConnectionOverrides(

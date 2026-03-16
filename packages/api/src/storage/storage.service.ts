@@ -84,10 +84,10 @@ export class StorageService {
       throw new Error(`Snapshot path is outside the allowed directory`);
     }
     if (!fs.existsSync(resolvedPath)) {
-      throw new Error(`Snapshot not found: ${snapshotPath}`);
+      throw new Error(`Snapshot not found: ${resolvedPath}`);
     }
     const content = fs.readFileSync(resolvedPath);
-    const filename = path.basename(snapshotPath);
+    const filename = path.basename(resolvedPath);
     const key = `snapshots/${projectId}/${filename}`;
 
     await this.uploadFile(
