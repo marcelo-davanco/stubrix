@@ -73,10 +73,20 @@ export class StorageService {
     snapshotPath: string,
     projectId: string,
   ): Promise<StorageObject> {
-    if (!fs.existsSync(snapshotPath)) {
+    const resolvedPath = path.resolve(snapshotPath);
+    const dumpsBase = path.resolve(
+      process.env['DUMPS_DIR'] ?? path.join(process.cwd(), 'dumps'),
+    );
+    if (
+      resolvedPath !== dumpsBase &&
+      !resolvedPath.startsWith(dumpsBase + path.sep)
+    ) {
+      throw new Error(`Snapshot path is outside the allowed directory`);
+    }
+    if (!fs.existsSync(resolvedPath)) {
       throw new Error(`Snapshot not found: ${snapshotPath}`);
     }
-    const content = fs.readFileSync(snapshotPath);
+    const content = fs.readFileSync(resolvedPath);
     const filename = path.basename(snapshotPath);
     const key = `snapshots/${projectId}/${filename}`;
 

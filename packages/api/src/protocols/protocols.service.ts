@@ -101,7 +101,9 @@ export class ProtocolsService {
       ...options,
       createdAt: new Date().toISOString(),
     };
-    const filename = `${protocol}_${name.replace(/[^a-z0-9]/gi, '_')}_${mock.id}.json`;
+    const filename = path.basename(
+      `${protocol}_${name.replace(/[^a-z0-9]/gi, '_')}_${mock.id}.json`,
+    );
     fs.writeFileSync(
       path.join(this.storageDir, filename),
       JSON.stringify(mock, null, 2),

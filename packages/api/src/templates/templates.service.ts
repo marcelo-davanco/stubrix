@@ -346,7 +346,8 @@ export class TemplatesService {
         }
       }
 
-      const filePath = path.join(outputDir, filename);
+      const safeFilename = path.basename(filename);
+      const filePath = path.join(outputDir, safeFilename);
       fs.writeFileSync(filePath, content);
       created.push(filename);
     }

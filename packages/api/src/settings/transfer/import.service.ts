@@ -96,9 +96,11 @@ export class ImportService {
       );
     }
 
-    // Decrypt if needed
+    // Determine encryption from actual content structure, not user-controlled flag
+    const isEncrypted =
+      typeof payload.payload === 'string' && payload.payload.length > 0;
     let services: Record<string, ParsedServiceConfig>;
-    if (payload.meta.encrypted === true) {
+    if (isEncrypted) {
       if (!password) {
         throw new BadRequestException(
           'masterPassword is required to decrypt this file.',
@@ -108,10 +110,7 @@ export class ImportService {
       if (!verified) {
         throw new BadRequestException('Invalid master password.');
       }
-      if (!payload.payload) {
-        throw new BadRequestException('Encrypted file has no payload.');
-      }
-      const decrypted = this.crypto.decrypt(payload.payload);
+      const decrypted = this.crypto.decrypt(payload.payload as string);
       services = JSON.parse(decrypted) as Record<string, ParsedServiceConfig>;
     } else {
       services = (payload.services ?? {}) as Record<

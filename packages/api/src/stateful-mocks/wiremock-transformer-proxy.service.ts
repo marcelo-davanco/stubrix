@@ -94,7 +94,7 @@ export class WireMockTransformerProxyService {
   private extractQueryParams(request: ProxyRequest): Record<string, unknown> {
     try {
       const url = new URL(request.url, 'http://localhost');
-      const params: Record<string, unknown> = {};
+      const params = Object.create(null) as Record<string, unknown>;
       url.searchParams.forEach((value, key) => {
         if (
           key !== '__proto__' &&

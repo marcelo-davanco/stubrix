@@ -83,6 +83,9 @@ export class StatefulMocksService {
   }
 
   findOne(id: string): StatefulMock {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) {
+      throw new NotFoundException(`Stateful mock '${id}' not found`);
+    }
     const filePath = path.join(this.storageDir, `${id}.json`);
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException(`Stateful mock '${id}' not found`);
