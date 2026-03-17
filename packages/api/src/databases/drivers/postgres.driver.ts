@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { execSync } from 'child_process';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { Client } from 'pg';
 import type {
   ConnectionOverrides,
   DatabaseDriverInterface,
 } from './database-driver.interface';
+
+const execFileAsync = promisify(execFile);
 
 @Injectable()
 export class PostgresDriver implements DatabaseDriverInterface {
@@ -43,25 +46,39 @@ export class PostgresDriver implements DatabaseDriverInterface {
     return Boolean(this.host);
   }
 
-  healthCheck(): Promise<boolean> {
-    if (!this.isConfigured()) return Promise.resolve(false);
+  async healthCheck(): Promise<boolean> {
+    if (!this.isConfigured()) return false;
     try {
-      execSync('pg_isready', { env: this.getEnv(), stdio: 'ignore' });
-      return Promise.resolve(true);
+      await execFileAsync('pg_isready', ['-h', this.host, '-p', this.port], {
+        env: this.getEnv(),
+      });
+      return true;
     } catch {
-      return Promise.resolve(false);
+      return false;
     }
   }
 
-  listDatabases(overrides?: ConnectionOverrides): Promise<string[]> {
+  async listDatabases(overrides?: ConnectionOverrides): Promise<string[]> {
     const host = overrides?.host ?? this.host;
     const port = overrides?.port ?? this.port;
     const user = overrides?.username ?? this.user;
-    const output = execSync(
-      `psql -h ${host} -p ${port} -U ${user} -t -A -c "SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;"`,
-      { env: this.getEnv(undefined, overrides), encoding: 'utf-8' },
+    const { stdout } = await execFileAsync(
+      'psql',
+      [
+        '-h',
+        host,
+        '-p',
+        port,
+        '-U',
+        user,
+        '-t',
+        '-A',
+        '-c',
+        'SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;',
+      ],
+      { env: this.getEnv(undefined, overrides) },
     );
-    return Promise.resolve(output.trim().split('\n').filter(Boolean));
+    return stdout.trim().split('\n').filter(Boolean);
   }
 
   async executeQuery(
@@ -85,7 +102,7 @@ export class PostgresDriver implements DatabaseDriverInterface {
     }
   }
 
-  getDatabaseInfo(
+  async getDatabaseInfo(
     dbName: string,
     overrides?: ConnectionOverrides,
   ): Promise<{
@@ -93,17 +110,32 @@ export class PostgresDriver implements DatabaseDriverInterface {
     totalSize: string;
     tables: Array<{ name: string; size: string }>;
   }> {
+    const host = overrides?.host ?? this.host;
+    const port = overrides?.port ?? this.port;
+    const user = overrides?.username ?? this.user;
     const env = this.getEnv(dbName, overrides);
-    const tablesOutput = execSync(
-      `psql -t -A -c "SELECT schemaname || '.' || tablename AS table_name, pg_size_pretty(pg_total_relation_size((quote_ident(schemaname) || '.' || quote_ident(tablename))::regclass)) AS size FROM pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY pg_total_relation_size((quote_ident(schemaname) || '.' || quote_ident(tablename))::regclass) DESC LIMIT 20;"`,
-      { env, encoding: 'utf-8' },
+    const psqlArgs = ['-h', host, '-p', port, '-U', user, '-t', '-A'];
+
+    const { stdout: tablesOutput } = await execFileAsync(
+      'psql',
+      [
+        ...psqlArgs,
+        '-c',
+        "SELECT schemaname || '.' || tablename AS table_name, pg_size_pretty(pg_total_relation_size((quote_ident(schemaname) || '.' || quote_ident(tablename))::regclass)) AS size FROM pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY pg_total_relation_size((quote_ident(schemaname) || '.' || quote_ident(tablename))::regclass) DESC LIMIT 20;",
+      ],
+      { env },
     );
-    const sizeOutput = execSync(
-      `psql -t -A -c "SELECT pg_size_pretty(pg_database_size(current_database()));"`,
-      { env, encoding: 'utf-8' },
+    const { stdout: sizeOutput } = await execFileAsync(
+      'psql',
+      [
+        ...psqlArgs,
+        '-c',
+        'SELECT pg_size_pretty(pg_database_size(current_database()));',
+      ],
+      { env },
     );
 
-    return Promise.resolve({
+    return {
       database: dbName,
       totalSize: sizeOutput.trim(),
       tables: tablesOutput
@@ -111,9 +143,9 @@ export class PostgresDriver implements DatabaseDriverInterface {
         .split('\n')
         .filter(Boolean)
         .map((line: string) => {
-          const [name, size] = line.split('|');
+          const [name = '', size = ''] = line.split('|');
           return { name, size };
         }),
-    });
+    };
   }
 }

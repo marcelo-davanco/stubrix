@@ -107,9 +107,25 @@ export class ServiceLifecycleService implements OnModuleInit {
     serviceId: string,
     options?: EnableServiceDto,
   ): Promise<ServiceActionResult> {
+    return this.enableServiceInternal(serviceId, options, new Set<string>());
+  }
+
+  private async enableServiceInternal(
+    serviceId: string,
+    options: EnableServiceDto | undefined,
+    visited: Set<string>,
+  ): Promise<ServiceActionResult> {
     const enableDeps = options?.enableDependencies !== false;
     const skipHealthCheck = options?.skipHealthCheck === true;
     const timeout = options?.timeout ?? 60000;
+
+    if (visited.has(serviceId)) {
+      return this.errorResult(
+        serviceId,
+        'enable',
+        `Circular dependency detected for "${serviceId}"`,
+      );
+    }
 
     if (this.inProgress.has(serviceId)) {
       return this.errorResult(
@@ -136,34 +152,39 @@ export class ServiceLifecycleService implements OnModuleInit {
       );
     }
 
+    visited.add(serviceId);
     this.inProgress.add(serviceId);
 
     const affectedServices: string[] = [];
 
-    // Auto-enable dependencies
-    if (enableDeps) {
-      const deps = this.registry.getDependencies(serviceId);
-      for (const depId of deps) {
-        const depRow = this.configDb.getService(depId);
-        if (depRow && depRow.enabled !== 1) {
-          this.logger.log(`Auto-enabling dependency: ${depId}`);
-          const depResult = await this.enableService(depId, {
-            enableDependencies: true,
-            timeout,
-          });
-          if (!depResult.success) {
-            return this.errorResult(
-              serviceId,
-              'enable',
-              `Failed to enable dependency "${depId}": ${depResult.message}`,
+    try {
+      // Auto-enable dependencies
+      if (enableDeps) {
+        const deps = this.registry.getDependencies(serviceId);
+        for (const depId of deps) {
+          const depRow = this.configDb.getService(depId);
+          if (depRow && depRow.enabled !== 1) {
+            this.logger.log(`Auto-enabling dependency: ${depId}`);
+            const depResult = await this.enableServiceInternal(
+              depId,
+              {
+                enableDependencies: true,
+                timeout,
+              },
+              new Set(visited),
             );
+            if (!depResult.success) {
+              return this.errorResult(
+                serviceId,
+                'enable',
+                `Failed to enable dependency "${depId}": ${depResult.message}`,
+              );
+            }
+            affectedServices.push(depId);
           }
-          affectedServices.push(depId);
         }
       }
-    }
 
-    try {
       // Mark as enabled in SQLite
       this.configDb.updateServiceStatus(serviceId, true);
       this.configDb.updateHealthStatus(serviceId, 'unknown');
