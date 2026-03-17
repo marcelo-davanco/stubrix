@@ -42,7 +42,9 @@ describe('ServiceLifecycleService', () => {
     process.env.CONFIG_DB_PATH = TEST_DB_PATH;
 
     const dockerMock: Partial<jest.Mocked<DockerComposeService>> = {
+      startService: jest.fn().mockResolvedValue(makeDockerResult(true)),
       startProfile: jest.fn().mockResolvedValue(makeDockerResult(true)),
+      stopService: jest.fn().mockResolvedValue(makeDockerResult(true)),
       stopProfile: jest.fn().mockResolvedValue(makeDockerResult(true)),
       restartService: jest.fn().mockResolvedValue(makeDockerResult(true)),
       getRunningContainers: jest.fn().mockResolvedValue([]),
@@ -105,11 +107,13 @@ describe('ServiceLifecycleService', () => {
 
     const result = await service.enableService('wiremock');
 
-    const startProfile = docker.startProfile;
     expect(result.success).toBe(true);
     expect(result.action).toBe('enable');
-    expect(result.healthStatus).toBe('healthy');
-    expect(startProfile).toHaveBeenCalledWith('wiremock');
+    expect(result.healthStatus).toBe('unknown');
+    expect(docker.startService).toHaveBeenCalledWith(
+      'wiremock',
+      expect.any(Object),
+    );
 
     const row = configDb.getService('wiremock');
     expect(row!.enabled).toBe(1);
@@ -120,10 +124,9 @@ describe('ServiceLifecycleService', () => {
 
     const result = await service.enableService('wiremock');
 
-    const startProfile = docker.startProfile;
     expect(result.success).toBe(false);
     expect(result.message).toMatch(/already enabled/i);
-    expect(startProfile).not.toHaveBeenCalled();
+    expect(docker.startService).not.toHaveBeenCalled();
   });
 
   it('should return error for unknown service', async () => {
@@ -167,7 +170,7 @@ describe('ServiceLifecycleService', () => {
   });
 
   it('should return error when Docker start fails', async () => {
-    docker.startProfile.mockResolvedValue(
+    docker.startService.mockResolvedValue(
       makeDockerResult(false, 'daemon not running'),
     );
 
@@ -199,7 +202,7 @@ describe('ServiceLifecycleService', () => {
 
     expect(result.success).toBe(true);
     expect(result.action).toBe('disable');
-    expect(docker.stopProfile).toHaveBeenCalledWith('postgres');
+    expect(docker.stopService).toHaveBeenCalledWith('db-postgres');
 
     const row = configDb.getService('postgres');
     expect(row!.enabled).toBe(0);
@@ -266,8 +269,8 @@ describe('ServiceLifecycleService', () => {
     const restartService = docker.restartService;
     expect(result.success).toBe(true);
     expect(result.action).toBe('restart');
-    expect(restartService).toHaveBeenCalledWith('wiremock');
-    expect(result.healthStatus).toBe('healthy');
+    expect(restartService).toHaveBeenCalledWith('wiremock', expect.any(Object));
+    expect(result.healthStatus).toBe('unknown');
   });
 
   it('should return error when restarting unknown service', async () => {

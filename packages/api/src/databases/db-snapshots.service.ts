@@ -116,19 +116,31 @@ export class DbSnapshotsService {
     return path.join(this.dumpsDir, '.snapshot-metadata.json');
   }
 
+  private static readonly FORBIDDEN_KEYS = new Set([
+    '__proto__',
+    'constructor',
+    'prototype',
+  ]);
+
   private readMetadata(): Record<string, SnapshotMeta> {
     try {
       const file = this.getMetadataFile();
       if (fs.existsSync(file)) {
         const parsed: unknown = JSON.parse(fs.readFileSync(file, 'utf-8'));
-        if (parsed && typeof parsed === 'object') {
-          return parsed as Record<string, SnapshotMeta>;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const safe = Object.create(null) as Record<string, SnapshotMeta>;
+          for (const [k, v] of Object.entries(parsed)) {
+            if (!DbSnapshotsService.FORBIDDEN_KEYS.has(k)) {
+              safe[k] = v as SnapshotMeta;
+            }
+          }
+          return safe;
         }
       }
     } catch {
       // ignore
     }
-    return {};
+    return Object.create(null) as Record<string, SnapshotMeta>;
   }
 
   private writeMetadata(data: Record<string, SnapshotMeta>): void {
@@ -166,17 +178,24 @@ export class DbSnapshotsService {
     updates: Partial<SnapshotMeta>,
   ): SnapshotMeta {
     const baseName = path.basename(name, path.extname(name));
-    if (
-      baseName === '__proto__' ||
-      baseName === 'constructor' ||
-      baseName === 'prototype'
-    ) {
+    if (DbSnapshotsService.FORBIDDEN_KEYS.has(baseName)) {
       throw new ForbiddenException('Invalid snapshot name');
     }
     const meta = this.readMetadata();
-    meta[name] = { ...this.getSnapshotMeta(name), ...updates };
+    const safeUpdates: SnapshotMeta = {
+      ...this.getSnapshotMeta(name),
+      favorite:
+        typeof updates.favorite === 'boolean' ? updates.favorite : false,
+      protected:
+        typeof updates.protected === 'boolean' ? updates.protected : false,
+      category: typeof updates.category === 'string' ? updates.category : null,
+      engine: typeof updates.engine === 'string' ? updates.engine : null,
+      projectId:
+        typeof updates.projectId === 'string' ? updates.projectId : null,
+    };
+    meta[baseName] = safeUpdates;
     this.writeMetadata(meta);
-    return meta[name];
+    return meta[baseName];
   }
 
   private listSnapshotFiles(): SnapshotFile[] {
@@ -265,9 +284,24 @@ export class DbSnapshotsService {
       password: string;
     }>,
   ): Promise<void> {
+    const host = envOverrides?.host ?? this.postgresHost ?? 'localhost';
+    const port = envOverrides?.port ?? this.postgresPort;
+    const user = envOverrides?.user ?? this.postgresUser;
     await this.execFileAsync(
       'pg_dump',
-      ['--clean', '--if-exists', '--file', filepath, database],
+      [
+        '-h',
+        host,
+        '-p',
+        port,
+        '-U',
+        user,
+        '--clean',
+        '--if-exists',
+        '--file',
+        filepath,
+        database,
+      ],
       {
         env: this.getPostgresEnv(database, envOverrides),
       },
@@ -284,9 +318,16 @@ export class DbSnapshotsService {
       password: string;
     }>,
   ): Promise<void> {
-    await this.execFileAsync('psql', ['--file', filepath, database], {
-      env: this.getPostgresEnv(database, envOverrides),
-    });
+    const host = envOverrides?.host ?? this.postgresHost ?? 'localhost';
+    const port = envOverrides?.port ?? this.postgresPort;
+    const user = envOverrides?.user ?? this.postgresUser;
+    await this.execFileAsync(
+      'psql',
+      ['-h', host, '-p', port, '-U', user, '--file', filepath, database],
+      {
+        env: this.getPostgresEnv(database, envOverrides),
+      },
+    );
   }
 
   list(projectId?: string): ListSnapshotsResponse {
@@ -449,14 +490,11 @@ export class DbSnapshotsService {
       }
       fs.renameSync(currentPath, newPath);
       const meta = this.readMetadata();
+      const forbidden = DbSnapshotsService.FORBIDDEN_KEYS;
       if (
         meta[currentName] &&
-        newName !== '__proto__' &&
-        newName !== 'constructor' &&
-        newName !== 'prototype' &&
-        currentName !== '__proto__' &&
-        currentName !== 'constructor' &&
-        currentName !== 'prototype'
+        !forbidden.has(newName) &&
+        !forbidden.has(currentName)
       ) {
         meta[newName] = meta[currentName];
         delete meta[currentName];

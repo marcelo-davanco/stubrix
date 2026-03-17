@@ -72,7 +72,7 @@ x-common: &common
   volumes:
     - ./mocks:/mocks
   ports:
-    - "${MOCK_PORT:-8081}:${MOCK_PORT:-8081}"
+    - '${MOCK_PORT:-8081}:${MOCK_PORT:-8081}'
   environment:
     MOCK_PORT: ${MOCK_PORT:-8081}
 
@@ -86,10 +86,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.api
-    profiles: ["control-plane", "stubrix"]
+    profiles: ['control-plane', 'stubrix']
     container_name: stubrix-api
     ports:
-      - "${CONTROL_PORT:-9090}:9090"
+      - '${CONTROL_PORT:-9090}:9090'
     environment:
       NODE_ENV: production
       CONTROL_PORT: 9090
@@ -179,7 +179,7 @@ services:
         condition: service_healthy
         required: false
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
@@ -187,7 +187,7 @@ services:
   # --------------------------------------------------------------------------
   wiremock:
     <<: *common
-    profiles: ["wiremock"]
+    profiles: ['wiremock']
     container_name: mock-server-wiremock
     environment:
       MOCK_ENGINE: wiremock
@@ -198,22 +198,22 @@ services:
   # --------------------------------------------------------------------------
   wiremock-record:
     <<: *common
-    profiles: ["wiremock-record"]
+    profiles: ['wiremock-record']
     container_name: mock-server-wiremock-record
     environment:
       MOCK_ENGINE: wiremock
       MOCK_PORT: ${MOCK_PORT:-8081}
-      RECORD_MODE: "true"
-      PROXY_TARGET: "${PROXY_TARGET:-http://host.docker.internal:3000}"
+      RECORD_MODE: 'true'
+      PROXY_TARGET: '${PROXY_TARGET:-http://host.docker.internal:3000}'
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
 
   # --------------------------------------------------------------------------
   # Mockoon – Serve mocks (converted from WireMock format)
   # --------------------------------------------------------------------------
   mockoon:
     <<: *common
-    profiles: ["mockoon"]
+    profiles: ['mockoon']
     container_name: mock-server-mockoon
     environment:
       MOCK_ENGINE: mockoon
@@ -224,14 +224,14 @@ services:
   # --------------------------------------------------------------------------
   mockoon-proxy:
     <<: *common
-    profiles: ["mockoon-proxy"]
+    profiles: ['mockoon-proxy']
     container_name: mock-server-mockoon-proxy
     environment:
       MOCK_ENGINE: mockoon
       MOCK_PORT: ${MOCK_PORT:-8081}
-      PROXY_TARGET: "${PROXY_TARGET:-http://host.docker.internal:3000}"
+      PROXY_TARGET: '${PROXY_TARGET:-http://host.docker.internal:3000}'
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
 
   # --------------------------------------------------------------------------
   # Redis – Queue & Cache (BullMQ backend)
@@ -239,15 +239,15 @@ services:
   # --------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    profiles: ["redis", "infra"]
+    profiles: ['redis', 'infra']
     container_name: stubrix-redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - '${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy noeviction
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -258,20 +258,25 @@ services:
   # --------------------------------------------------------------------------
   db-postgres:
     image: postgres:17
-    profiles: ["postgres", "databases"]
+    profiles: ['postgres', 'databases']
     container_name: stubrix-db-postgres
     environment:
       POSTGRES_USER: ${PG_USER:-postgres}
       POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
       POSTGRES_DB: ${PG_DATABASE:-postgres}
       PGDATA: ${PGDATA:-/var/lib/postgresql/data/pgdata}
+      PGPORT: ${PG_EXTERNAL_PORT:-5542}
     ports:
-      - "${PG_EXTERNAL_PORT:-5442}:5432"
+      - '${PG_EXTERNAL_PORT:-5542}:${PG_EXTERNAL_PORT:-5542}'
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./dumps/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres}"]
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${PG_USER:-postgres} -p ${PG_EXTERNAL_PORT:-5542}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -282,7 +287,7 @@ services:
   # --------------------------------------------------------------------------
   db-mysql:
     image: mysql:8
-    profiles: ["mysql"]
+    profiles: ['mysql']
     container_name: stubrix-db-mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
@@ -290,12 +295,12 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-stubrix}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-stubrix}
     ports:
-      - "${MYSQL_EXTERNAL_PORT:-3307}:3306"
+      - '${MYSQL_EXTERNAL_PORT:-3307}:3306'
     volumes:
       - mysql_data:/var/lib/mysql
       - ./dumps/mysql:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -314,10 +319,10 @@ services:
   # --------------------------------------------------------------------------
   adminer:
     image: adminer:4
-    profiles: ["adminer", "db-viewer"]
+    profiles: ['adminer', 'db-viewer']
     container_name: stubrix-adminer
     ports:
-      - "${ADMINER_PORT:-8084}:8080"
+      - '${ADMINER_PORT:-8084}:8080'
     environment:
       ADMINER_DEFAULT_SERVER: ${PG_HOST:-db-postgres}
       ADMINER_DESIGN: pepa-linha-dark
@@ -333,14 +338,24 @@ services:
   # Access: http://localhost:8083
   # --------------------------------------------------------------------------
   cloudbeaver:
-    image: dbeaver/cloudbeaver:latest
-    profiles: ["cloudbeaver", "db-viewer"]
+    build:
+      context: .
+      dockerfile: Dockerfile.cloudbeaver
+    profiles: ['cloudbeaver', 'db-viewer']
     container_name: stubrix-cloudbeaver
     ports:
-      - "${CLOUDBEAVER_PORT:-8083}:8978"
+      - '${CLOUDBEAVER_PORT:-8083}:8978'
+    environment:
+      CLOUDBEAVER_WORKSPACE_DIR: ${CLOUDBEAVER_WORKSPACE_DIR:-/opt/cloudbeaver/workspace}
+      CLOUDBEAVER_CONTENT_ROOT: ${CLOUDBEAVER_CONTENT_ROOT:-/opt/cloudbeaver/web}
+      CLOUDBEAVER_DRIVERS_DIR: ${CLOUDBEAVER_DRIVERS_DIR:-/opt/cloudbeaver/drivers}
+      CLOUDBEAVER_ROOT_URI: ${CLOUDBEAVER_ROOT_URI:-/}
+      CLOUDBEAVER_PRODUCT_CONF: ${CLOUDBEAVER_PRODUCT_CONF:-/opt/cloudbeaver/conf/product.conf}
+      CLOUDBEAVER_SESSION_EXPIRE: ${CLOUDBEAVER_SESSION_EXPIRE:-1800000}
+      CLOUDBEAVER_ANONYMOUS_ACCESS: ${CLOUDBEAVER_ANONYMOUS_ACCESS:-true}
+      CLOUDBEAVER_CUSTOM_CONNECTIONS: ${CLOUDBEAVER_CUSTOM_CONNECTIONS:-true}
     volumes:
       - cloudbeaver_data:/opt/cloudbeaver/workspace
-      - ./config/cloudbeaver:/opt/cloudbeaver/conf:ro
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
@@ -349,10 +364,10 @@ services:
   # --------------------------------------------------------------------------
   localstack:
     image: localstack/localstack:latest
-    profiles: ["localstack", "cloud"]
+    profiles: ['localstack', 'cloud']
     container_name: stubrix-localstack
     ports:
-      - "${LOCALSTACK_PORT:-4566}:4566"
+      - '${LOCALSTACK_PORT:-4566}:4566'
     environment:
       SERVICES: ${LOCALSTACK_SERVICES:-s3,sqs,sns,dynamodb,lambda,secretsmanager}
       DEBUG: ${LOCALSTACK_DEBUG:-0}
@@ -369,12 +384,12 @@ services:
   # --------------------------------------------------------------------------
   minio:
     image: minio/minio:latest
-    profiles: ["minio", "storage"]
+    profiles: ['minio', 'storage']
     container_name: stubrix-minio
     command: server /data --console-address ':9001'
     ports:
-      - "${MINIO_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - '${MINIO_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
@@ -388,11 +403,11 @@ services:
   # --------------------------------------------------------------------------
   keycloak:
     image: quay.io/keycloak/keycloak:latest
-    profiles: ["keycloak", "iam"]
+    profiles: ['keycloak', 'iam']
     container_name: stubrix-keycloak
     command: start-dev
     ports:
-      - "${KEYCLOAK_PORT:-8180}:8080"
+      - '${KEYCLOAK_PORT:-8180}:8080'
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
@@ -405,11 +420,11 @@ services:
   # --------------------------------------------------------------------------
   zitadel:
     image: ghcr.io/zitadel/zitadel:latest
-    profiles: ["zitadel"]
+    profiles: ['zitadel']
     container_name: stubrix-zitadel
     command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled
     ports:
-      - "${ZITADEL_PORT:-8085}:8080"
+      - '${ZITADEL_PORT:-8085}:8080'
     environment:
       ZITADEL_DATABASE_POSTGRES_HOST: ${ZITADEL_DATABASE_POSTGRES_HOST:-db-postgres}
       ZITADEL_DATABASE_POSTGRES_PORT: ${ZITADEL_DATABASE_POSTGRES_PORT:-5432}
@@ -435,10 +450,10 @@ services:
   # --------------------------------------------------------------------------
   prometheus:
     image: prom/prometheus:latest
-    profiles: ["prometheus", "monitoring"]
+    profiles: ['prometheus', 'monitoring']
     container_name: stubrix-prometheus
     ports:
-      - "${PROMETHEUS_PORT:-9091}:9090"
+      - '${PROMETHEUS_PORT:-9091}:9090'
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -453,10 +468,10 @@ services:
   # --------------------------------------------------------------------------
   grafana:
     image: grafana/grafana-oss:latest
-    profiles: ["grafana", "monitoring"]
+    profiles: ['grafana', 'monitoring']
     container_name: stubrix-grafana
     ports:
-      - "${GRAFANA_PORT:-3000}:3000"
+      - '${GRAFANA_PORT:-3000}:3000'
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASS:-admin}
@@ -471,14 +486,14 @@ services:
   # --------------------------------------------------------------------------
   jaeger:
     image: jaegertracing/all-in-one:latest
-    profiles: ["jaeger", "tracing"]
+    profiles: ['jaeger', 'tracing']
     container_name: stubrix-jaeger
     ports:
-      - "${JAEGER_UI_PORT:-16686}:16686"
-      - "${OTEL_HTTP_PORT:-4318}:4318"
-      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - '${JAEGER_UI_PORT:-16686}:16686'
+      - '${OTEL_HTTP_PORT:-4318}:4318'
+      - '${OTEL_GRPC_PORT:-4317}:4317'
     environment:
-      COLLECTOR_OTLP_ENABLED: "true"
+      COLLECTOR_OTLP_ENABLED: 'true'
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
@@ -487,7 +502,7 @@ services:
   # --------------------------------------------------------------------------
   redpanda:
     image: redpandadata/redpanda:latest
-    profiles: ["kafka", "events"]
+    profiles: ['kafka', 'events']
     container_name: stubrix-redpanda
     command:
       - redpanda
@@ -499,16 +514,16 @@ services:
       - --pandaproxy-addr 0.0.0.0:8082
       - --advertise-pandaproxy-addr localhost:8082
     ports:
-      - "${KAFKA_PORT:-9092}:9092"
-      - "${KAFKA_REST_PORT:-8082}:8082"
+      - '${KAFKA_PORT:-9092}:9092'
+      - '${KAFKA_REST_PORT:-8082}:8082'
     restart: unless-stopped
 
   redpanda-console:
     image: redpandadata/console:latest
-    profiles: ["kafka", "events"]
+    profiles: ['kafka', 'events']
     container_name: stubrix-redpanda-console
     ports:
-      - "${KAFKA_CONSOLE_PORT:-8080}:8080"
+      - '${KAFKA_CONSOLE_PORT:-8080}:8080'
     environment:
       KAFKA_BROKERS: redpanda:9092
     depends_on:
@@ -521,11 +536,11 @@ services:
   # --------------------------------------------------------------------------
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    profiles: ["rabbitmq", "events"]
+    profiles: ['rabbitmq', 'events']
     container_name: stubrix-rabbitmq
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+      - '${RABBITMQ_PORT:-5672}:5672'
+      - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
@@ -537,12 +552,18 @@ services:
   # --------------------------------------------------------------------------
   gripmock:
     image: tkpd/gripmock:latest
-    profiles: ["gripmock", "grpc"]
+    profiles: ['gripmock', 'grpc']
     container_name: stubrix-gripmock
     ports:
-      - "${GRIPMOCK_PORT:-4770}:4770"
-      - "${GRIPMOCK_API_PORT:-4771}:4771"
-    command: ["--stub=/stub", "--admin-listen=0.0.0.0", "--grpc-listen=0.0.0.0", "/proto/placeholder.proto"]
+      - '${GRIPMOCK_PORT:-4770}:4770'
+      - '${GRIPMOCK_API_PORT:-4771}:4771'
+    command:
+      [
+        '--stub=/stub',
+        '--admin-listen=0.0.0.0',
+        '--grpc-listen=0.0.0.0',
+        '/proto/placeholder.proto',
+      ]
     volumes:
       - ./mocks/proto:/proto:ro
       - ./mocks/proto/stubs:/stub
@@ -554,14 +575,14 @@ services:
   # --------------------------------------------------------------------------
   pact-broker:
     image: pactfoundation/pact-broker:latest
-    profiles: ["pact"]
+    profiles: ['pact']
     container_name: stubrix-pact-broker
     ports:
-      - "${PACT_BROKER_PORT:-9292}:9292"
+      - '${PACT_BROKER_PORT:-9292}:9292'
     environment:
       PACT_BROKER_DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
-      PACT_BROKER_ALLOW_PUBLIC_READ: "true"
-      PACT_BROKER_DISABLE_SSL_VERIFICATION: "true"
+      PACT_BROKER_ALLOW_PUBLIC_READ: 'true'
+      PACT_BROKER_DISABLE_SSL_VERIFICATION: 'true'
     depends_on:
       db-postgres:
         condition: service_healthy
@@ -574,11 +595,11 @@ services:
   # --------------------------------------------------------------------------
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:latest
-    profiles: ["toxiproxy", "chaos-network"]
+    profiles: ['toxiproxy', 'chaos-network']
     container_name: stubrix-toxiproxy
     ports:
-      - "${TOXIPROXY_PORT:-8474}:8474"
-      - "8475-8485:8475-8485"
+      - '${TOXIPROXY_PORT:-8474}:8474'
+      - '8475-8485:8475-8485'
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
@@ -587,15 +608,15 @@ services:
   # --------------------------------------------------------------------------
   chromadb:
     image: chromadb/chroma:latest
-    profiles: ["ai"]
+    profiles: ['ai']
     container_name: stubrix-chromadb
     ports:
-      - "${CHROMADB_PORT:-8000}:8000"
+      - '${CHROMADB_PORT:-8000}:8000'
     volumes:
       - chromadb_data:/chroma/chroma
     environment:
-      IS_PERSISTENT: "TRUE"
-      ANONYMIZED_TELEMETRY: "FALSE"
+      IS_PERSISTENT: 'TRUE'
+      ANONYMIZED_TELEMETRY: 'FALSE'
     restart: unless-stopped
 
   # --------------------------------------------------------------------------
@@ -604,14 +625,14 @@ services:
   openrag-opensearch:
     image: langflowai/openrag-opensearch:latest
     platform: linux/amd64
-    profiles: ["ai", "openrag"]
+    profiles: ['ai', 'openrag']
     container_name: stubrix-openrag-opensearch
     ports:
-      - "9201:9200"
+      - '9201:9200'
     environment:
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:-Stubrix@1234}
-      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
-      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: '-Xms512m -Xmx512m'
+      bootstrap.memory_lock: 'true'
       discovery.type: single-node
     ulimits:
       memlock:
@@ -628,10 +649,10 @@ services:
   openrag-langflow:
     image: langflowai/openrag-langflow:latest
     platform: linux/amd64
-    profiles: ["ai", "openrag"]
+    profiles: ['ai', 'openrag']
     container_name: stubrix-openrag-langflow
     ports:
-      - "${LANGFLOW_PORT:-7860}:7860"
+      - '${LANGFLOW_PORT:-7860}:7860'
     environment:
       LANGFLOW_SECRET_KEY: ${LANGFLOW_SECRET_KEY:-}
       LANGFLOW_SUPERUSER_PASSWORD: ${LANGFLOW_SUPERUSER_PASSWORD:-admin}
@@ -644,14 +665,14 @@ services:
   openrag:
     image: langflowai/openrag-backend:latest
     platform: linux/amd64
-    profiles: ["ai", "openrag"]
+    profiles: ['ai', 'openrag']
     container_name: stubrix-openrag
     ports:
-      - "${OPENRAG_PORT:-8888}:8000"
+      - '${OPENRAG_PORT:-8888}:8000'
     environment:
       LANGFLOW_URL: http://openrag-langflow:7860
       OPENSEARCH_HOST: openrag-opensearch
-      OPENSEARCH_PORT: "9200"
+      OPENSEARCH_PORT: '9200'
       OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:-Stubrix@1234}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OLLAMA_ENDPOINT: ${OLLAMA_HOST:-}
@@ -680,10 +701,10 @@ services:
 
   hoppscotch:
     image: hoppscotch/hoppscotch:latest
-    profiles: ["hoppscotch"]
+    profiles: ['hoppscotch']
     container_name: stubrix-hoppscotch
     ports:
-      - "${HOPPSCOTCH_PORT:-3100}:3000"
+      - '${HOPPSCOTCH_PORT:-3100}:3000'
     environment:
       VITE_BASE_URL: http://localhost:3100
       VITE_SHORTCODE_BASE_URL: http://localhost:3100
@@ -699,14 +720,12 @@ services:
       REFRESH_TOKEN_VALIDITY: 604800000
       ACCESS_TOKEN_VALIDITY: 86400000
       WHITELISTED_ORIGINS: http://localhost:3100,http://localhost:3100/admin
-      MAILER_SMTP_ENABLE: "false"
-      MAILER_USE_CUSTOM_CONFIGS: "false"
+      MAILER_SMTP_ENABLE: 'false'
+      MAILER_USE_CUSTOM_CONFIGS: 'false'
     depends_on:
       db-postgres:
         condition: service_healthy
         required: false
-      hoppscotch-migrate:
-        condition: service_completed_successfully
     restart: unless-stopped
 
 volumes:
