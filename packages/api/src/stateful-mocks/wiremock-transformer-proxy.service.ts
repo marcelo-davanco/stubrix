@@ -101,7 +101,6 @@ export class WireMockTransformerProxyService {
           key !== 'constructor' &&
           key !== 'prototype'
         ) {
-          // codeql[js/remote-property-injection] - Object.create(null) + prototype key guard prevent prototype pollution
           params[key] = value;
         }
       });

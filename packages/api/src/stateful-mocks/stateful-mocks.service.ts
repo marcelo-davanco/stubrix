@@ -165,7 +165,6 @@ export class StatefulMocksService {
   remove(id: string): void {
     const mock = this.findOne(id);
     const safeId = path.basename(mock.id);
-    // codeql[js/path-injection] - mock.id is a UUID generated internally; path.basename prevents traversal
     const filePath = path.join(this.storageDir, `${safeId}.json`);
     fs.unlinkSync(filePath);
     this.stateResolver.invalidateCache(mock.id);

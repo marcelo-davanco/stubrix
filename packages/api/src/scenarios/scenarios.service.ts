@@ -73,7 +73,6 @@ export class ScenariosService {
       .toLowerCase()
       .slice(0, 30);
     const filename = path.basename(`${slug}_${id}.json`);
-    // codeql[js/http-to-file-access] - intentional: captured mock scenario bundle is persisted to local storage
     fs.writeFileSync(
       path.join(this.scenariosDir, filename),
       JSON.stringify(bundle, null, 2),

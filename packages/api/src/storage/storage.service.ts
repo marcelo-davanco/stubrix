@@ -50,7 +50,6 @@ export class StorageService {
       'base64',
     );
 
-    // codeql[js/file-access-to-http] - intentional: local snapshot file is uploaded to configured MinIO instance
     const res = await fetch(
       `${this.minioUrl}/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
       {

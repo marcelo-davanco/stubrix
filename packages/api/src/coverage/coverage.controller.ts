@@ -130,7 +130,6 @@ export class CoverageController {
       ) {
         throw new BadRequestException(`URL hostname not allowed: ${hostname}`);
       }
-      // codeql[js/request-forgery] - hostname validated against private/loopback ranges above
       const res = await fetch(parsedUrl.href);
       const content = await res.text();
       const report = await this.coverageService.analyze(content);

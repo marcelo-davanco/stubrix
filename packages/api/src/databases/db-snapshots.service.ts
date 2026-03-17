@@ -193,7 +193,6 @@ export class DbSnapshotsService {
       projectId:
         typeof updates.projectId === 'string' ? updates.projectId : null,
     };
-    // codeql[js/remote-property-injection] - baseName validated against FORBIDDEN_KEYS (prototype names) above
     meta[baseName] = safeUpdates;
     this.writeMetadata(meta);
     return meta[baseName];
@@ -497,8 +496,7 @@ export class DbSnapshotsService {
         !forbidden.has(newName) &&
         !forbidden.has(currentName)
       ) {
-        // codeql[js/remote-property-injection] - newName and currentName validated against FORBIDDEN_KEYS above
-        meta[newName] = meta[currentName]; // codeql[js/remote-property-injection]
+        meta[newName] = meta[currentName];
         delete meta[currentName];
         this.writeMetadata(meta);
       }

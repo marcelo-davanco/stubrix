@@ -76,7 +76,6 @@ export class WebhooksService {
 
     const events = this.loadEvents();
     events.unshift(event);
-    // codeql[js/http-to-file-access] - intentional: received webhook events are stored for replay
     fs.writeFileSync(
       this.eventsFile,
       JSON.stringify(events.slice(0, 500), null, 2),
@@ -141,8 +140,6 @@ export class WebhooksService {
           String(v),
         ]),
       );
-      // codeql[js/request-forgery] - assertHttpUrl() blocks private/loopback addresses
-      // codeql[js/file-access-to-http] - intentional: stored event body is replayed to validated external URL
       const res = await fetch(safeUrl, {
         method: safeMethod,
         headers: safeHeaders,
@@ -192,8 +189,6 @@ export class WebhooksService {
     const safeHeaders = Object.fromEntries(
       Object.entries(sim.headers ?? {}).map(([k, v]) => [String(k), String(v)]),
     );
-    // codeql[js/request-forgery] - assertHttpUrl() blocks private/loopback addresses
-    // codeql[js/file-access-to-http] - intentional: simulation payload is sent to validated external URL
     const res = await fetch(safeUrl, {
       method: safeMethod,
       headers: { 'Content-Type': 'application/json', ...safeHeaders },
