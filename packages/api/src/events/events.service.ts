@@ -157,7 +157,7 @@ export class EventsService {
     payload: unknown,
     headers?: Record<string, string>,
   ): Promise<void> {
-    // lgtm[js/file-access-to-http] - intentional: stored event payload is published to configured Kafka REST endpoint
+    // codeql[js/file-access-to-http] - intentional: stored event payload is published to configured Kafka REST endpoint
     const res = await fetch(
       `${this.kafkaUrl}/topics/${encodeURIComponent(topic)}`,
       {
@@ -182,7 +182,7 @@ export class EventsService {
     const pass = this.config.get<string>('RABBITMQ_PASS') ?? 'guest';
     const auth = Buffer.from(`${user}:${pass}`).toString('base64');
 
-    // lgtm[js/file-access-to-http] - intentional: stored event payload is published to configured RabbitMQ endpoint
+    // codeql[js/file-access-to-http] - intentional: stored event payload is published to configured RabbitMQ endpoint
     const res = await fetch(
       `${this.rabbitmqUrl}/api/exchanges/${encodeURIComponent(vhost)}/${encodeURIComponent(exchange)}/publish`,
       {

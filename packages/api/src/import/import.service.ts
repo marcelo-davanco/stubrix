@@ -223,7 +223,7 @@ export class ImportService {
     const headers = Object.create(null) as Record<string, string>;
     entry.request.headers?.forEach((header) => {
       if (this.isSafeHeaderName(header.name)) {
-        // lgtm[js/remote-property-injection] - Object.create(null) + isSafeHeaderName guard prevent prototype pollution
+        // codeql[js/remote-property-injection] - Object.create(null) + isSafeHeaderName guard prevent prototype pollution
         headers[header.name] = header.value;
       }
     });
@@ -253,7 +253,7 @@ export class ImportService {
     // Set response headers
     entry.response.headers?.forEach((header) => {
       if (this.isSafeHeaderName(header.name)) {
-        // lgtm[js/remote-property-injection] - Object.create(null) + isSafeHeaderName guard prevent prototype pollution
+        // codeql[js/remote-property-injection] - Object.create(null) + isSafeHeaderName guard prevent prototype pollution
         mapping.response.headers[header.name] = header.value;
       }
     });
@@ -273,7 +273,7 @@ export class ImportService {
     const headers = Object.create(null) as Record<string, string>;
     item.request.header?.forEach((header) => {
       if (this.isSafeHeaderName(header.key)) {
-        // lgtm[js/remote-property-injection] - Object.create(null) + isSafeHeaderName guard prevent prototype pollution
+        // codeql[js/remote-property-injection] - Object.create(null) + isSafeHeaderName guard prevent prototype pollution
         headers[header.key] = header.value;
       }
     });
@@ -344,7 +344,7 @@ export class ImportService {
       const response = item.response[0];
       response.header?.forEach((header) => {
         if (this.isSafeHeaderName(header.key)) {
-          // lgtm[js/remote-property-injection] - Object.create(null) + isSafeHeaderName guard prevent prototype pollution
+          // codeql[js/remote-property-injection] - Object.create(null) + isSafeHeaderName guard prevent prototype pollution
           mapping.response.headers[header.key] = header.value;
         }
       });

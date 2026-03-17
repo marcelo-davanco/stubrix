@@ -104,7 +104,7 @@ export class ProtocolsService {
     const filename = path.basename(
       `${protocol}_${name.replace(/[^a-z0-9]/gi, '_')}_${mock.id}.json`,
     );
-    // lgtm[js/http-to-file-access] - intentional: API request body (protocol mock definition) is persisted to storage
+    // codeql[js/http-to-file-access] - intentional: API request body (protocol mock definition) is persisted to storage
     fs.writeFileSync(
       path.join(this.storageDir, filename),
       JSON.stringify(mock, null, 2),
