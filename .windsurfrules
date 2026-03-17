@@ -67,10 +67,17 @@ Stubrix is a monorepo (npm workspaces) that provides a unified mock server platf
 - **DeepWiki MCP**: Use for referencing NestJS, React, WireMock documentation
 - **Sequential Thinking MCP**: Use for complex architectural decisions
 
+## Branch Strategy
+- **dev** (default): All development work happens here — feature branches merge into `dev` via PR
+- **sta**: Staging/QA — receives merges from `dev` via PR before going to production
+- **main**: Production only — receives merges exclusively from `sta` via PR with 1 review required
+- Flow: `feat/*` or `fix/*` → `dev` → `sta` → `main`
+- Never push directly to `main` or `sta`; `dev` allows direct commits for small changes
+
 ## Feature Development
 - Feature specs live in `/features/` directory as numbered markdown files
 - Follow the integration plan in `features/integracao-db-docker.md`
-- Each feature should be developed in a feature branch
+- Each feature should be developed in a feature branch off `dev`
 - Always build shared package first: `npm run build:shared`
 
 ## Build Order (critical)
