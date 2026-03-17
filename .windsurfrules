@@ -83,7 +83,7 @@ Stubrix is a monorepo (npm workspaces) that provides a unified mock server platf
 - **main**: Production only — receives merges exclusively from `stg` via PR with 1 review required
 - Flow: `feat/*` or `fix/*` → `dev` → `stg` → `main`
 - **All three branches require PR** — never push directly to `main`, `stg`, or `dev`
-- `dev` PR: no review required; `stg` PR: 1 review required; `main` PR: 1 review + CodeQL
+- All PRs require 1 review approval and CodeQL passing
 
 ## Feature Development
 
