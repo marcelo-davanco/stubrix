@@ -1,18 +1,21 @@
 # Stubrix — Global Rules for Windsurf
 
 ## Project Overview
+
 Stubrix is a monorepo (npm workspaces) that provides a unified mock server platform with WireMock/Mockoon engines, a NestJS 11 control plane API, a React 19 dashboard, and a multi-database management system.
 
 ## Architecture
+
 - **Monorepo**: npm workspaces at `packages/`
 - **@stubrix/api**: NestJS 11 + Express, WebSockets (Socket.IO), class-validator
 - **@stubrix/ui**: React 19 + Vite 7 + TailwindCSS + Lucide + React Router 7
 - **@stubrix/db-ui**: Database microfrontend (React, consumed by @stubrix/ui)
 - **@stubrix/shared**: TypeScript types shared across all packages
 - **Docker**: Multi-profile compose (wiremock, mockoon, postgres, mysql)
-- **Mocks**: Canonical WireMock format (mappings/*.json + __files/*)
+- **Mocks**: Canonical WireMock format (mappings/_.json + \_\_files/_)
 
 ## Tech Stack & Versions
+
 - Node.js >= 24, npm >= 10
 - TypeScript 5.x across all packages
 - NestJS 11 (API)
@@ -23,6 +26,7 @@ Stubrix is a monorepo (npm workspaces) that provides a unified mock server platf
 - ESLint 9 + Prettier (formatting)
 
 ## Code Style Rules
+
 - Use TypeScript strict mode in all packages
 - Follow NestJS conventions for the API: modules, controllers, services, DTOs
 - Use class-validator decorators for all DTOs in @stubrix/api
@@ -34,12 +38,14 @@ Stubrix is a monorepo (npm workspaces) that provides a unified mock server platf
 - All shared types go in @stubrix/shared, never duplicate types across packages
 
 ## File Naming
+
 - API: kebab-case for files (e.g., `mock-engine.service.ts`, `create-mock.dto.ts`)
 - UI: PascalCase for components (e.g., `MockEditor.tsx`, `DatabasesPage.tsx`)
 - Shared: kebab-case for type files (e.g., `mock.types.ts`)
 - Tests: co-located as `*.spec.ts` (API) or `*.test.tsx` (UI)
 
 ## API Conventions
+
 - All REST endpoints under `/api/` prefix
 - WebSocket namespace: `/ws/logs`
 - Project-scoped routes: `/api/projects/:projectId/...`
@@ -48,18 +54,21 @@ Stubrix is a monorepo (npm workspaces) that provides a unified mock server platf
 - Return consistent error shapes with HttpException
 
 ## Database Operations
+
 - PostgreSQL: real operations via pg_dump/psql
 - MySQL/SQLite: driver pattern with placeholder implementations
 - Snapshots stored in `dumps/{engine}/`
 - Metadata in `dumps/.snapshot-metadata.json` and `dumps/.project-databases.json`
 
 ## Docker & Infrastructure
+
 - All services use Docker Compose profiles — never start services without explicit profile
 - Environment variables defined in `.env` (loaded by Makefile, docker-compose, NestJS config)
 - Mock port default: 8081, API port default: 9090
 - Always use `make` targets as the primary CLI interface
 
 ## MCP Integration
+
 - **GitHub MCP**: Use for all git operations, PR management, issue tracking
 - **PostgreSQL MCP**: Use for direct database queries and inspection
 - **Playwright MCP**: Use for E2E testing of the dashboard UI
@@ -68,31 +77,37 @@ Stubrix is a monorepo (npm workspaces) that provides a unified mock server platf
 - **Sequential Thinking MCP**: Use for complex architectural decisions
 
 ## Branch Strategy
+
 - **dev** (default): All development work happens here — feature branches merge into `dev` via PR
-- **sta**: Staging/QA — receives merges from `dev` via PR before going to production
-- **main**: Production only — receives merges exclusively from `sta` via PR with 1 review required
-- Flow: `feat/*` or `fix/*` → `dev` → `sta` → `main`
-- Never push directly to `main` or `sta`; `dev` allows direct commits for small changes
+- **stg**: Staging/QA — receives merges from `dev` via PR before going to production
+- **main**: Production only — receives merges exclusively from `stg` via PR with 1 review required
+- Flow: `feat/*` or `fix/*` → `dev` → `stg` → `main`
+- **All three branches require PR** — never push directly to `main`, `stg`, or `dev`
+- `dev` PR: no review required; `stg` PR: 1 review required; `main` PR: 1 review + CodeQL
 
 ## Feature Development
+
 - Feature specs live in `/features/` directory as numbered markdown files
 - Follow the integration plan in `features/integracao-db-docker.md`
 - Each feature should be developed in a feature branch off `dev`
 - Always build shared package first: `npm run build:shared`
 
 ## Build Order (critical)
+
 1. @stubrix/shared (no deps)
 2. @stubrix/api (depends on shared)
 3. @stubrix/db-ui (depends on shared)
 4. @stubrix/ui (depends on shared + db-ui)
 
 ## Testing
+
 - Unit tests required for all services in @stubrix/api
 - E2E tests for critical API flows
 - Use Playwright MCP for dashboard E2E when available
 - Test database operations with real PostgreSQL via Docker profile
 
 ## Security
+
 - Never commit `.env` files — use `.env.example` as template
 - CORS configured via environment variable
 - No hardcoded credentials in source code
