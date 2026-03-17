@@ -497,8 +497,8 @@ export class DbSnapshotsService {
         !forbidden.has(newName) &&
         !forbidden.has(currentName)
       ) {
-        // codeql[js/remote-property-injection] - keys sanitized against forbidden prototype names above
-        meta[newName] = meta[currentName];
+        // codeql[js/remote-property-injection] - newName and currentName validated against FORBIDDEN_KEYS above
+        meta[newName] = meta[currentName]; // codeql[js/remote-property-injection]
         delete meta[currentName];
         this.writeMetadata(meta);
       }
