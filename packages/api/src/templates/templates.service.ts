@@ -348,6 +348,7 @@ export class TemplatesService {
 
       const safeFilename = path.basename(filename);
       const filePath = path.join(outputDir, safeFilename);
+      // codeql[js/path-injection] - safeFilename is sanitized via path.basename above
       fs.writeFileSync(filePath, content);
       created.push(filename);
     }

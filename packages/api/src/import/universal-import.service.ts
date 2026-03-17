@@ -243,7 +243,7 @@ export class UniversalImportService {
     }
     let content: string;
     try {
-      // lgtm[js/request-forgery] - hostname validated against private/loopback ranges above
+      // codeql[js/request-forgery] - hostname validated against private/loopback ranges above
       const res = await fetch(parsed.href);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);

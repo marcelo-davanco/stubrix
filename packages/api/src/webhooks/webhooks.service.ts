@@ -141,8 +141,8 @@ export class WebhooksService {
           String(v),
         ]),
       );
-      // lgtm[js/request-forgery] - assertHttpUrl() blocks private/loopback addresses
-      // lgtm[js/file-access-to-http] - intentional: stored event body is replayed to validated external URL
+      // codeql[js/request-forgery] - assertHttpUrl() blocks private/loopback addresses
+      // codeql[js/file-access-to-http] - intentional: stored event body is replayed to validated external URL
       const res = await fetch(safeUrl, {
         method: safeMethod,
         headers: safeHeaders,
