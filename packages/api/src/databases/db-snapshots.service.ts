@@ -193,9 +193,10 @@ export class DbSnapshotsService {
       projectId:
         typeof updates.projectId === 'string' ? updates.projectId : null,
     };
-    meta[name] = safeUpdates;
+    // codeql[js/remote-property-injection] - baseName validated against FORBIDDEN_KEYS (prototype names) above
+    meta[baseName] = safeUpdates;
     this.writeMetadata(meta);
-    return meta[name];
+    return meta[baseName];
   }
 
   private listSnapshotFiles(): SnapshotFile[] {
