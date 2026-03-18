@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { execFileSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
+import * as fs from 'fs';
 import { MongoClient } from 'mongodb';
 import type {
   ConnectionOverrides,
@@ -17,6 +18,7 @@ export class MongodbDriver implements DatabaseDriverInterface {
   private readonly user: string;
   private readonly password: string;
   private readonly database: string;
+  private readonly containerName: string;
 
   constructor(private readonly config: ConfigService) {
     this.host = this.config.get<string>('MONGO_HOST');
@@ -24,6 +26,8 @@ export class MongodbDriver implements DatabaseDriverInterface {
     this.user = this.config.get<string>('MONGO_USER') ?? 'stubrix';
     this.password = this.config.get<string>('MONGO_PASSWORD') ?? 'stubrix';
     this.database = this.config.get<string>('MONGO_DATABASE') ?? 'stubrix';
+    this.containerName =
+      this.config.get<string>('MONGO_CONTAINER') ?? 'stubrix-mongodb';
   }
 
   /**
@@ -35,7 +39,7 @@ export class MongodbDriver implements DatabaseDriverInterface {
     const p = overrides?.port ?? this.port;
     const u = encodeURIComponent(overrides?.username ?? this.user);
     const pw = encodeURIComponent(overrides?.password ?? this.password);
-    const db = database ?? this.database;
+    const db = encodeURIComponent(database ?? this.database);
     return `mongodb://${u}:${pw}@${h}:${p}/${db}?authSource=admin`;
   }
 
@@ -88,7 +92,7 @@ export class MongodbDriver implements DatabaseDriverInterface {
       const tables: Array<{ name: string; size: string }> = [];
       for (const col of collections) {
         try {
-          const colStats = await db.collection(col.name).stats();
+          const colStats = await db.command({ collStats: col.name });
           const sizeMb = (colStats.size / (1024 * 1024)).toFixed(2);
           tables.push({ name: col.name, size: `${sizeMb} MB` });
         } catch {
@@ -132,11 +136,24 @@ export class MongodbDriver implements DatabaseDriverInterface {
   }
 
   /**
+   * Verifica se mongodump está disponível localmente no PATH.
+   */
+  private hasMongodumpLocal(): boolean {
+    try {
+      execFileSync('mongodump', ['--version'], { stdio: 'pipe' });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Cria um snapshot usando mongodump --archive --gzip
    *
    * O comando gera um ÚNICO arquivo binário compactado,
    * encaixando perfeitamente na estrutura dumps/mongodb/.
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async createSnapshot(
     database: string,
     filepath: string,
@@ -148,24 +165,63 @@ export class MongodbDriver implements DatabaseDriverInterface {
 
     try {
       const uri = this.buildUri(database, overrides);
-      const args = [`--uri=${uri}`, `--archive=${filepath}`, '--gzip'];
-
       this.logger.log(`Creating MongoDB snapshot: ${database} -> ${filepath}`);
-      execFileSync('mongodump', args, { stdio: 'pipe' });
+
+      if (this.hasMongodumpLocal()) {
+        execFileSync(
+          'mongodump',
+          [`--uri=${uri}`, `--archive=${filepath}`, '--gzip'],
+          { stdio: 'pipe', maxBuffer: 512 * 1024 * 1024 },
+        );
+      } else {
+        // Use --add-host to make host.docker.internal work on all platforms (Linux/Windows/macOS)
+        const dockerUri = uri.replace(
+          /localhost|127\.0\.0\.1/g,
+          'host.docker.internal',
+        );
+        const result = spawnSync(
+          'docker',
+          [
+            'exec',
+            '-i',
+            '--add-host=host.docker.internal:host-gateway',
+            this.containerName,
+            'mongodump',
+            `--uri=${dockerUri}`,
+            '--archive',
+            '--gzip',
+          ],
+          { encoding: 'buffer', maxBuffer: 512 * 1024 * 1024 },
+        );
+        if (result.error) throw result.error;
+        if (result.status !== 0) {
+          throw new Error(
+            result.stderr?.toString('utf8') ??
+              'mongodump via docker exec failed',
+          );
+        }
+        if (!result.stdout || result.stdout.length === 0) {
+          this.logger.warn(
+            'mongodump produced no output (empty database?) — creating empty snapshot file',
+          );
+        }
+        fs.writeFileSync(filepath, result.stdout);
+      }
       this.logger.log(`MongoDB snapshot created successfully: ${filepath}`);
-    } catch (error) {
-      this.logger.error(`Failed to create MongoDB snapshot: ${error.message}`);
-      throw new Error(`MongoDB snapshot failed: ${error.message}`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to create MongoDB snapshot: ${msg}`);
+      throw new Error(`MongoDB snapshot failed: ${msg}`);
     }
   }
 
   /**
    * Restaura um snapshot usando mongorestore --archive --gzip --drop
    *
-   * A flag --drop é OBRIGATÓRIA (Harness Engineering).
-   * Garante que antes de restaurar o BSON, o MongoDB apague
-   * as coleções existentes, evitando dados duplicados.
+   * A flag --drop é OBRIGATÓRIA.
+   * Garante que as coleções existentes sejam apagadas antes da restauração.
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async restoreSnapshot(
     database: string,
     filepath: string,
@@ -177,19 +233,52 @@ export class MongodbDriver implements DatabaseDriverInterface {
 
     try {
       const uri = this.buildUri(database, overrides);
-      const args = [
-        `--uri=${uri}`,
-        `--archive=${filepath}`,
-        '--gzip',
-        '--drop',
-      ];
-
       this.logger.log(`Restoring MongoDB snapshot: ${filepath} -> ${database}`);
-      execFileSync('mongorestore', args, { stdio: 'pipe' });
+
+      if (this.hasMongodumpLocal()) {
+        execFileSync(
+          'mongorestore',
+          [`--uri=${uri}`, `--archive=${filepath}`, '--gzip', '--drop'],
+          { stdio: 'pipe', maxBuffer: 512 * 1024 * 1024 },
+        );
+      } else {
+        // Use --add-host to make host.docker.internal work on all platforms (Linux/Windows/macOS)
+        const dockerUri = uri.replace(
+          /localhost|127\.0\.0\.1/g,
+          'host.docker.internal',
+        );
+        if (!fs.existsSync(filepath)) {
+          throw new Error(`Snapshot file not found: ${filepath}`);
+        }
+        const fileData = fs.readFileSync(filepath);
+        const result = spawnSync(
+          'docker',
+          [
+            'exec',
+            '-i',
+            '--add-host=host.docker.internal:host-gateway',
+            this.containerName,
+            'mongorestore',
+            `--uri=${dockerUri}`,
+            '--archive',
+            '--gzip',
+            '--drop',
+          ],
+          { input: fileData, encoding: 'buffer', maxBuffer: 512 * 1024 * 1024 },
+        );
+        if (result.error) throw result.error;
+        if (result.status !== 0) {
+          throw new Error(
+            result.stderr?.toString('utf8') ??
+              'mongorestore via docker exec failed',
+          );
+        }
+      }
       this.logger.log(`MongoDB snapshot restored successfully: ${filepath}`);
-    } catch (error) {
-      this.logger.error(`Failed to restore MongoDB snapshot: ${error.message}`);
-      throw new Error(`MongoDB restore failed: ${error.message}`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to restore MongoDB snapshot: ${msg}`);
+      throw new Error(`MongoDB restore failed: ${msg}`);
     }
   }
 }
