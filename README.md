@@ -21,22 +21,22 @@
 
 Stubrix covers the full API development lifecycle in a single tool — no stitching together five different platforms:
 
-| Capability | What it does |
-|---|---|
-| **Dual Mock Engine** | WireMock (Java) or Mockoon (Node.js) — same mocks, zero lock-in, one command to switch |
-| **Multi-Protocol** | REST, GraphQL, gRPC, WebSockets, Kafka, RabbitMQ — all mockable in one place |
-| **Contract Testing** | Pact Broker integration — verify that producer and consumer contracts match before deploying |
-| **Chaos & Resilience** | Fault injection (latency, errors, payload corruption) + Toxiproxy network-level chaos |
-| **Cloud Simulation** | LocalStack for AWS (S3, SQS, SNS, DynamoDB, Lambda) — zero cloud cost during development |
-| **Object Storage** | MinIO (S3-compatible) — store large mock bodies and database snapshot archives |
-| **Distributed Tracing** | Jaeger + OpenTelemetry — follow a request across services during local testing |
-| **Prometheus Metrics** | Built-in metrics exposition + Grafana dashboards — observe the mock server itself |
-| **Performance Testing** | k6 scripts (smoke, load, stress) with baseline regression CI gate |
-| **Identity & Access** | Keycloak and Zitadel — real OAuth2/OIDC token flows locally |
-| **AI-Native (MCP)** | 3 MCP servers with **100+ tools** — manage everything from your AI coding assistant |
-| **Database Snapshots** | PostgreSQL `pg_dump`/`psql`, MySQL, SQLite — snapshot and restore DB state alongside mocks |
-| **Service Control Panel** | Enable/disable 24 infrastructure services, configure, backup and restore all settings — no manual Docker commands |
-| **Visual Control Panel** | NestJS 11 API + React 19 Dashboard — no CLI-only workflows |
+| Capability                | What it does                                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Dual Mock Engine**      | WireMock (Java) or Mockoon (Node.js) — same mocks, zero lock-in, one command to switch                                                     |
+| **Multi-Protocol**        | REST, GraphQL, gRPC, WebSockets, Kafka, RabbitMQ — all mockable in one place                                                               |
+| **Contract Testing**      | Pact Broker integration — verify that producer and consumer contracts match before deploying                                               |
+| **Chaos & Resilience**    | Fault injection (latency, errors, payload corruption) + Toxiproxy network-level chaos                                                      |
+| **Cloud Simulation**      | LocalStack for AWS (S3, SQS, SNS, DynamoDB, Lambda) — zero cloud cost during development                                                   |
+| **Object Storage**        | MinIO (S3-compatible) — store large mock bodies and database snapshot archives                                                             |
+| **Distributed Tracing**   | Jaeger + OpenTelemetry — follow a request across services during local testing                                                             |
+| **Prometheus Metrics**    | Built-in metrics exposition + Grafana dashboards — observe the mock server itself                                                          |
+| **Performance Testing**   | k6 scripts (smoke, load, stress) with baseline regression CI gate                                                                          |
+| **Identity & Access**     | Keycloak and Zitadel — real OAuth2/OIDC token flows locally                                                                                |
+| **AI-Native (MCP)**       | 3 MCP servers with **100+ tools** — manage everything from your AI coding assistant                                                        |
+| **Database Snapshots**    | PostgreSQL `pg_dump`/`psql`, MySQL `mysqldump`, SQLite, MongoDB `mongodump`/`mongorestore` — snapshot and restore DB state alongside mocks |
+| **Service Control Panel** | Enable/disable 24 infrastructure services, configure, backup and restore all settings — no manual Docker commands                          |
+| **Visual Control Panel**  | NestJS 11 API + React 19 Dashboard — no CLI-only workflows                                                                                 |
 
 ---
 
@@ -75,7 +75,7 @@ Stubrix is a **monorepo** (npm workspaces) built on three core layers:
 │  Infrastructure Layer (20+ Docker profiles)                    │
 │                                                                 │
 │  Mock Engines: WireMock · Mockoon                              │
-│  Databases: PostgreSQL · MySQL · SQLite                        │
+│  Databases: PostgreSQL · MySQL · SQLite · MongoDB              │
 │  Messaging: Kafka (Redpanda) · RabbitMQ                        │
 │  Protocols: GripMock (gRPC)                                    │
 │  Cloud: LocalStack · MinIO · Keycloak · Zitadel               │
@@ -87,18 +87,18 @@ Stubrix is a **monorepo** (npm workspaces) built on three core layers:
 
 ### Monorepo packages
 
-| Package | Description |
-|---------|-------------|
-| `@stubrix/api` | NestJS 11 control plane — 28 modules, REST API + WebSockets |
-| `@stubrix/ui` | React 19 + Vite 7 dashboard host |
-| `@stubrix/mock-ui` | Mock server microfrontend |
-| `@stubrix/db-ui` | Database management microfrontend |
-| `@stubrix/shared` | TypeScript types shared across all packages |
-| `@stubrix/cli` | Standalone CLI (`stubrix` binary) |
-| `@stubrix/vscode-extension` | VS Code sidebar + commands |
-| `stubrix-mcp` | MCP server — full Stubrix API (100+ tools) |
-| `wiremock-mcp` | MCP server — WireMock Admin API (16 tools) |
-| `docker-mcp` | MCP server — Docker Compose management (12 tools) |
+| Package                     | Description                                                 |
+| --------------------------- | ----------------------------------------------------------- |
+| `@stubrix/api`              | NestJS 11 control plane — 28 modules, REST API + WebSockets |
+| `@stubrix/ui`               | React 19 + Vite 7 dashboard host                            |
+| `@stubrix/mock-ui`          | Mock server microfrontend                                   |
+| `@stubrix/db-ui`            | Database management microfrontend                           |
+| `@stubrix/shared`           | TypeScript types shared across all packages                 |
+| `@stubrix/cli`              | Standalone CLI (`stubrix` binary)                           |
+| `@stubrix/vscode-extension` | VS Code sidebar + commands                                  |
+| `stubrix-mcp`               | MCP server — full Stubrix API (100+ tools)                  |
+| `wiremock-mcp`              | MCP server — WireMock Admin API (16 tools)                  |
+| `docker-mcp`                | MCP server — Docker Compose management (12 tools)           |
 
 ---
 
@@ -219,8 +219,8 @@ All services start via Docker Compose profiles. Use Makefile shortcuts or `docke
 
 ### Control Plane
 
-| Profile | Service | Port | Command |
-|---------|---------|------|---------|
+| Profile         | Service                | Port  | Command           |
+| --------------- | ---------------------- | ----- | ----------------- |
 | `control-plane` | Stubrix API + React UI | :9090 | `make stubrix-up` |
 
 ```bash
@@ -234,54 +234,55 @@ make stack-down        # Stop full stack
 
 ### Mock Engines
 
-| Profile | Service | Port | Command |
-|---------|---------|------|---------|
-| `wiremock` | WireMock | :8081 | `make wiremock` |
-| `mockoon` | Mockoon CLI | :8081 | `make mockoon` |
+| Profile           | Service                | Port  | Command                                   |
+| ----------------- | ---------------------- | ----- | ----------------------------------------- |
+| `wiremock`        | WireMock               | :8081 | `make wiremock`                           |
+| `mockoon`         | Mockoon CLI            | :8081 | `make mockoon`                            |
 | `wiremock-record` | WireMock (record mode) | :8081 | `make wiremock-record PROXY_TARGET=<url>` |
-| `mockoon-proxy` | Mockoon (hybrid proxy) | :8081 | `make mockoon-proxy PROXY_TARGET=<url>` |
+| `mockoon-proxy`   | Mockoon (hybrid proxy) | :8081 | `make mockoon-proxy PROXY_TARGET=<url>`   |
 
 ### Databases
 
-| Profile | Service | Port | Command |
-|---------|---------|------|---------|
-| `postgres` | PostgreSQL 17 | :5442 | `make postgres` |
-| `mysql` | MySQL 8 | :3307 | `make mysql` |
-| `adminer` | Adminer UI | :8084 | `make adminer-up` |
-| `cloudbeaver` | CloudBeaver UI | :8083 | `make cloudbeaver-up` |
+| Profile       | Service        | Port   | Command               |
+| ------------- | -------------- | ------ | --------------------- |
+| `postgres`    | PostgreSQL 17  | :5442  | `make postgres`       |
+| `mysql`       | MySQL 8        | :3307  | `make mysql`          |
+| `mongoDb`     | MongoDB        | :27017 | `make mongodb`        |
+| `adminer`     | Adminer UI     | :8084  | `make adminer-up`     |
+| `cloudbeaver` | CloudBeaver UI | :8083  | `make cloudbeaver-up` |
 
 ### Messaging & Protocols
 
-| Profile | Service | Port | Command |
-|---------|---------|------|---------|
-| `kafka` | Redpanda (Kafka) | :9092 | `make kafka-up` |
-| `rabbitmq` | RabbitMQ + UI | :5672 / :15672 | `make rabbitmq-up` |
-| `gripmock` | GripMock (gRPC) | :4770 / :4771 | `make gripmock-up` |
+| Profile    | Service          | Port           | Command            |
+| ---------- | ---------------- | -------------- | ------------------ |
+| `kafka`    | Redpanda (Kafka) | :9092          | `make kafka-up`    |
+| `rabbitmq` | RabbitMQ + UI    | :5672 / :15672 | `make rabbitmq-up` |
+| `gripmock` | GripMock (gRPC)  | :4770 / :4771  | `make gripmock-up` |
 
 ### Observability
 
-| Profile | Service | Port | Command |
-|---------|---------|------|---------|
-| `monitoring` | Prometheus | :9091 | `make monitoring-up` |
-| `monitoring` | Grafana | :3000 | `make monitoring-up` |
-| `jaeger` | Jaeger UI + OTLP | :16686 / :4318 | `make jaeger-up` |
+| Profile      | Service          | Port           | Command              |
+| ------------ | ---------------- | -------------- | -------------------- |
+| `monitoring` | Prometheus       | :9091          | `make monitoring-up` |
+| `monitoring` | Grafana          | :3000          | `make monitoring-up` |
+| `jaeger`     | Jaeger UI + OTLP | :16686 / :4318 | `make jaeger-up`     |
 
 ### Cloud & IAM
 
-| Profile | Service | Port | Command |
-|---------|---------|------|---------|
-| `localstack` | LocalStack (AWS) | :4566 | `make localstack-up` |
-| `minio` | MinIO + Console | :9000 / :9001 | `make minio-up` |
-| `keycloak` | Keycloak | :8180 | `make keycloak-up` |
-| `zitadel` | Zitadel | :8085 | `make zitadel-up` |
+| Profile      | Service          | Port          | Command              |
+| ------------ | ---------------- | ------------- | -------------------- |
+| `localstack` | LocalStack (AWS) | :4566         | `make localstack-up` |
+| `minio`      | MinIO + Console  | :9000 / :9001 | `make minio-up`      |
+| `keycloak`   | Keycloak         | :8180         | `make keycloak-up`   |
+| `zitadel`    | Zitadel          | :8085         | `make zitadel-up`    |
 
 ### Testing & Chaos
 
-| Profile | Service | Port | Command |
-|---------|---------|------|---------|
-| `pact` | Pact Broker | :9292 | `make pact-up` |
-| `toxiproxy` | Toxiproxy | :8474 | `make toxiproxy-up` |
-| `hoppscotch` | Hoppscotch | :3100 | `make hoppscotch` |
+| Profile      | Service     | Port  | Command             |
+| ------------ | ----------- | ----- | ------------------- |
+| `pact`       | Pact Broker | :9292 | `make pact-up`      |
+| `toxiproxy`  | Toxiproxy   | :8474 | `make toxiproxy-up` |
+| `hoppscotch` | Hoppscotch  | :3100 | `make hoppscotch`   |
 
 ```bash
 make stack-up    # Stubrix + WireMock + PostgreSQL
@@ -491,23 +492,23 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ### Tool coverage by domain
 
-| Domain | Tools |
-|--------|-------|
-| Projects & Mocks | `stubrix_list_projects`, `stubrix_create_mock`, `stubrix_start_recording`, ... |
-| Database Snapshots | `stubrix_create_snapshot`, `stubrix_restore_snapshot`, ... |
-| Contracts | `contract_publish`, `contract_verify` |
-| Chaos | `chaos_list_rules`, `chaos_create_rule`, `chaos_network_*` |
-| Events | `event_publish`, `event_template_*`, `event_health` |
-| Protocols | `protocol_graphql_parse`, `protocol_grpc_mock`, ... |
-| Auth | `auth_create_user`, `auth_validate_key`, `auth_audit_log` |
-| Metrics | `metrics_health`, `metrics_summary` |
-| Performance | `perf_list_scripts`, `perf_save_baseline`, `perf_compare_baseline` |
-| Tracing | `tracing_list`, `tracing_health`, `tracing_config` |
-| Cloud (AWS) | `cloud_health`, `cloud_s3_*`, `cloud_sns_publish` |
-| Storage (MinIO) | `storage_health`, `storage_upload_mock_body`, `storage_archive_snapshot` |
-| IAM | `iam_health`, `iam_get_token`, `iam_introspect_token` |
-| Governance | `lint_spec` |
-| Docker | `docker_compose_up`, `docker_logs`, `docker_health`, ... |
+| Domain             | Tools                                                                          |
+| ------------------ | ------------------------------------------------------------------------------ |
+| Projects & Mocks   | `stubrix_list_projects`, `stubrix_create_mock`, `stubrix_start_recording`, ... |
+| Database Snapshots | `stubrix_create_snapshot`, `stubrix_restore_snapshot`, ...                     |
+| Contracts          | `contract_publish`, `contract_verify`                                          |
+| Chaos              | `chaos_list_rules`, `chaos_create_rule`, `chaos_network_*`                     |
+| Events             | `event_publish`, `event_template_*`, `event_health`                            |
+| Protocols          | `protocol_graphql_parse`, `protocol_grpc_mock`, ...                            |
+| Auth               | `auth_create_user`, `auth_validate_key`, `auth_audit_log`                      |
+| Metrics            | `metrics_health`, `metrics_summary`                                            |
+| Performance        | `perf_list_scripts`, `perf_save_baseline`, `perf_compare_baseline`             |
+| Tracing            | `tracing_list`, `tracing_health`, `tracing_config`                             |
+| Cloud (AWS)        | `cloud_health`, `cloud_s3_*`, `cloud_sns_publish`                              |
+| Storage (MinIO)    | `storage_health`, `storage_upload_mock_body`, `storage_archive_snapshot`       |
+| IAM                | `iam_health`, `iam_get_token`, `iam_introspect_token`                          |
+| Governance         | `lint_spec`                                                                    |
+| Docker             | `docker_compose_up`, `docker_logs`, `docker_health`, ...                       |
 
 ---
 
@@ -515,19 +516,19 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 See `.env.example` for the full reference. Key variables:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MOCK_PORT` | `8081` | Mock server port |
-| `PROXY_TARGET` | — | Real API URL for recording/proxy |
-| `MOCK_ENGINE` | `wiremock` | `wiremock` or `mockoon` |
-| `CONTROL_PORT` | `9090` | NestJS API port |
-| `PG_HOST` / `PG_PORT` | `localhost:5442` | PostgreSQL connection |
-| `LOCALSTACK_URL` | `http://localhost:4566` | LocalStack endpoint |
-| `MINIO_URL` | `http://localhost:9000` | MinIO endpoint |
-| `KEYCLOAK_URL` | `http://localhost:8180` | Keycloak endpoint |
-| `PROMETHEUS_PORT` | `9091` | Prometheus port |
-| `JAEGER_UI_PORT` | `16686` | Jaeger UI port |
-| `OTEL_ENDPOINT` | `http://localhost:4318` | OpenTelemetry HTTP endpoint |
+| Variable              | Default                 | Description                      |
+| --------------------- | ----------------------- | -------------------------------- |
+| `MOCK_PORT`           | `8081`                  | Mock server port                 |
+| `PROXY_TARGET`        | —                       | Real API URL for recording/proxy |
+| `MOCK_ENGINE`         | `wiremock`              | `wiremock` or `mockoon`          |
+| `CONTROL_PORT`        | `9090`                  | NestJS API port                  |
+| `PG_HOST` / `PG_PORT` | `localhost:5442`        | PostgreSQL connection            |
+| `LOCALSTACK_URL`      | `http://localhost:4566` | LocalStack endpoint              |
+| `MINIO_URL`           | `http://localhost:9000` | MinIO endpoint                   |
+| `KEYCLOAK_URL`        | `http://localhost:8180` | Keycloak endpoint                |
+| `PROMETHEUS_PORT`     | `9091`                  | Prometheus port                  |
+| `JAEGER_UI_PORT`      | `16686`                 | Jaeger UI port                   |
+| `OTEL_ENDPOINT`       | `http://localhost:4318` | OpenTelemetry HTTP endpoint      |
 
 ---
 
@@ -543,22 +544,22 @@ All 27 modules are documented with request/response schemas, organized by tag:
 
 ## 🗺️ Roadmap (Releases)
 
-| Version | Milestone | Key Features |
-|---------|-----------|-------------|
-| v1.3.1 | Foundation | WireMock/Mockoon dual engine, recording, dashboard, DB snapshots, MCP servers |
-| v1.4.0 | Stateful Mocking | Stateful mock scenarios, Adminer/CloudBeaver DB viewers |
-| v1.5.0 | API Clients | HAR/Postman/OpenAPI import, Bruno tests, Hoppscotch |
-| v1.6.0 | Governance | Spectral OpenAPI linting, mock coverage analysis |
-| v1.7.0 | Intelligence | AI/RAG mock generation (ChromaDB), Time Machine scenarios |
-| v1.8.0 | Contracts & Chaos | Pact Broker, fault injection, Toxiproxy network chaos |
-| v1.9.0 | CLI & Automation | `@stubrix/cli` standalone binary, Makefile automation |
-| v2.0.0 | Multi-Protocol | GraphQL/gRPC mocking, Kafka/RabbitMQ event simulation, webhooks |
-| v2.1.0 | Enterprise | Auth/RBAC/multi-tenancy, VS Code extension, environment templates |
-| v2.2.0 | Observability | Prometheus/Grafana metrics, k6 performance testing, Jaeger tracing |
-| v2.3.0 | Cloud & Storage | LocalStack AWS, MinIO object storage, Keycloak/Zitadel IAM |
-| v2.4.0 | Micro Frontends | `@stubrix/mock-ui` and `@stubrix/db-ui` extracted as standalone packages |
-| v2.5.0 | Service Control Panel | Enable/disable 24 services via dashboard, health monitoring, config backup |
-| **v2.6.0** | **Proto & Stubs** | **gRPC proto file editor, live GripMock stub management, container runtime fixes** |
+| Version    | Milestone             | Key Features                                                                       |
+| ---------- | --------------------- | ---------------------------------------------------------------------------------- |
+| v1.3.1     | Foundation            | WireMock/Mockoon dual engine, recording, dashboard, DB snapshots, MCP servers      |
+| v1.4.0     | Stateful Mocking      | Stateful mock scenarios, Adminer/CloudBeaver DB viewers                            |
+| v1.5.0     | API Clients           | HAR/Postman/OpenAPI import, Bruno tests, Hoppscotch                                |
+| v1.6.0     | Governance            | Spectral OpenAPI linting, mock coverage analysis                                   |
+| v1.7.0     | Intelligence          | AI/RAG mock generation (ChromaDB), Time Machine scenarios                          |
+| v1.8.0     | Contracts & Chaos     | Pact Broker, fault injection, Toxiproxy network chaos                              |
+| v1.9.0     | CLI & Automation      | `@stubrix/cli` standalone binary, Makefile automation                              |
+| v2.0.0     | Multi-Protocol        | GraphQL/gRPC mocking, Kafka/RabbitMQ event simulation, webhooks                    |
+| v2.1.0     | Enterprise            | Auth/RBAC/multi-tenancy, VS Code extension, environment templates                  |
+| v2.2.0     | Observability         | Prometheus/Grafana metrics, k6 performance testing, Jaeger tracing                 |
+| v2.3.0     | Cloud & Storage       | LocalStack AWS, MinIO object storage, Keycloak/Zitadel IAM                         |
+| v2.4.0     | Micro Frontends       | `@stubrix/mock-ui` and `@stubrix/db-ui` extracted as standalone packages           |
+| v2.5.0     | Service Control Panel | Enable/disable 24 services via dashboard, health monitoring, config backup         |
+| **v2.6.0** | **Proto & Stubs**     | **gRPC proto file editor, live GripMock stub management, container runtime fixes** |
 
 ---
 
@@ -599,11 +600,11 @@ Or via UI: `Cmd+Shift+P → Extensions: Install from VSIX...` → select `packag
 
 ## 📚 Guides
 
-| Guide | Description |
-|-------|-------------|
-| [Recording with PokéAPI](docs/guide-pokeapi-recording.md) | Record PokéAPI mocks, serve offline, use via Postman |
-| [`packages/api/API.md`](packages/api/API.md) | Full NestJS API module reference |
-| [`packages/vscode-extension/README.md`](packages/vscode-extension/README.md) | Extension install + Windsurf CLI PATH setup |
+| Guide                                                                        | Description                                          |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [Recording with PokéAPI](docs/guide-pokeapi-recording.md)                    | Record PokéAPI mocks, serve offline, use via Postman |
+| [`packages/api/API.md`](packages/api/API.md)                                 | Full NestJS API module reference                     |
+| [`packages/vscode-extension/README.md`](packages/vscode-extension/README.md) | Extension install + Windsurf CLI PATH setup          |
 
 ---
 

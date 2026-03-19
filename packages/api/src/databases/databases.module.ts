@@ -3,6 +3,7 @@ import { ProjectsModule } from '../projects/projects.module';
 import { PostgresDriver } from './drivers/postgres.driver';
 import { MysqlDriver } from './drivers/mysql.driver';
 import { SqliteDriver } from './drivers/sqlite.driver';
+import { MongodbDriver } from './drivers/mongodb.driver';
 import { DriverRegistryService } from './drivers/driver-registry.service';
 import { DbEnginesService } from './db-engines.service';
 import { DbSnapshotsService } from './db-snapshots.service';
@@ -23,6 +24,7 @@ import { ProjectDatabaseContextService } from './project-database-context.servic
     PostgresDriver,
     MysqlDriver,
     SqliteDriver,
+    MongodbDriver,
     DriverRegistryService,
     DbEnginesService,
     DbSnapshotsService,

@@ -104,6 +104,7 @@ export class DbSnapshotsService {
     this.ensureDir(path.join(this.dumpsDir, 'postgres'));
     this.ensureDir(path.join(this.dumpsDir, 'mysql'));
     this.ensureDir(path.join(this.dumpsDir, 'sqlite'));
+    this.ensureDir(path.join(this.dumpsDir, 'mongodb'));
   }
 
   private ensureDir(dir: string): void {
@@ -200,7 +201,7 @@ export class DbSnapshotsService {
 
   private listSnapshotFiles(): SnapshotFile[] {
     const files: SnapshotFile[] = [];
-    for (const engine of ['postgres', 'mysql', 'sqlite']) {
+    for (const engine of ['postgres', 'mysql', 'sqlite', 'mongodb']) {
       const engineDir = path.join(this.dumpsDir, engine);
       let dirEntries: string[];
       try {
@@ -226,6 +227,11 @@ export class DbSnapshotsService {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  }
+
+  private getSnapshotExtension(filename: string): string {
+    if (filename.endsWith('.archive.gz')) return '.archive.gz';
+    return path.extname(filename);
   }
 
   private getTimestamp(): string {
@@ -364,7 +370,12 @@ export class DbSnapshotsService {
     connectionId: string | undefined,
     engine: string,
   ):
-    | Partial<{ host: string; port: string; user: string; password: string }>
+    | Partial<{
+        host: string;
+        port: string;
+        username: string;
+        password: string;
+      }>
     | undefined {
     if (!connectionId || !projectId) {
       return undefined;
@@ -377,7 +388,7 @@ export class DbSnapshotsService {
       return {
         host: cfg.host ?? undefined,
         port: cfg.port ?? undefined,
-        user: cfg.username ?? undefined,
+        username: cfg.username ?? undefined,
         password: cfg.password ?? undefined,
       };
     } catch {
@@ -401,7 +412,12 @@ export class DbSnapshotsService {
     const label = path.basename(dto.label ?? 'snapshot');
     const database = path.basename(dto.database ?? 'default');
     const projectId = this.resolveProjectId(dto.projectId);
-    const extension = driver.engine === 'sqlite' ? 'db' : 'sql';
+    const extension =
+      driver.engine === 'sqlite'
+        ? 'db'
+        : driver.engine === 'mongodb'
+          ? 'archive.gz'
+          : 'sql';
     const filename = `${label}-${database}-${this.getTimestamp()}.${extension}`;
     const targetDir = path.join(this.dumpsDir, driver.engine);
     this.ensureDir(targetDir);
@@ -438,6 +454,17 @@ export class DbSnapshotsService {
         await driver.createSnapshot(database, filepath);
       } else {
         throw new Error('SQLite driver does not support snapshots');
+      }
+    } else if (driver.engine === 'mongodb') {
+      const envOverrides = this.resolveConnectionOverrides(
+        projectId,
+        dto.connectionId,
+        driver.engine,
+      );
+      if (driver.createSnapshot) {
+        await driver.createSnapshot(database, filepath, envOverrides);
+      } else {
+        throw new Error('MongoDB driver does not support snapshots');
       }
     } else {
       const safeEngine = String(driver.engine).replace(/[^a-z0-9_-]/gi, '');
@@ -479,7 +506,7 @@ export class DbSnapshotsService {
     const currentPath = snapshot.filepath;
 
     if (dto.newName && dto.newName !== name) {
-      const ext = path.extname(name);
+      const ext = this.getSnapshotExtension(name);
       const rawName = dto.newName.endsWith(ext)
         ? dto.newName
         : `${dto.newName}${ext}`;
@@ -605,6 +632,26 @@ export class DbSnapshotsService {
         };
       } else {
         throw new Error('SQLite driver does not support restore');
+      }
+    } else if (engine === 'mongodb') {
+      const overrides = this.resolveConnectionOverrides(
+        dto.projectId ?? null,
+        dto.connectionId,
+        engine,
+      );
+      const mongodbDriver = this.registry.get('mongodb');
+      if (mongodbDriver?.restoreSnapshot) {
+        await mongodbDriver.restoreSnapshot(
+          database,
+          snapshot.filepath,
+          overrides,
+        );
+        return {
+          message: `Snapshot "${name}" restored to database "${database}"`,
+          engine,
+        };
+      } else {
+        throw new Error('MongoDB driver does not support restore');
       }
     }
 

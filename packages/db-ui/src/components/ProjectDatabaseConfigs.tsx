@@ -45,6 +45,7 @@ const ENGINE_DEFAULTS: Record<string, Partial<ConfigFormState>> = {
   postgres: { host: 'localhost', port: '5432' },
   mysql: { host: 'localhost', port: '3306' },
   sqlite: { host: '', port: '' },
+  mongodb: { host: 'localhost', port: '27017' },
 };
 
 const ENGINE_STYLE: Record<string, { badge: string; icon: string }> = {
@@ -60,6 +61,17 @@ const ENGINE_STYLE: Record<string, { badge: string; icon: string }> = {
     badge: 'bg-teal-500/15 text-teal-300 ring-1 ring-teal-500/30',
     icon: '📁',
   },
+  mongodb: {
+    badge: 'bg-green-500/15 text-green-300 ring-1 ring-green-500/30',
+    icon: '🍃',
+  },
+};
+
+const ENGINE_PORTS: Record<string, string> = {
+  postgres: '5432',
+  mysql: '3306',
+  mongodb: '27017',
+  sqlite: '',
 };
 
 const INPUT_CLASS =
@@ -124,6 +136,7 @@ function ConfigForm({
             <option value="postgres">PostgreSQL</option>
             <option value="mysql">MySQL</option>
             <option value="sqlite">SQLite</option>
+            <option value="mongodb">MongoDB</option>
           </select>
         </div>
         <div>
@@ -165,7 +178,7 @@ function ConfigForm({
               <input
                 value={form.port}
                 onChange={(e) => set({ port: e.target.value })}
-                placeholder={form.engine === 'postgres' ? '5432' : '3306'}
+                placeholder={ENGINE_PORTS[form.engine] || ''}
                 className={INPUT_CLASS}
               />
             </div>

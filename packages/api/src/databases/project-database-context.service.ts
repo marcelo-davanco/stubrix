@@ -3,7 +3,7 @@ import { ProjectDatabaseConfigService } from './project-database-config.service'
 
 export interface ResolvedProjectDatabaseContext {
   projectId: string;
-  engine: 'postgres' | 'mysql' | 'sqlite';
+  engine: 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
   connectionName: string;
   database: string | null;
   host: string | null;

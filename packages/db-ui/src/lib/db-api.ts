@@ -3,7 +3,7 @@ import type { DatabaseInfo, Engine, Project, Snapshot } from '@stubrix/shared';
 export type ProjectDatabaseConfigItem = {
   id: string;
   projectId: string;
-  engine: 'mysql' | 'postgres' | 'sqlite';
+  engine: 'mysql' | 'postgres' | 'sqlite' | 'mongodb';
   name: string;
   database: null | string;
   host: null | string;
@@ -20,7 +20,7 @@ export type ProjectDatabaseConfigItem = {
 };
 
 export type UpsertProjectDatabaseConfigPayload = {
-  engine: 'mysql' | 'postgres' | 'sqlite';
+  engine: 'mysql' | 'postgres' | 'sqlite' | 'mongodb';
   name: string;
   database?: string;
   host?: string;
