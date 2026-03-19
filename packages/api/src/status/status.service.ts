@@ -32,18 +32,22 @@ export class StatusService {
     );
     const proxyTarget = this.config.get<string>('PROXY_TARGET') ?? null;
 
-    let engineStatus: 'running' | 'stopped' | 'error' = 'stopped';
+    let engineStatus: 'running' | 'stopped' | 'error';
     let recordMode = false;
 
     try {
       await this.wireMock.get('/settings');
       engineStatus = 'running';
-      const recStatus = await this.wireMock.get<{ status?: string }>(
-        '/recordings/status',
-      );
-      recordMode = recStatus.status === 'Recording';
-    } catch {
-      engineStatus = 'stopped';
+      if (engine === 'wiremock') {
+        const recStatus = await this.wireMock.get<{ status?: string }>(
+          '/recordings/status',
+        );
+        recordMode = recStatus.status === 'Recording';
+      }
+    } catch (err: unknown) {
+      const hasResponse = !!(err as { response?: unknown }).response;
+      engineStatus =
+        engine === 'mockoon' && hasResponse ? 'running' : 'stopped';
     }
 
     const { total, byProject } = this.countMocksByProject();

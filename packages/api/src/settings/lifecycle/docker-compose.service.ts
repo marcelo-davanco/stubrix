@@ -105,7 +105,36 @@ export class DockerComposeService {
     ]);
   }
 
-  async restartService(serviceName: string): Promise<DockerResult> {
+  async restartService(
+    serviceName: string,
+    envOverrides?: Record<string, string>,
+  ): Promise<DockerResult> {
+    if (envOverrides && Object.keys(envOverrides).length > 0) {
+      const stop = await this.run([
+        'compose',
+        '-f',
+        this.composePath,
+        '-p',
+        this.projectName,
+        'stop',
+        serviceName,
+      ]);
+      if (!stop.success) return stop;
+      return this.run(
+        [
+          'compose',
+          '-f',
+          this.composePath,
+          '-p',
+          this.projectName,
+          'up',
+          '-d',
+          '--no-recreate',
+          serviceName,
+        ],
+        envOverrides,
+      );
+    }
     return this.run([
       'compose',
       '-f',

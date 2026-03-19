@@ -31,6 +31,14 @@ help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
+setup: ## Clean install — removes node_modules and reinstalls with correct native binaries
+	rm -rf node_modules package-lock.json
+	npm install
+	@OS=$$(uname -s | tr '[:upper:]' '[:lower:]'); \
+	ARCH=$$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/'); \
+	ROLLUP_VERSION=$$(node -e "console.log(require('./node_modules/rollup/package.json').version)"); \
+	npm_config_os=$$OS npm_config_cpu=$$ARCH npm install @rollup/rollup-$$OS-$$ARCH@$$ROLLUP_VERSION
+
 build: ## Build the Docker image
 	docker compose build
 
@@ -114,7 +122,7 @@ mongodb-shell: ## Open mongosh shell
 # Database Viewers (F29)
 # ---------------------------------------------------------------------------
 
-adminer: ## Start Adminer + PostgreSQL (lightweight DB web UI — http://localhost:8082)
+adminer: ## Start Adminer + PostgreSQL (lightweight DB web UI — http://localhost:8084)
 	docker compose --profile postgres --profile adminer up
 
 adminer-up: ## Start Adminer + PostgreSQL (detached)

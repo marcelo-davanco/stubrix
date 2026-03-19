@@ -9,7 +9,7 @@
 # ---------------------------------------------------------------------------
 # Stage 1: Install ALL dependencies + compile native addons for Linux
 # ---------------------------------------------------------------------------
-FROM node:25-slim AS deps
+FROM node:24-slim AS deps
 
 WORKDIR /app
 
@@ -23,9 +23,10 @@ COPY packages/api/package.json      ./packages/api/
 COPY packages/ui/package.json       ./packages/ui/
 COPY packages/db-ui/package.json    ./packages/db-ui/
 COPY packages/mock-ui/package.json  ./packages/mock-ui/
-COPY packages/cli/package.json      ./packages/cli/
+COPY packages/cli/package.json             ./packages/cli/
+COPY packages/vscode-extension/package.json ./packages/vscode-extension/
 
-RUN npm ci && \
+RUN npm install && \
   npm rebuild
 
 # ---------------------------------------------------------------------------
@@ -49,17 +50,18 @@ FROM deps AS pruner
 COPY --from=builder /app ./
 
 RUN npm prune --omit=dev && \
-  rm -rf packages/ui packages/db-ui packages/mock-ui packages/cli
+  rm -rf packages/ui packages/db-ui packages/mock-ui packages/cli packages/vscode-extension
 
 # ---------------------------------------------------------------------------
 # Stage 4: Production image (minimal — only runtime artifacts)
 # ---------------------------------------------------------------------------
-FROM node:25-slim AS production
+FROM node:24-slim AS production
 
 WORKDIR /app
 
 ENV NODE_ENV=production \
-  CONTROL_PORT=9090
+  CONTROL_PORT=9090 \
+  MOCKS_DIR=/app/mocks
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   curl ca-certificates gnupg lsb-release && \

@@ -1,7 +1,43 @@
 {
   "name": "stubrix",
-  "version": "2.5.0",
-  "private": true,
+  "version": "2.6.2",
+  "description": "Unified mock server platform with WireMock and Mockoon engines",
+  "keywords": [
+    "mock",
+    "api",
+    "testing",
+    "wiremock",
+    "mockoon",
+    "server"
+  ],
+  "author": "Marcelo Davanço",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcelo-davanco/stubrix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marcelo-davanco/stubrix/issues"
+  },
+  "homepage": "https://github.com/marcelo-davanco/stubrix#readme",
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=10.0.0"
+  },
+  "files": [
+    "packages/shared/dist/**",
+    "packages/api/dist/**",
+    "packages/db-ui/dist/**",
+    "packages/mock-ui/dist/**",
+    "packages/ui/dist/**",
+    "packages/cli/dist/**",
+    "packages/vscode-extension/dist/**",
+    "scripts/",
+    "docker-compose.yml",
+    "Dockerfile",
+    "Makefile",
+    "README.md"
+  ],
   "workspaces": [
     "packages/shared",
     "packages/api",
@@ -11,8 +47,13 @@
     "packages/cli",
     "packages/vscode-extension"
   ],
+  "overrides": {
+    "fast-xml-parser": "^5.5.5",
+    "minimatch": "^10.2.4",
+    "file-type": "^21.3.2"
+  },
   "devDependencies": {
-    "@usebruno/cli": "^1.4.0"
+    "@usebruno/cli": "^3.1.3"
   },
   "scripts": {
     "bruno-test": "bash scripts/bruno-test.sh",
@@ -43,8 +84,7 @@
     "close-issue": "./scripts/close-issue.sh",
     "close-issues": "./scripts/close-issue.sh --batch"
   },
-  "engines": {
-    "node": ">=24.0.0",
-    "npm": ">=10.0.0"
+  "optionalDependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.59.0"
   }
 }

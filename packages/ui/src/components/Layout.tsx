@@ -1,85 +1,104 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
-  FolderOpen, ScrollText, FlaskConical, Database,
-  Camera, Layers, Webhook, ShieldAlert,
-  BarChart2, ShieldCheck, Brain, LayoutTemplate,
-  GitBranch, Gauge, Network, Radio, Wifi,
-  Users, ShieldCheck as IamIcon, FileCheck,
-  Cloud, HardDrive, Settings,
+  FolderOpen,
+  ScrollText,
+  FlaskConical,
+  Database,
+  Camera,
+  Layers,
+  Webhook,
+  ShieldAlert,
+  BarChart2,
+  ShieldCheck,
+  Brain,
+  LayoutTemplate,
+  GitBranch,
+  Gauge,
+  Network,
+  Radio,
+  Wifi,
+  Users,
+  ShieldCheck as IamIcon,
+  FileCheck,
+  Cloud,
+  HardDrive,
+  Settings,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useTranslation } from '../lib/i18n';
 
-type NavItem = { to: string; label: string; icon: React.ElementType; end?: boolean };
-type NavGroup = { label: string; items: NavItem[] };
+type NavItem = {
+  to: string;
+  labelKey: string;
+  icon: React.ElementType;
+  end?: boolean;
+};
+type NavGroup = { labelKey: string; items: NavItem[] };
 
 const navGroups: NavGroup[] = [
   {
-    label: 'Core',
+    labelKey: 'nav.groupCore',
     items: [
-      { to: '/', label: 'Projects', icon: FolderOpen, end: true },
-      { to: '/databases', label: 'Databases', icon: Database },
-      { to: '/logs', label: 'Logs', icon: ScrollText },
+      { to: '/', labelKey: 'nav.projects', icon: FolderOpen, end: true },
+      { to: '/databases', labelKey: 'nav.databases', icon: Database },
+      { to: '/logs', labelKey: 'nav.logs', icon: ScrollText },
     ],
   },
   {
-    label: 'Mocking',
+    labelKey: 'nav.groupMocking',
     items: [
-      { to: '/scenarios', label: 'Scenarios', icon: Camera },
-      { to: '/stateful', label: 'Stateful Mocks', icon: Layers },
-      { to: '/templates', label: 'Templates', icon: LayoutTemplate },
-      { to: '/webhooks', label: 'Webhooks', icon: Webhook },
+      { to: '/scenarios', labelKey: 'nav.scenarios', icon: Camera },
+      { to: '/stateful', labelKey: 'nav.statefulMocks', icon: Layers },
+      { to: '/templates', labelKey: 'nav.templates', icon: LayoutTemplate },
+      { to: '/webhooks', labelKey: 'nav.webhooks', icon: Webhook },
     ],
   },
   {
-    label: 'Quality',
+    labelKey: 'nav.groupQuality',
     items: [
-      { to: '/coverage', label: 'Coverage', icon: BarChart2 },
-      { to: '/governance', label: 'Governance', icon: ShieldCheck },
-      { to: '/chaos', label: 'Chaos Panel', icon: ShieldAlert },
-      { to: '/contracts', label: 'Contracts', icon: FileCheck },
+      { to: '/coverage', labelKey: 'nav.coverage', icon: BarChart2 },
+      { to: '/governance', labelKey: 'nav.governance', icon: ShieldCheck },
+      { to: '/chaos', labelKey: 'nav.chaosPanel', icon: ShieldAlert },
+      { to: '/contracts', labelKey: 'nav.contracts', icon: FileCheck },
     ],
   },
   {
-    label: 'Intelligence',
+    labelKey: 'nav.groupIntelligence',
+    items: [{ to: '/intelligence', labelKey: 'nav.intelligence', icon: Brain }],
+  },
+  {
+    labelKey: 'nav.groupObservability',
     items: [
-      { to: '/intelligence', label: 'Intelligence', icon: Brain },
+      { to: '/metrics', labelKey: 'nav.metrics', icon: BarChart2 },
+      { to: '/tracing', labelKey: 'nav.tracing', icon: GitBranch },
+      { to: '/performance', labelKey: 'nav.performance', icon: Gauge },
     ],
   },
   {
-    label: 'Observability',
+    labelKey: 'nav.groupProtocols',
     items: [
-      { to: '/metrics', label: 'Metrics', icon: BarChart2 },
-      { to: '/tracing', label: 'Tracing', icon: GitBranch },
-      { to: '/performance', label: 'Performance', icon: Gauge },
+      { to: '/protocols', labelKey: 'nav.protocols', icon: Network },
+      { to: '/events', labelKey: 'nav.events', icon: Radio },
+      { to: '/chaos-network', labelKey: 'nav.networkChaos', icon: Wifi },
     ],
   },
   {
-    label: 'Protocols',
+    labelKey: 'nav.groupEnterprise',
     items: [
-      { to: '/protocols', label: 'Protocols', icon: Network },
-      { to: '/events', label: 'Events', icon: Radio },
-      { to: '/chaos-network', label: 'Network Chaos', icon: Wifi },
+      { to: '/auth', labelKey: 'nav.authUsers', icon: Users },
+      { to: '/iam', labelKey: 'nav.iam', icon: IamIcon },
     ],
   },
   {
-    label: 'Enterprise',
+    labelKey: 'nav.groupCloud',
     items: [
-      { to: '/auth', label: 'Auth & Users', icon: Users },
-      { to: '/iam', label: 'IAM', icon: IamIcon },
+      { to: '/cloud', labelKey: 'nav.cloudLocalStack', icon: Cloud },
+      { to: '/storage', labelKey: 'nav.storageMinio', icon: HardDrive },
     ],
   },
   {
-    label: 'Cloud',
-    items: [
-      { to: '/cloud', label: 'Cloud (LocalStack)', icon: Cloud },
-      { to: '/storage', label: 'Storage (MinIO)', icon: HardDrive },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { to: '/settings', label: 'Settings', icon: Settings },
-    ],
+    labelKey: 'nav.groupSystem',
+    items: [{ to: '/settings', labelKey: 'nav.settings', icon: Settings }],
   },
 ];
 
@@ -92,6 +111,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   );
 
 export function Layout() {
+  const { t } = useTranslation();
   return (
     <div className="flex h-screen overflow-hidden bg-main-bg text-text-primary">
       <aside className="flex w-56 flex-shrink-0 flex-col border-r border-white/5 bg-sidebar">
@@ -101,15 +121,15 @@ export function Layout() {
         </div>
         <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
           {navGroups.map((group) => (
-            <div key={group.label}>
+            <div key={group.labelKey}>
               <p className="px-3 mb-1 text-xs font-semibold uppercase tracking-wider text-text-secondary/50">
-                {group.label}
+                {t(group.labelKey)}
               </p>
               <div className="space-y-0.5">
-                {group.items.map(({ to, label, icon: Icon, end }) => (
+                {group.items.map(({ to, labelKey, icon: Icon, end }) => (
                   <NavLink key={to} to={to} end={end} className={navLinkClass}>
                     <Icon size={16} />
-                    {label}
+                    {t(labelKey)}
                   </NavLink>
                 ))}
               </div>
@@ -117,7 +137,7 @@ export function Layout() {
           ))}
         </nav>
         <div className="border-t border-white/10 px-4 py-3 text-xs text-text-secondary">
-          v1.0.0
+          v{__APP_VERSION__}
         </div>
       </aside>
 

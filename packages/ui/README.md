@@ -8,12 +8,12 @@ This package is the **host shell** that composes the micro frontend architecture
 
 ## Package Role
 
-| Responsibility | Package |
-| -------------- | ------- |
-| Mock server pages (Projects, Mocks, Editor, Recording) | `@stubrix/mock-ui` |
-| Database pages (Snapshots, Connections) | `@stubrix/db-ui` |
-| Real-time logs page | **`@stubrix/ui`** (this package) |
-| Layout, routing, navigation shell | **`@stubrix/ui`** (this package) |
+| Responsibility                                         | Package                          |
+| ------------------------------------------------------ | -------------------------------- |
+| Mock server pages (Projects, Mocks, Editor, Recording) | `@stubrix/mock-ui`               |
+| Database pages (Snapshots, Connections)                | `@stubrix/db-ui`                 |
+| Real-time logs page                                    | **`@stubrix/ui`** (this package) |
+| Layout, routing, navigation shell                      | **`@stubrix/ui`** (this package) |
 
 ## Structure
 
@@ -57,7 +57,9 @@ export function MocksListBridge() {
       projectId={projectId}
       onBack={() => navigate(`/projects/${projectId}`)}
       onNavigateToNewMock={(id) => navigate(`/projects/${id}/mocks/new`)}
-      onNavigateToEditMock={(id, mockId) => navigate(`/projects/${id}/mocks/${mockId}/edit`)}
+      onNavigateToEditMock={(id, mockId) =>
+        navigate(`/projects/${id}/mocks/${mockId}/edit`)
+      }
     />
   );
 }
@@ -65,16 +67,38 @@ export function MocksListBridge() {
 
 ## Routes
 
-| Path | Component |
-| ---- | --------- |
-| `/` | `MockServersBridge` → `MockServersPage` |
-| `/projects/:projectId` | `ProjectDashboardBridge` → `ProjectDashboardPage` |
-| `/projects/:projectId/mocks` | `MocksListBridge` → `MocksListPage` |
-| `/projects/:projectId/mocks/new` | `MockEditorBridge` → `MockEditorPage` |
-| `/projects/:projectId/mocks/:mockId/edit` | `MockEditorBridge` → `MockEditorPage` |
-| `/projects/:projectId/recording` | `RecordingBridge` → `RecordingPanelPage` |
-| `/databases` | `DatabasesPage` (`@stubrix/db-ui`) |
-| `/logs` | `LogsPage` |
+| Path                                      | Component                                         |
+| ----------------------------------------- | ------------------------------------------------- |
+| `/`                                       | `MockServersBridge` → `MockServersPage`           |
+| `/projects/:projectId`                    | `ProjectDashboardBridge` → `ProjectDashboardPage` |
+| `/projects/:projectId/mocks`              | `MocksListBridge` → `MocksListPage`               |
+| `/projects/:projectId/mocks/new`          | `MockEditorBridge` → `MockEditorPage`             |
+| `/projects/:projectId/mocks/:mockId/edit` | `MockEditorBridge` → `MockEditorPage`             |
+| `/projects/:projectId/recording`          | `RecordingBridge` → `RecordingPanelPage`          |
+| `/databases`                              | `DatabasesPage` (`@stubrix/db-ui`)                |
+| `/logs`                                   | `LogsPage`                                        |
+| `/scenarios`                              | `ScenariosBridge`                                 |
+| `/stateful`                               | `StatefulMocksBridge`                             |
+| `/webhooks`                               | `WebhooksBridge`                                  |
+| `/chaos`                                  | `ChaosBridge`                                     |
+| `/chaos-network`                          | `ChaosNetworkBridge`                              |
+| `/coverage`                               | `CoverageBridge`                                  |
+| `/governance`                             | `GovernanceBridge`                                |
+| `/intelligence`                           | `IntelligenceBridge`                              |
+| `/templates`                              | `TemplatesBridge`                                 |
+| `/metrics`                                | `MetricsBridge`                                   |
+| `/tracing`                                | `TracingBridge`                                   |
+| `/performance`                            | `PerformanceBridge`                               |
+| `/protocols`                              | `ProtocolsBridge` (GraphQL SDL + gRPC stubs)      |
+| `/events`                                 | `EventsBridge` (Kafka + RabbitMQ)                 |
+| `/auth`                                   | `AuthBridge`                                      |
+| `/iam`                                    | `IamBridge`                                       |
+| `/contracts`                              | `ContractsBridge`                                 |
+| `/cloud`                                  | `CloudBridge`                                     |
+| `/storage`                                | `StorageBridge`                                   |
+| `/settings`                               | `SettingsPage` — service dashboard (24 services)  |
+| `/settings/services/:serviceId`           | `ServiceConfigPage` — per-service config editor   |
+| `/settings/backups`                       | `BackupsPage` — config backup management          |
 
 ## Development
 

@@ -1,4 +1,4 @@
-import { cn } from '../../lib/utils'
+import { cn } from '../../lib/utils';
 
 const CATEGORY_LABELS: Record<string, string> = {
   mock_engines: 'Mock Engines',
@@ -15,37 +15,49 @@ const CATEGORY_LABELS: Record<string, string> = {
   chaos: 'Chaos',
   ai: 'AI / Intelligence',
   api_clients: 'API Clients',
-}
+};
 
 export interface ServiceOption {
-  serviceId: string
-  name: string
-  category: string
+  serviceId: string;
+  name: string;
+  category: string;
 }
 
 interface ServiceSelectorProps {
-  services: ServiceOption[]
-  selected: string[]
-  onChange: (selected: string[]) => void
-  counts?: Record<string, number>
+  services: ServiceOption[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  counts?: Record<string, number>;
 }
 
-export function ServiceSelector({ services, selected, onChange, counts }: ServiceSelectorProps) {
-  const byCategory = services.reduce<Record<string, ServiceOption[]>>((acc, svc) => {
-    if (!acc[svc.category]) acc[svc.category] = []
-    acc[svc.category].push(svc)
-    return acc
-  }, {})
+export function ServiceSelector({
+  services,
+  selected,
+  onChange,
+  counts,
+}: ServiceSelectorProps) {
+  const byCategory = services.reduce<Record<string, ServiceOption[]>>(
+    (acc, svc) => {
+      if (!acc[svc.category]) acc[svc.category] = [];
+      acc[svc.category].push(svc);
+      return acc;
+    },
+    {},
+  );
 
-  const allSelected = selected.length === services.length
+  const allSelected = selected.length === services.length;
 
   const toggleAll = () => {
-    onChange(allSelected ? [] : services.map((s) => s.serviceId))
-  }
+    onChange(allSelected ? [] : services.map((s) => s.serviceId));
+  };
 
   const toggle = (id: string) => {
-    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id])
-  }
+    onChange(
+      selected.includes(id)
+        ? selected.filter((s) => s !== id)
+        : [...selected, id],
+    );
+  };
 
   return (
     <div className="border border-white/10 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
@@ -80,12 +92,14 @@ export function ServiceSelector({ services, selected, onChange, counts }: Servic
                 <span className="text-sm">{svc.name}</span>
               </div>
               {counts?.[svc.serviceId] !== undefined && (
-                <span className="text-xs text-text-secondary">({counts[svc.serviceId]} changes)</span>
+                <span className="text-xs text-text-secondary">
+                  ({counts[svc.serviceId]} changes)
+                </span>
               )}
             </label>
           ))}
         </div>
       ))}
     </div>
-  )
+  );
 }

@@ -117,19 +117,31 @@ export class DbSnapshotsService {
     return path.join(this.dumpsDir, '.snapshot-metadata.json');
   }
 
+  private static readonly FORBIDDEN_KEYS = new Set([
+    '__proto__',
+    'constructor',
+    'prototype',
+  ]);
+
   private readMetadata(): Record<string, SnapshotMeta> {
     try {
       const file = this.getMetadataFile();
       if (fs.existsSync(file)) {
         const parsed: unknown = JSON.parse(fs.readFileSync(file, 'utf-8'));
-        if (parsed && typeof parsed === 'object') {
-          return parsed as Record<string, SnapshotMeta>;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const safe = Object.create(null) as Record<string, SnapshotMeta>;
+          for (const [k, v] of Object.entries(parsed)) {
+            if (!DbSnapshotsService.FORBIDDEN_KEYS.has(k)) {
+              safe[k] = v as SnapshotMeta;
+            }
+          }
+          return safe;
         }
       }
     } catch {
       // ignore
     }
-    return {};
+    return Object.create(null) as Record<string, SnapshotMeta>;
   }
 
   private writeMetadata(data: Record<string, SnapshotMeta>): void {
@@ -166,23 +178,39 @@ export class DbSnapshotsService {
     name: string,
     updates: Partial<SnapshotMeta>,
   ): SnapshotMeta {
+    const baseName = path.basename(name, path.extname(name));
+    if (DbSnapshotsService.FORBIDDEN_KEYS.has(baseName)) {
+      throw new ForbiddenException('Invalid snapshot name');
+    }
     const meta = this.readMetadata();
-    meta[name] = { ...this.getSnapshotMeta(name), ...updates };
+    const safeUpdates: SnapshotMeta = {
+      ...this.getSnapshotMeta(name),
+      favorite:
+        typeof updates.favorite === 'boolean' ? updates.favorite : false,
+      protected:
+        typeof updates.protected === 'boolean' ? updates.protected : false,
+      category: typeof updates.category === 'string' ? updates.category : null,
+      engine: typeof updates.engine === 'string' ? updates.engine : null,
+      projectId:
+        typeof updates.projectId === 'string' ? updates.projectId : null,
+    };
+    meta[baseName] = safeUpdates;
     this.writeMetadata(meta);
-    return meta[name];
+    return meta[baseName];
   }
 
   private listSnapshotFiles(): SnapshotFile[] {
     const files: SnapshotFile[] = [];
     for (const engine of ['postgres', 'mysql', 'sqlite', 'mongodb']) {
       const engineDir = path.join(this.dumpsDir, engine);
-      if (!fs.existsSync(engineDir)) continue;
-      const engineFiles = fs
-        .readdirSync(engineDir)
-        .filter(
-          (f: string) =>
-            f.endsWith('.sql') || f.endsWith('.db') || f.endsWith('.archive.gz'),
-        )
+      let dirEntries: string[];
+      try {
+        dirEntries = fs.readdirSync(engineDir) as unknown as string[];
+      } catch {
+        continue;
+      }
+      const engineFiles = dirEntries
+        .filter((f: string) => f.endsWith('.sql') || f.endsWith('.db'))
         .map((file: string) => {
           const filepath = path.join(engineDir, file);
           const stats = fs.statSync(filepath);
@@ -262,9 +290,24 @@ export class DbSnapshotsService {
       password: string;
     }>,
   ): Promise<void> {
+    const host = envOverrides?.host ?? this.postgresHost ?? 'localhost';
+    const port = envOverrides?.port ?? this.postgresPort;
+    const user = envOverrides?.user ?? this.postgresUser;
     await this.execFileAsync(
       'pg_dump',
-      ['--clean', '--if-exists', '--file', filepath, database],
+      [
+        '-h',
+        host,
+        '-p',
+        port,
+        '-U',
+        user,
+        '--clean',
+        '--if-exists',
+        '--file',
+        filepath,
+        database,
+      ],
       {
         env: this.getPostgresEnv(database, envOverrides),
       },
@@ -281,9 +324,16 @@ export class DbSnapshotsService {
       password: string;
     }>,
   ): Promise<void> {
-    await this.execFileAsync('psql', ['--file', filepath, database], {
-      env: this.getPostgresEnv(database, envOverrides),
-    });
+    const host = envOverrides?.host ?? this.postgresHost ?? 'localhost';
+    const port = envOverrides?.port ?? this.postgresPort;
+    const user = envOverrides?.user ?? this.postgresUser;
+    await this.execFileAsync(
+      'psql',
+      ['-h', host, '-p', port, '-U', user, '--file', filepath, database],
+      {
+        env: this.getPostgresEnv(database, envOverrides),
+      },
+    );
   }
 
   list(projectId?: string): ListSnapshotsResponse {
@@ -320,7 +370,12 @@ export class DbSnapshotsService {
     connectionId: string | undefined,
     engine: string,
   ):
-    | Partial<{ host: string; port: string; username: string; password: string }>
+    | Partial<{
+        host: string;
+        port: string;
+        username: string;
+        password: string;
+      }>
     | undefined {
     if (!connectionId || !projectId) {
       return undefined;
@@ -354,8 +409,8 @@ export class DbSnapshotsService {
       throw new NotFoundException('No active database engine found');
     }
 
-    const label = dto.label ?? 'snapshot';
-    const database = dto.database ?? 'default';
+    const label = path.basename(dto.label ?? 'snapshot');
+    const database = path.basename(dto.database ?? 'default');
     const projectId = this.resolveProjectId(dto.projectId);
     const extension =
       driver.engine === 'sqlite'
@@ -367,6 +422,14 @@ export class DbSnapshotsService {
     const targetDir = path.join(this.dumpsDir, driver.engine);
     this.ensureDir(targetDir);
     const filepath = path.join(targetDir, filename);
+    const resolvedFilepath = path.resolve(filepath);
+    const resolvedTargetDir = path.resolve(targetDir);
+    if (
+      resolvedFilepath !== resolvedTargetDir &&
+      !resolvedFilepath.startsWith(resolvedTargetDir + path.sep)
+    ) {
+      throw new Error('Snapshot path is outside the allowed directory');
+    }
 
     if (driver.engine === 'postgres') {
       const envOverrides = this.resolveConnectionOverrides(
@@ -404,9 +467,11 @@ export class DbSnapshotsService {
         throw new Error('MongoDB driver does not support snapshots');
       }
     } else {
+      const safeEngine = String(driver.engine).replace(/[^a-z0-9_-]/gi, '');
+      const safeDatabase = String(database).replace(/[^a-z0-9_-]/gi, '');
       fs.writeFileSync(
         filepath,
-        `-- placeholder snapshot for ${driver.engine}:${database}\n`,
+        `-- placeholder snapshot for ${safeEngine}:${safeDatabase}\n`,
         'utf-8',
       );
     }
@@ -438,26 +503,31 @@ export class DbSnapshotsService {
     if (!snapshot) throw new NotFoundException('Snapshot not found');
 
     let currentName = name;
-    let currentPath = snapshot.filepath;
+    const currentPath = snapshot.filepath;
 
     if (dto.newName && dto.newName !== name) {
       const ext = this.getSnapshotExtension(name);
-      const newName = dto.newName.endsWith(ext)
+      const rawName = dto.newName.endsWith(ext)
         ? dto.newName
         : `${dto.newName}${ext}`;
+      const newName = path.basename(rawName);
       const newPath = path.join(path.dirname(currentPath), newName);
       if (fs.existsSync(newPath)) {
         throw new ConflictException('A snapshot with this name already exists');
       }
       fs.renameSync(currentPath, newPath);
       const meta = this.readMetadata();
-      if (meta[currentName]) {
+      const forbidden = DbSnapshotsService.FORBIDDEN_KEYS;
+      if (
+        meta[currentName] &&
+        !forbidden.has(newName) &&
+        !forbidden.has(currentName)
+      ) {
         meta[newName] = meta[currentName];
         delete meta[currentName];
         this.writeMetadata(meta);
       }
       currentName = newName;
-      currentPath = newPath;
     }
 
     const allowed: Array<keyof SnapshotMeta> = [
@@ -493,7 +563,13 @@ export class DbSnapshotsService {
 
     fs.unlinkSync(snapshot.filepath);
     const allMeta = this.readMetadata();
-    delete allMeta[name];
+    if (
+      name !== '__proto__' &&
+      name !== 'constructor' &&
+      name !== 'prototype'
+    ) {
+      delete allMeta[name];
+    }
     this.writeMetadata(allMeta);
 
     return { message: `Snapshot "${name}" deleted` };

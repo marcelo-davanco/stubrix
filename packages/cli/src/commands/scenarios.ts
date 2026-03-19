@@ -2,7 +2,9 @@ import { Command } from 'commander';
 import { apiGet, apiPost, apiDelete } from './api';
 
 export function registerScenarioCommands(program: Command): void {
-  const scenario = program.command('scenario').description('Time Machine scenario management');
+  const scenario = program
+    .command('scenario')
+    .description('Time Machine scenario management');
 
   scenario
     .command('list')

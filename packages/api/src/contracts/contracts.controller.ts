@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { ContractsService } from './contracts.service';
@@ -29,7 +29,9 @@ export class ContractsController {
   }
 
   @Get('can-i-deploy')
-  @ApiOperation({ summary: 'Check if a pacticipant version can be deployed to production' })
+  @ApiOperation({
+    summary: 'Check if a pacticipant version can be deployed to production',
+  })
   @ApiQuery({ name: 'pacticipant', required: true })
   @ApiQuery({ name: 'version', required: true })
   canIDeploy(

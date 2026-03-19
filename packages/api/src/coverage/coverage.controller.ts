@@ -109,7 +109,28 @@ export class CoverageController {
     }
 
     try {
-      const res = await fetch(specUrl);
+      const parsedUrl = new URL(specUrl);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new BadRequestException(
+          `URL scheme not allowed: ${parsedUrl.protocol}`,
+        );
+      }
+      const hostname = parsedUrl.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+      if (
+        hostname === 'localhost' ||
+        hostname === '0.0.0.0' ||
+        hostname === '::1' ||
+        /^127\./.test(hostname) ||
+        /^10\./.test(hostname) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+        /^192\.168\./.test(hostname) ||
+        /^169\.254\./.test(hostname) ||
+        hostname.endsWith('.internal') ||
+        hostname.endsWith('.local')
+      ) {
+        throw new BadRequestException(`URL hostname not allowed: ${hostname}`);
+      }
+      const res = await fetch(parsedUrl.href);
       const content = await res.text();
       const report = await this.coverageService.analyze(content);
       return {
@@ -117,6 +138,7 @@ export class CoverageController {
         summary: `${report.coveredEndpoints}/${report.totalEndpoints} endpoints covered`,
       };
     } catch (err) {
+      if (err instanceof BadRequestException) throw err;
       throw new BadRequestException(
         `Failed to fetch spec: ${(err as Error).message}`,
       );

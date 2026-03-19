@@ -114,7 +114,8 @@ export class PerformanceService {
 
   constructor(private readonly config: ConfigService) {
     const mocksDir =
-      this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
     this.storageDir = path.join(mocksDir, 'performance');
     this.scriptsFile = path.join(this.storageDir, 'scripts.json');
     this.baselinesFile = path.join(this.storageDir, 'baselines.json');
@@ -154,8 +155,13 @@ export class PerformanceService {
 
   listBaselines(): PerformanceBaseline[] {
     if (!fs.existsSync(this.baselinesFile)) return [];
-    try { return JSON.parse(fs.readFileSync(this.baselinesFile, 'utf-8')) as PerformanceBaseline[]; }
-    catch { return []; }
+    try {
+      return JSON.parse(
+        fs.readFileSync(this.baselinesFile, 'utf-8'),
+      ) as PerformanceBaseline[];
+    } catch {
+      return [];
+    }
   }
 
   saveBaseline(
@@ -187,18 +193,29 @@ export class PerformanceService {
     const b = baseline.metrics;
 
     if (current.p95ResponseMs > b.p95ResponseMs * 1.2)
-      regressions.push(`p95 latency regressed: ${current.p95ResponseMs}ms vs baseline ${b.p95ResponseMs}ms`);
+      regressions.push(
+        `p95 latency regressed: ${current.p95ResponseMs}ms vs baseline ${b.p95ResponseMs}ms`,
+      );
     if (current.errorRate > b.errorRate + 0.01)
-      regressions.push(`Error rate regressed: ${(current.errorRate * 100).toFixed(1)}% vs baseline ${(b.errorRate * 100).toFixed(1)}%`);
+      regressions.push(
+        `Error rate regressed: ${(current.errorRate * 100).toFixed(1)}% vs baseline ${(b.errorRate * 100).toFixed(1)}%`,
+      );
     if (current.requestsPerSec < b.requestsPerSec * 0.8)
-      regressions.push(`Throughput regressed: ${current.requestsPerSec.toFixed(1)} rps vs baseline ${b.requestsPerSec.toFixed(1)} rps`);
+      regressions.push(
+        `Throughput regressed: ${current.requestsPerSec.toFixed(1)} rps vs baseline ${b.requestsPerSec.toFixed(1)} rps`,
+      );
 
     return { passed: regressions.length === 0, regressions };
   }
 
   private loadScripts(): K6Script[] {
     if (!fs.existsSync(this.scriptsFile)) return [];
-    try { return JSON.parse(fs.readFileSync(this.scriptsFile, 'utf-8')) as K6Script[]; }
-    catch { return []; }
+    try {
+      return JSON.parse(
+        fs.readFileSync(this.scriptsFile, 'utf-8'),
+      ) as K6Script[];
+    } catch {
+      return [];
+    }
   }
 }

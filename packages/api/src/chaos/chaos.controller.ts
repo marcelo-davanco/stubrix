@@ -10,7 +10,15 @@ import {
   Patch,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
-import { IsString, IsOptional, IsArray, IsNumber, Min, Max, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsNumber,
+  Min,
+  Max,
+  IsBoolean,
+} from 'class-validator';
 import { ChaosService } from './chaos.service';
 import type { FaultProfile, FaultRule, ChaosPreset } from './chaos.types';
 
@@ -125,11 +133,10 @@ export class ChaosController {
   }
 
   @Get('evaluate')
-  @ApiOperation({ summary: 'Evaluate active chaos profiles for a given URL + method' })
-  evaluate(
-    @Body('urlPath') urlPath: string,
-    @Body('method') method: string,
-  ) {
+  @ApiOperation({
+    summary: 'Evaluate active chaos profiles for a given URL + method',
+  })
+  evaluate(@Body('urlPath') urlPath: string, @Body('method') method: string) {
     return this.service.evaluate(urlPath ?? '/', method ?? 'GET');
   }
 }

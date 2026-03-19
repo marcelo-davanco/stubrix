@@ -8,13 +8,14 @@ Provides the REST API and WebSocket server that powers the Stubrix dashboard. Ma
 
 ## Tech Stack
 
-| Layer | Technology |
-| ----- | ---------- |
-| Framework | NestJS 11 + Express |
-| WebSockets | Socket.IO (`/ws/logs`) |
-| Validation | class-validator + class-transformer |
-| Persistence | JSON files (mocks/projects), filesystem (snapshots) |
-| Database ops | pg_dump/psql (PostgreSQL), driver pattern (MySQL/SQLite) |
+| Layer          | Technology                                               |
+| -------------- | -------------------------------------------------------- |
+| Framework      | NestJS 11 + Express                                      |
+| WebSockets     | Socket.IO (`/ws/logs`)                                   |
+| Validation     | class-validator + class-transformer                      |
+| Persistence    | JSON files (mocks/projects), filesystem (snapshots)      |
+| Database ops   | pg_dump/psql (PostgreSQL), driver pattern (MySQL/SQLite) |
+| Service config | SQLite (`data/stubrix-config.db`) via better-sqlite3     |
 
 ## Module Structure
 
@@ -44,71 +45,96 @@ src/
 ├── metrics/          Prometheus exposition endpoint
 ├── performance/      k6 scripts + baseline regression gate
 ├── tracing/          Jaeger/OpenTelemetry distributed tracing
-├── cloud/            LocalStack AWS (S3, SQS, SNS, DynamoDB, Lambda)
+├── cloud/            LocalStack AWS mocking (S3, SQS, SNS, DynamoDB, Lambda)
 ├── storage/          MinIO object storage
-└── iam/              Keycloak + Zitadel IAM integration
+├── iam/              Keycloak + Zitadel IAM integration
+└── settings/
+    ├── database/     SQLite config DB (better-sqlite3)
+    ├── registry/     24-service registry + category definitions
+    ├── lifecycle/    Enable/disable via Docker Compose + health monitoring
+    ├── config/       Per-service CRUD config + AES-256-GCM encryption
+    ├── backup/       Config backup + restore
+    └── import-export/ JSON/YAML selective import/export
 ```
 
 ## API Reference
 
 ### Projects
 
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/api/projects` | List all projects |
-| GET | `/api/projects/:id` | Get project by ID |
-| POST | `/api/projects` | Create project |
-| PUT | `/api/projects/:id` | Update project |
-| DELETE | `/api/projects/:id` | Delete project |
+| Method | Endpoint            | Description       |
+| ------ | ------------------- | ----------------- |
+| GET    | `/api/projects`     | List all projects |
+| GET    | `/api/projects/:id` | Get project by ID |
+| POST   | `/api/projects`     | Create project    |
+| PUT    | `/api/projects/:id` | Update project    |
+| DELETE | `/api/projects/:id` | Delete project    |
 
 ### Mocks
 
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/api/projects/:id/mocks` | List mocks for project |
-| GET | `/api/projects/:id/mocks/:mockId` | Get mock detail |
-| POST | `/api/projects/:id/mocks` | Create mock mapping |
-| PUT | `/api/projects/:id/mocks/:mockId` | Update mock mapping |
-| DELETE | `/api/projects/:id/mocks/:mockId` | Delete mock mapping |
+| Method | Endpoint                          | Description            |
+| ------ | --------------------------------- | ---------------------- |
+| GET    | `/api/projects/:id/mocks`         | List mocks for project |
+| GET    | `/api/projects/:id/mocks/:mockId` | Get mock detail        |
+| POST   | `/api/projects/:id/mocks`         | Create mock mapping    |
+| PUT    | `/api/projects/:id/mocks/:mockId` | Update mock mapping    |
+| DELETE | `/api/projects/:id/mocks/:mockId` | Delete mock mapping    |
 
 ### Recording
 
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/api/projects/:id/recording/status` | Recording status |
-| POST | `/api/projects/:id/recording/start` | Start recording |
-| POST | `/api/projects/:id/recording/stop` | Stop and save mocks |
-| POST | `/api/projects/:id/recording/snapshot` | Take snapshot |
+| Method | Endpoint                               | Description         |
+| ------ | -------------------------------------- | ------------------- |
+| GET    | `/api/projects/:id/recording/status`   | Recording status    |
+| POST   | `/api/projects/:id/recording/start`    | Start recording     |
+| POST   | `/api/projects/:id/recording/stop`     | Stop and save mocks |
+| POST   | `/api/projects/:id/recording/snapshot` | Take snapshot       |
+
+### Settings & Services
+
+| Method | Endpoint                             | Description                             |
+| ------ | ------------------------------------ | --------------------------------------- |
+| GET    | `/api/settings/services`             | List all services with status + health  |
+| GET    | `/api/settings/services/:id`         | Get service details                     |
+| POST   | `/api/settings/services/:id/enable`  | Enable service (starts container)       |
+| POST   | `/api/settings/services/:id/disable` | Disable service (stops container)       |
+| PATCH  | `/api/settings/services/:id`         | Update service config (autoStart, etc.) |
+| GET    | `/api/settings/services/:id/config`  | Get service configuration               |
+| PUT    | `/api/settings/services/:id/config`  | Save service configuration              |
+| GET    | `/api/settings/backups`              | List config backups                     |
+| POST   | `/api/settings/backups`              | Create config backup                    |
+| POST   | `/api/settings/backups/:id/restore`  | Restore config backup                   |
+| DELETE | `/api/settings/backups/:id`          | Delete backup                           |
+| GET    | `/api/settings/export`               | Export all config (JSON/YAML)           |
+| POST   | `/api/settings/import`               | Import config from file                 |
 
 ### Status & Engine
 
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/api/status` | Engine status + mock counts by project |
-| GET | `/api/engine` | Engine name, port, health |
-| POST | `/api/engine/reset` | Reset WireMock state |
+| Method | Endpoint            | Description                            |
+| ------ | ------------------- | -------------------------------------- |
+| GET    | `/api/status`       | Engine status + mock counts by project |
+| GET    | `/api/engine`       | Engine name, port, health              |
+| POST   | `/api/engine/reset` | Reset WireMock state                   |
 
 ### Logs
 
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/api/logs` | Recent request logs |
-| WS | `/ws/logs` | Real-time log stream (Socket.IO) |
+| Method | Endpoint    | Description                      |
+| ------ | ----------- | -------------------------------- |
+| GET    | `/api/logs` | Recent request logs              |
+| WS     | `/ws/logs`  | Real-time log stream (Socket.IO) |
 
 ### Databases
 
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/api/db/engines` | List available DB engines |
-| GET | `/api/db/databases` | List databases for engine |
-| GET | `/api/db/databases/:name` | Database info |
-| GET | `/api/db/snapshots` | List snapshots |
-| POST | `/api/db/snapshots` | Create snapshot |
-| POST | `/api/db/snapshots/:name/restore` | Restore snapshot |
-| DELETE | `/api/db/snapshots/:name` | Delete snapshot |
-| GET | `/api/projects/:id/databases/configs` | Project DB configs |
-| PUT | `/api/projects/:id/databases/configs` | Upsert project DB config |
-| DELETE | `/api/projects/:id/databases/configs/:configId` | Delete DB config |
+| Method | Endpoint                                        | Description               |
+| ------ | ----------------------------------------------- | ------------------------- |
+| GET    | `/api/db/engines`                               | List available DB engines |
+| GET    | `/api/db/databases`                             | List databases for engine |
+| GET    | `/api/db/databases/:name`                       | Database info             |
+| GET    | `/api/db/snapshots`                             | List snapshots            |
+| POST   | `/api/db/snapshots`                             | Create snapshot           |
+| POST   | `/api/db/snapshots/:name/restore`               | Restore snapshot          |
+| DELETE | `/api/db/snapshots/:name`                       | Delete snapshot           |
+| GET    | `/api/projects/:id/databases/configs`           | Project DB configs        |
+| PUT    | `/api/projects/:id/databases/configs`           | Upsert project DB config  |
+| DELETE | `/api/projects/:id/databases/configs/:configId` | Delete DB config          |
 
 ## Environment Variables
 

@@ -56,7 +56,9 @@ export class LintService {
     }
 
     try {
-      const results = await this.spectral.run(parsed as Record<string, unknown>);
+      const results = await this.spectral.run(
+        parsed as Record<string, unknown>,
+      );
 
       const violations: LintViolation[] = results.map((r) => ({
         code: String(r.code),
@@ -64,11 +66,18 @@ export class LintService {
         severity: SEVERITY_MAP[r.severity] ?? 'info',
         path: r.path.map(String),
         range: r.range
-          ? { start: { line: r.range.start.line, character: r.range.start.character } }
+          ? {
+              start: {
+                line: r.range.start.line,
+                character: r.range.start.character,
+              },
+            }
           : undefined,
       }));
 
-      const errorCount = violations.filter((v) => v.severity === 'error').length;
+      const errorCount = violations.filter(
+        (v) => v.severity === 'error',
+      ).length;
       const warnCount = violations.filter((v) => v.severity === 'warn').length;
       const infoCount = violations.filter((v) => v.severity === 'info').length;
 
@@ -94,14 +103,19 @@ export class LintService {
     return this.lintSpec(content);
   }
 
-  listRules(): Array<{ code: string; description: string; severity: LintSeverity }> {
+  listRules(): Array<{
+    code: string;
+    description: string;
+    severity: LintSeverity;
+  }> {
     const ruleset = this.spectral.ruleset;
     if (!ruleset) return [];
 
     return Object.entries(ruleset.rules).map(([code, rule]) => ({
       code,
       description: (rule as { description?: string }).description ?? '',
-      severity: SEVERITY_MAP[(rule as { severity?: number }).severity ?? 1] ?? 'warn',
+      severity:
+        SEVERITY_MAP[(rule as { severity?: number }).severity ?? 1] ?? 'warn',
     }));
   }
 
@@ -119,7 +133,9 @@ export class LintService {
   private errorResult(message: string): LintResult {
     return {
       valid: false,
-      violations: [{ code: 'parse-error', message, severity: 'error', path: [] }],
+      violations: [
+        { code: 'parse-error', message, severity: 'error', path: [] },
+      ],
       errorCount: 1,
       warnCount: 0,
       infoCount: 0,

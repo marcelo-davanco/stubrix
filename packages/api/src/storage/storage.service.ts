@@ -19,9 +19,11 @@ export class StorageService {
   private readonly defaultBucket: string;
 
   constructor(private readonly config: ConfigService) {
-    this.minioUrl = this.config.get<string>('MINIO_URL') ?? 'http://localhost:9000';
+    this.minioUrl =
+      this.config.get<string>('MINIO_URL') ?? 'http://localhost:9000';
     this.minioUser = this.config.get<string>('MINIO_ROOT_USER') ?? 'minioadmin';
-    this.minioPass = this.config.get<string>('MINIO_ROOT_PASSWORD') ?? 'minioadmin';
+    this.minioPass =
+      this.config.get<string>('MINIO_ROOT_PASSWORD') ?? 'minioadmin';
     this.defaultBucket = this.config.get<string>('MINIO_BUCKET') ?? 'stubrix';
   }
 
@@ -44,33 +46,52 @@ export class StorageService {
   ): Promise<{ bucket: string; key: string; url: string }> {
     const buf = typeof content === 'string' ? Buffer.from(content) : content;
     const body = new Uint8Array(buf);
-    const auth = Buffer.from(`${this.minioUser}:${this.minioPass}`).toString('base64');
+    const auth = Buffer.from(`${this.minioUser}:${this.minioPass}`).toString(
+      'base64',
+    );
 
-    const res = await fetch(`${this.minioUrl}/${bucket}/${key}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': String(body.length),
-        Authorization: `Basic ${auth}`,
+    const res = await fetch(
+      `${this.minioUrl}/${encodeURIComponent(bucket)}/${encodeURIComponent(key)}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': contentType,
+          'Content-Length': String(body.length),
+          Authorization: `Basic ${auth}`,
+        },
+        body,
+        signal: AbortSignal.timeout(30_000),
       },
-      body,
-      signal: AbortSignal.timeout(30_000),
-    });
+    );
 
     if (!res.ok) throw new Error(`MinIO upload failed: HTTP ${res.status}`);
     this.logger.log(`Uploaded to MinIO: ${bucket}/${key}`);
     return { bucket, key, url: `${this.minioUrl}/${bucket}/${key}` };
   }
 
-  async archiveSnapshot(snapshotPath: string, projectId: string): Promise<StorageObject> {
-    if (!fs.existsSync(snapshotPath)) {
-      throw new Error(`Snapshot not found: ${snapshotPath}`);
+  async archiveSnapshot(
+    engine: string,
+    filename: string,
+    projectId: string,
+  ): Promise<StorageObject> {
+    const safeEngine = path.basename(engine);
+    const safeFilename = path.basename(filename);
+    const dumpsBase = path.resolve(
+      process.env['DUMPS_DIR'] ?? path.join(process.cwd(), 'dumps'),
+    );
+    const safePath = path.join(dumpsBase, safeEngine, safeFilename);
+    if (!fs.existsSync(safePath)) {
+      throw new Error(`Snapshot not found: ${safeFilename}`);
     }
-    const content = fs.readFileSync(snapshotPath);
-    const filename = path.basename(snapshotPath);
-    const key = `snapshots/${projectId}/${filename}`;
+    const content = fs.readFileSync(safePath);
+    const key = `snapshots/${projectId}/${safeFilename}`;
 
-    await this.uploadFile(this.defaultBucket, key, content, 'application/octet-stream');
+    await this.uploadFile(
+      this.defaultBucket,
+      key,
+      content,
+      'application/octet-stream',
+    );
 
     return {
       key,
@@ -80,7 +101,10 @@ export class StorageService {
     };
   }
 
-  async uploadMockBody(filename: string, content: string): Promise<StorageObject> {
+  async uploadMockBody(
+    filename: string,
+    content: string,
+  ): Promise<StorageObject> {
     const key = `mock-bodies/${filename}`;
     const buf = Buffer.from(content, 'utf-8');
     await this.uploadFile(this.defaultBucket, key, buf, 'application/json');

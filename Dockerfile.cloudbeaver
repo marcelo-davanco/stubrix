@@ -1,0 +1,14 @@
+FROM dbeaver/cloudbeaver:latest
+
+USER root
+
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends gettext-base && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY config/cloudbeaver/cloudbeaver.conf.template /opt/cloudbeaver/conf-template/cloudbeaver.conf.template
+
+COPY scripts/cloudbeaver-entrypoint.sh /entrypoint-wrapper.sh
+RUN chmod +x /entrypoint-wrapper.sh
+
+ENTRYPOINT ["/entrypoint-wrapper.sh"]

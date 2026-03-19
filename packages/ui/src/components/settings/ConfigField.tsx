@@ -1,32 +1,39 @@
-import { RotateCcw } from 'lucide-react'
-import type { ConfigField as ConfigFieldType, EffectiveConfigValue } from '../../hooks/useServiceConfig'
-import { SensitiveField } from './SensitiveField'
-import { EffectiveConfigBadge } from './EffectiveConfigBadge'
+import { RotateCcw } from 'lucide-react';
+import type {
+  ConfigField as ConfigFieldType,
+  EffectiveConfigValue,
+} from '../../hooks/useServiceConfig';
+import { useTranslation } from '../../lib/i18n';
+import { SensitiveField } from './SensitiveField';
+import { EffectiveConfigBadge } from './EffectiveConfigBadge';
 
 interface ConfigFieldProps {
-  field: ConfigFieldType
-  value: string
-  effective?: EffectiveConfigValue
-  onChange: (value: string) => void
-  onReset?: () => void
-  onRequestUnlock?: () => void
-  sessionActive?: boolean
-  error?: string
+  field: ConfigFieldType;
+  value: string;
+  effective?: EffectiveConfigValue;
+  onChange: (value: string) => void;
+  onReset?: () => void;
+  onRequestUnlock?: () => void;
+  sessionActive?: boolean;
+  error?: string;
 }
 
 function validateField(field: ConfigFieldType, value: string): string | null {
-  if (field.required && !value) return `${field.label} is required`
+  if (field.required && !value) return `${field.label} is required`;
   if (field.dataType === 'number') {
-    const num = Number(value)
-    if (isNaN(num)) return `${field.label} must be a number`
+    const num = Number(value);
+    if (isNaN(num)) return `${field.label} must be a number`;
     if (field.validation?.min !== undefined && num < field.validation.min)
-      return `${field.label} must be at least ${field.validation.min}`
+      return `${field.label} must be at least ${field.validation.min}`;
     if (field.validation?.max !== undefined && num > field.validation.max)
-      return `${field.label} must be at most ${field.validation.max}`
+      return `${field.label} must be at most ${field.validation.max}`;
   }
-  if (field.validation?.pattern && !new RegExp(field.validation.pattern).test(value))
-    return `${field.label} format is invalid`
-  return null
+  if (
+    field.validation?.pattern &&
+    !new RegExp(field.validation.pattern).test(value)
+  )
+    return `${field.label} format is invalid`;
+  return null;
 }
 
 export function ConfigField({
@@ -39,12 +46,13 @@ export function ConfigField({
   sessionActive = false,
   error: externalError,
 }: ConfigFieldProps) {
-  const isEnvOverride = effective?.source === 'env'
-  const validationError = validateField(field, value)
-  const displayError = externalError ?? (value !== '' ? validationError : null)
+  const { t } = useTranslation();
+  const isEnvOverride = effective?.source === 'env';
+  const validationError = validateField(field, value);
+  const displayError = externalError ?? (value !== '' ? validationError : null);
 
   const inputClass =
-    'w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed'
+    'w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const renderInput = () => {
     if (field.sensitive) {
@@ -56,7 +64,7 @@ export function ConfigField({
           onRequestUnlock={onRequestUnlock ?? (() => {})}
           disabled={isEnvOverride}
         />
-      )
+      );
     }
 
     if (field.dataType === 'boolean') {
@@ -76,9 +84,11 @@ export function ConfigField({
               }`}
             />
           </button>
-          <span className="text-sm">{value === 'true' ? 'Enabled' : 'Disabled'}</span>
+          <span className="text-sm">
+            {value === 'true' ? 'Enabled' : 'Disabled'}
+          </span>
         </label>
-      )
+      );
     }
 
     if (field.dataType === 'select' && field.validation?.options) {
@@ -95,7 +105,7 @@ export function ConfigField({
             </option>
           ))}
         </select>
-      )
+      );
     }
 
     if (field.dataType === 'json') {
@@ -107,7 +117,7 @@ export function ConfigField({
           rows={4}
           className={inputClass + ' font-mono text-xs resize-y'}
         />
-      )
+      );
     }
 
     return (
@@ -120,21 +130,23 @@ export function ConfigField({
         max={field.validation?.max}
         className={inputClass}
       />
-    )
-  }
+    );
+  };
 
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-text-primary">{field.label}</label>
+          <label className="text-sm font-medium text-text-primary">
+            {field.label}
+          </label>
           {effective && <EffectiveConfigBadge source={effective.source} />}
         </div>
         {onReset && (
           <button
             type="button"
             onClick={onReset}
-            title="Reset to default"
+            title={t('serviceConfig.resetToDefault')}
             className="p-1 text-text-secondary hover:text-text-primary transition-colors"
           >
             <RotateCcw size={12} />
@@ -146,7 +158,8 @@ export function ConfigField({
 
       {isEnvOverride && (
         <p className="text-xs text-purple-400/80">
-          Overridden by env var. Remove the environment variable to configure from the UI.
+          Overridden by env var. Remove the environment variable to configure
+          from the UI.
         </p>
       )}
 
@@ -154,13 +167,15 @@ export function ConfigField({
         <p className="text-xs text-text-secondary">{field.description}</p>
       )}
 
-      {field.validation?.min !== undefined && field.validation?.max !== undefined && !isEnvOverride && (
-        <p className="text-xs text-text-secondary">
-          Range: {field.validation.min}–{field.validation.max}
-        </p>
-      )}
+      {field.validation?.min !== undefined &&
+        field.validation?.max !== undefined &&
+        !isEnvOverride && (
+          <p className="text-xs text-text-secondary">
+            Range: {field.validation.min}–{field.validation.max}
+          </p>
+        )}
 
       {displayError && <p className="text-xs text-red-400">{displayError}</p>}
     </div>
-  )
+  );
 }

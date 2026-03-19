@@ -9,7 +9,9 @@ export class MetricsController {
 
   @Get('prometheus')
   @Header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
-  @ApiOperation({ summary: 'Prometheus scrape endpoint — /metrics compatible format' })
+  @ApiOperation({
+    summary: 'Prometheus scrape endpoint — /metrics compatible format',
+  })
   prometheus(): string {
     return this.service.getPrometheusText();
   }

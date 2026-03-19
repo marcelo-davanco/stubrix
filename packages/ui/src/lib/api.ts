@@ -49,15 +49,22 @@ export const api = {
     list: () => request<Project[]>('/projects'),
     get: (id: string) => request<Project>(`/projects/${id}`),
     create: (dto: CreateProjectDto) =>
-      request<Project>('/projects', { method: 'POST', body: JSON.stringify(dto) }),
+      request<Project>('/projects', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     update: (id: string, dto: UpdateProjectDto) =>
-      request<Project>(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(dto) }),
+      request<Project>(`/projects/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(dto),
+      }),
     delete: (id: string) =>
       request<void>(`/projects/${id}`, { method: 'DELETE' }),
   },
 
   mocks: {
-    list: (projectId: string) => request<MockListItem[]>(`/projects/${projectId}/mocks`),
+    list: (projectId: string) =>
+      request<MockListItem[]>(`/projects/${projectId}/mocks`),
     get: (projectId: string, id: string) =>
       request<MockDetail>(`/projects/${projectId}/mocks/${id}`),
     create: (projectId: string, dto: CreateMockDto) =>
@@ -83,9 +90,13 @@ export const api = {
         body: JSON.stringify(dto),
       }),
     stop: (projectId: string) =>
-      request<RecordingStopResult>(`/projects/${projectId}/recording/stop`, { method: 'POST' }),
+      request<RecordingStopResult>(`/projects/${projectId}/recording/stop`, {
+        method: 'POST',
+      }),
     snapshot: (projectId: string) =>
-      request<SnapshotResult>(`/projects/${projectId}/recording/snapshot`, { method: 'POST' }),
+      request<SnapshotResult>(`/projects/${projectId}/recording/snapshot`, {
+        method: 'POST',
+      }),
   },
 
   logs: {
@@ -94,6 +105,7 @@ export const api = {
   },
 
   engine: {
-    get: () => request<{ engine: string; port: number; healthy: boolean }>('/engine'),
+    get: () =>
+      request<{ engine: string; port: number; healthy: boolean }>('/engine'),
   },
 };

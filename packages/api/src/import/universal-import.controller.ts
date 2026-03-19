@@ -9,8 +9,19 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsArray, IsNumber } from 'class-validator';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiConsumes,
+} from '@nestjs/swagger';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsArray,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { UniversalImportService } from './universal-import.service';
 import type { ImportPreview, ImportResult } from '@stubrix/shared';
@@ -99,7 +110,9 @@ export class UniversalImportController {
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Import mocks from uploaded file (HAR/Postman/OpenAPI)' })
+  @ApiOperation({
+    summary: 'Import mocks from uploaded file (HAR/Postman/OpenAPI)',
+  })
   @ApiResponse({ status: 200, description: 'Imported successfully' })
   async importFile(
     @UploadedFile() file: Express.Multer.File,
@@ -116,11 +129,15 @@ export class UniversalImportController {
     }
 
     const content = file.buffer.toString('utf-8');
-    return this.service.importContent(content, {
-      projectId,
-      deduplicate: deduplicate !== 'false',
-      overwrite: overwrite === 'true',
-    }, file.originalname);
+    return this.service.importContent(
+      content,
+      {
+        projectId,
+        deduplicate: deduplicate !== 'false',
+        overwrite: overwrite === 'true',
+      },
+      file.originalname,
+    );
   }
 
   @Post('url')
@@ -139,21 +156,31 @@ export class UniversalImportController {
 
   @Post('content')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Import mocks from raw content (HAR/Postman/OpenAPI JSON/YAML)' })
+  @ApiOperation({
+    summary: 'Import mocks from raw content (HAR/Postman/OpenAPI JSON/YAML)',
+  })
   @ApiResponse({ status: 200, description: 'Imported successfully' })
-  async importContent(@Body() dto: ImportFromContentDto): Promise<ImportResult> {
-    return this.service.importContent(dto.content, {
-      projectId: dto.projectId,
-      deduplicate: dto.deduplicate ?? true,
-      overwrite: dto.overwrite ?? false,
-      filterMethods: dto.filterMethods,
-      filterStatusCodes: dto.filterStatusCodes,
-    }, dto.filename);
+  async importContent(
+    @Body() dto: ImportFromContentDto,
+  ): Promise<ImportResult> {
+    return this.service.importContent(
+      dto.content,
+      {
+        projectId: dto.projectId,
+        deduplicate: dto.deduplicate ?? true,
+        overwrite: dto.overwrite ?? false,
+        filterMethods: dto.filterMethods,
+        filterStatusCodes: dto.filterStatusCodes,
+      },
+      dto.filename,
+    );
   }
 
   @Post('preview')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Preview what would be imported without creating any mocks' })
+  @ApiOperation({
+    summary: 'Preview what would be imported without creating any mocks',
+  })
   @ApiResponse({ status: 200, description: 'Preview generated' })
   preview(@Body() dto: PreviewFromContentDto): ImportPreview {
     return this.service.preview(dto.content, dto.filename, dto.baseUrl);
@@ -181,10 +208,30 @@ export class UniversalImportController {
   formats() {
     return {
       formats: [
-        { id: 'har', name: 'HAR (HTTP Archive)', extensions: ['.har', '.json'], versions: ['1.2'] },
-        { id: 'postman', name: 'Postman Collection', extensions: ['.json'], versions: ['2.1'] },
-        { id: 'openapi', name: 'OpenAPI', extensions: ['.json', '.yaml', '.yml'], versions: ['3.0', '3.1'] },
-        { id: 'swagger', name: 'Swagger', extensions: ['.json', '.yaml', '.yml'], versions: ['2.0'] },
+        {
+          id: 'har',
+          name: 'HAR (HTTP Archive)',
+          extensions: ['.har', '.json'],
+          versions: ['1.2'],
+        },
+        {
+          id: 'postman',
+          name: 'Postman Collection',
+          extensions: ['.json'],
+          versions: ['2.1'],
+        },
+        {
+          id: 'openapi',
+          name: 'OpenAPI',
+          extensions: ['.json', '.yaml', '.yml'],
+          versions: ['3.0', '3.1'],
+        },
+        {
+          id: 'swagger',
+          name: 'Swagger',
+          extensions: ['.json', '.yaml', '.yml'],
+          versions: ['2.0'],
+        },
       ],
     };
   }

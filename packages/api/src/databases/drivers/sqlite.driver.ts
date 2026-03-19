@@ -65,40 +65,40 @@ export class SqliteDriver implements DatabaseDriverInterface {
     const db = new Database(this.dbPath, { readonly: true });
     try {
       const values = params ? Object.values(params) : [];
-      const rows = db.prepare(query).all(...values) as Record<string, unknown>[];
+      const rows = db.prepare(query).all(...values) as Record<
+        string,
+        unknown
+      >[];
       return Promise.resolve(rows);
     } finally {
       db.close();
     }
   }
 
-  async createSnapshot(
-    database: string,
-    filepath: string,
-  ): Promise<void> {
+  async createSnapshot(database: string, filepath: string): Promise<void> {
     if (!this.isConfigured()) {
       throw new Error('SQLite driver is not configured');
     }
 
     try {
       const sourcePath = this.dbPath!;
-      
+
       // Check if source database exists
       if (!fs.existsSync(sourcePath)) {
         throw new Error(`Source database file not found: ${sourcePath}`);
       }
 
       this.logger.log(`Creating SQLite snapshot: ${sourcePath} -> ${filepath}`);
-      
+
       // Copy the database file
       fs.copyFileSync(sourcePath, filepath);
-      
+
       // Also copy WAL and SHM files if they exist
       const walPath = `${sourcePath}-wal`;
       const shmPath = `${sourcePath}-shm`;
       const walDest = `${filepath}-wal`;
       const shmDest = `${filepath}-shm`;
-      
+
       if (fs.existsSync(walPath)) {
         fs.copyFileSync(walPath, walDest);
       }
@@ -113,24 +113,23 @@ export class SqliteDriver implements DatabaseDriverInterface {
     }
   }
 
-  async restoreSnapshot(
-    database: string,
-    filepath: string,
-  ): Promise<void> {
+  async restoreSnapshot(database: string, filepath: string): Promise<void> {
     if (!this.isConfigured()) {
       throw new Error('SQLite driver is not configured');
     }
 
     try {
       const targetPath = this.dbPath!;
-      
+
       // Check if snapshot file exists
       if (!fs.existsSync(filepath)) {
         throw new Error(`Snapshot file not found: ${filepath}`);
       }
 
-      this.logger.log(`Restoring SQLite snapshot: ${filepath} -> ${targetPath}`);
-      
+      this.logger.log(
+        `Restoring SQLite snapshot: ${filepath} -> ${targetPath}`,
+      );
+
       // Close any existing connections by attempting to open in read-only mode first
       try {
         const testDb = new Database(targetPath, { readonly: true });
@@ -138,23 +137,23 @@ export class SqliteDriver implements DatabaseDriverInterface {
       } catch {
         // Database might be locked, continue anyway
       }
-      
+
       // Copy the database file
       fs.copyFileSync(filepath, targetPath);
-      
+
       // Also restore WAL and SHM files if they exist
       const walPath = `${filepath}-wal`;
       const shmPath = `${filepath}-shm`;
       const walDest = `${targetPath}-wal`;
       const shmDest = `${targetPath}-shm`;
-      
+
       if (fs.existsSync(walPath)) {
         fs.copyFileSync(walPath, walDest);
       } else if (fs.existsSync(walDest)) {
         // Remove existing WAL if snapshot doesn't have one
         fs.unlinkSync(walDest);
       }
-      
+
       if (fs.existsSync(shmPath)) {
         fs.copyFileSync(shmPath, shmDest);
       } else if (fs.existsSync(shmDest)) {

@@ -24,25 +24,53 @@ export interface NetworkPreset {
 }
 
 const NETWORK_PRESETS: Record<string, NetworkPreset> = {
-  'latency': {
+  latency: {
     name: 'High Latency',
     description: 'Add 500ms latency to all connections',
-    toxics: [{ type: 'latency', stream: 'downstream', toxicity: 1.0, attributes: { latency: 500, jitter: 50 } }],
+    toxics: [
+      {
+        type: 'latency',
+        stream: 'downstream',
+        toxicity: 1.0,
+        attributes: { latency: 500, jitter: 50 },
+      },
+    ],
   },
-  'bandwidth': {
+  bandwidth: {
     name: 'Low Bandwidth',
     description: 'Limit bandwidth to 100KB/s',
-    toxics: [{ type: 'bandwidth', stream: 'downstream', toxicity: 1.0, attributes: { rate: 100 } }],
+    toxics: [
+      {
+        type: 'bandwidth',
+        stream: 'downstream',
+        toxicity: 1.0,
+        attributes: { rate: 100 },
+      },
+    ],
   },
   'packet-loss': {
     name: 'Packet Loss',
     description: '30% packet loss simulation',
-    toxics: [{ type: 'timeout', stream: 'downstream', toxicity: 0.3, attributes: { timeout: 0 } }],
+    toxics: [
+      {
+        type: 'timeout',
+        stream: 'downstream',
+        toxicity: 0.3,
+        attributes: { timeout: 0 },
+      },
+    ],
   },
   'slow-close': {
     name: 'Slow Close',
     description: 'Delay connection closing by 2s',
-    toxics: [{ type: 'slow_close', stream: 'downstream', toxicity: 1.0, attributes: { delay: 2000 } }],
+    toxics: [
+      {
+        type: 'slow_close',
+        stream: 'downstream',
+        toxicity: 1.0,
+        attributes: { delay: 2000 },
+      },
+    ],
   },
 };
 
@@ -52,7 +80,8 @@ export class ChaosNetworkService {
   private readonly toxiproxyUrl: string;
 
   constructor(private readonly config: ConfigService) {
-    this.toxiproxyUrl = this.config.get<string>('TOXIPROXY_URL') ?? 'http://localhost:8474';
+    this.toxiproxyUrl =
+      this.config.get<string>('TOXIPROXY_URL') ?? 'http://localhost:8474';
   }
 
   async listProxies(): Promise<ToxiProxy[]> {
@@ -69,7 +98,11 @@ export class ChaosNetworkService {
     }
   }
 
-  async createProxy(name: string, listen: string, upstream: string): Promise<ToxiProxy> {
+  async createProxy(
+    name: string,
+    listen: string,
+    upstream: string,
+  ): Promise<ToxiProxy> {
     const res = await fetch(`${this.toxiproxyUrl}/proxies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -80,27 +113,36 @@ export class ChaosNetworkService {
     return (await res.json()) as ToxiProxy;
   }
 
-  async addToxic(proxyName: string, toxic: Omit<Toxic, 'name'> & { name?: string }): Promise<Toxic> {
+  async addToxic(
+    proxyName: string,
+    toxic: Omit<Toxic, 'name'> & { name?: string },
+  ): Promise<Toxic> {
     const name = toxic.name ?? `${toxic.type}_${Date.now()}`;
-    const res = await fetch(`${this.toxiproxyUrl}/proxies/${proxyName}/toxics`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...toxic, name }),
-      signal: AbortSignal.timeout(5_000),
-    });
+    const res = await fetch(
+      `${this.toxiproxyUrl}/proxies/${encodeURIComponent(proxyName)}/toxics`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...toxic, name }),
+        signal: AbortSignal.timeout(5_000),
+      },
+    );
     if (!res.ok) throw new Error(`Toxiproxy HTTP ${res.status}`);
     return (await res.json()) as Toxic;
   }
 
   async removeToxic(proxyName: string, toxicName: string): Promise<void> {
-    await fetch(`${this.toxiproxyUrl}/proxies/${proxyName}/toxics/${toxicName}`, {
-      method: 'DELETE',
-      signal: AbortSignal.timeout(5_000),
-    });
+    await fetch(
+      `${this.toxiproxyUrl}/proxies/${encodeURIComponent(proxyName)}/toxics/${encodeURIComponent(toxicName)}`,
+      {
+        method: 'DELETE',
+        signal: AbortSignal.timeout(5_000),
+      },
+    );
   }
 
   async deleteProxy(name: string): Promise<void> {
-    await fetch(`${this.toxiproxyUrl}/proxies/${name}`, {
+    await fetch(`${this.toxiproxyUrl}/proxies/${encodeURIComponent(name)}`, {
       method: 'DELETE',
       signal: AbortSignal.timeout(5_000),
     });
@@ -116,7 +158,10 @@ export class ChaosNetworkService {
 
     const results: Toxic[] = [];
     for (const toxic of preset.toxics) {
-      const t = await this.addToxic(proxyName, { ...toxic, name: `${presetName}_${Date.now()}` });
+      const t = await this.addToxic(proxyName, {
+        ...toxic,
+        name: `${presetName}_${Date.now()}`,
+      });
       results.push(t);
     }
     return results;

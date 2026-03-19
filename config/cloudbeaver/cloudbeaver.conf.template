@@ -1,0 +1,27 @@
+{
+    "server": {
+        "serverPort": 8978,
+        "workspaceLocation": "${CLOUDBEAVER_WORKSPACE_DIR}",
+        "contentRoot": "${CLOUDBEAVER_CONTENT_ROOT}",
+        "driversLocation": "${CLOUDBEAVER_DRIVERS_DIR}",
+        "rootURI": "${CLOUDBEAVER_ROOT_URI}",
+        "serviceURI": "/api/",
+        "productConfiguration": "${CLOUDBEAVER_PRODUCT_CONF}",
+        "expireSessionAfterPeriod": ${CLOUDBEAVER_SESSION_EXPIRE},
+        "develMode": false,
+        "enableSecurityManager": false,
+        "database": {
+            "driver": "h2_embedded",
+            "url": "jdbc:h2:${CLOUDBEAVER_WORKSPACE_DIR}/.data/cloudbeaver",
+            "createDatabase": true
+        }
+    },
+    "app": {
+        "anonymousAccessEnabled": ${CLOUDBEAVER_ANONYMOUS_ACCESS},
+        "anonymousUserRole": "user",
+        "grantConnectionsAccessToAnonymousTeam": true,
+        "supportsCustomConnections": ${CLOUDBEAVER_CUSTOM_CONNECTIONS},
+        "showReadOnlyConnectionInfo": false,
+        "notificationsEnabled": true
+    }
+}

@@ -6,7 +6,11 @@ import type {
   RecordingState,
   StartRecordingDto,
 } from '@stubrix/shared';
-import { mockApi, type CreateMockDto, type UpdateMockDto } from '../lib/mock-api.js';
+import {
+  mockApi,
+  type CreateMockDto,
+  type UpdateMockDto,
+} from '../lib/mock-api.js';
 
 type MockManagerState = {
   projects: Project[];
@@ -81,75 +85,119 @@ export function useMockManager(initialProjectId?: string) {
     } finally {
       setLoading(false);
     }
-  }, [initialProjectId, loadMocks, loadProject, loadProjects, loadRecordingStatus, loadStatus]);
+  }, [
+    initialProjectId,
+    loadMocks,
+    loadProject,
+    loadProjects,
+    loadRecordingStatus,
+    loadStatus,
+  ]);
 
   useEffect(() => {
     void refreshAll();
   }, [refreshAll]);
 
-  const selectProject = useCallback(async (id: string) => {
-    setError(null);
-    try {
-      await loadProject(id);
-      await Promise.all([loadMocks(id), loadRecordingStatus(id)]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    }
-  }, [loadMocks, loadProject, loadRecordingStatus]);
+  const selectProject = useCallback(
+    async (id: string) => {
+      setError(null);
+      try {
+        await loadProject(id);
+        await Promise.all([loadMocks(id), loadRecordingStatus(id)]);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      }
+    },
+    [loadMocks, loadProject, loadRecordingStatus],
+  );
 
-  const createProject = useCallback(async (dto: { name: string; proxyTarget?: string; description?: string }) => {
-    const created = await mockApi.projects.create(dto);
-    await loadProjects();
-    return created;
-  }, [loadProjects]);
+  const createProject = useCallback(
+    async (dto: {
+      name: string;
+      proxyTarget?: string;
+      description?: string;
+    }) => {
+      const created = await mockApi.projects.create(dto);
+      await loadProjects();
+      return created;
+    },
+    [loadProjects],
+  );
 
-  const updateProject = useCallback(async (id: string, dto: { name?: string; proxyTarget?: string; description?: string }) => {
-    const updated = await mockApi.projects.update(id, dto);
-    await loadProjects();
-    if (currentProject?.id === id) setCurrentProject(updated);
-    return updated;
-  }, [currentProject?.id, loadProjects]);
+  const updateProject = useCallback(
+    async (
+      id: string,
+      dto: { name?: string; proxyTarget?: string; description?: string },
+    ) => {
+      const updated = await mockApi.projects.update(id, dto);
+      await loadProjects();
+      if (currentProject?.id === id) setCurrentProject(updated);
+      return updated;
+    },
+    [currentProject?.id, loadProjects],
+  );
 
-  const deleteProject = useCallback(async (id: string) => {
-    await mockApi.projects.delete(id);
-    await loadProjects();
-    if (currentProject?.id === id) setCurrentProject(null);
-  }, [currentProject?.id, loadProjects]);
+  const deleteProject = useCallback(
+    async (id: string) => {
+      await mockApi.projects.delete(id);
+      await loadProjects();
+      if (currentProject?.id === id) setCurrentProject(null);
+    },
+    [currentProject?.id, loadProjects],
+  );
 
-  const createMock = useCallback(async (projectId: string, dto: CreateMockDto) => {
-    const created = await mockApi.mocks.create(projectId, dto);
-    await loadMocks(projectId);
-    return created;
-  }, [loadMocks]);
+  const createMock = useCallback(
+    async (projectId: string, dto: CreateMockDto) => {
+      const created = await mockApi.mocks.create(projectId, dto);
+      await loadMocks(projectId);
+      return created;
+    },
+    [loadMocks],
+  );
 
-  const updateMock = useCallback(async (projectId: string, id: string, dto: UpdateMockDto) => {
-    const updated = await mockApi.mocks.update(projectId, id, dto);
-    await loadMocks(projectId);
-    return updated;
-  }, [loadMocks]);
+  const updateMock = useCallback(
+    async (projectId: string, id: string, dto: UpdateMockDto) => {
+      const updated = await mockApi.mocks.update(projectId, id, dto);
+      await loadMocks(projectId);
+      return updated;
+    },
+    [loadMocks],
+  );
 
-  const deleteMock = useCallback(async (projectId: string, id: string) => {
-    await mockApi.mocks.delete(projectId, id);
-    await loadMocks(projectId);
-  }, [loadMocks]);
+  const deleteMock = useCallback(
+    async (projectId: string, id: string) => {
+      await mockApi.mocks.delete(projectId, id);
+      await loadMocks(projectId);
+    },
+    [loadMocks],
+  );
 
-  const startRecording = useCallback(async (projectId: string, dto: StartRecordingDto) => {
-    const state = await mockApi.recording.start(projectId, dto);
-    setRecording(state);
-    return state;
-  }, []);
+  const startRecording = useCallback(
+    async (projectId: string, dto: StartRecordingDto) => {
+      const state = await mockApi.recording.start(projectId, dto);
+      setRecording(state);
+      return state;
+    },
+    [],
+  );
 
-  const stopRecording = useCallback(async (projectId: string) => {
-    const result = await mockApi.recording.stop(projectId);
-    await loadRecordingStatus(projectId);
-    return result;
-  }, [loadRecordingStatus]);
+  const stopRecording = useCallback(
+    async (projectId: string) => {
+      const result = await mockApi.recording.stop(projectId);
+      await loadRecordingStatus(projectId);
+      return result;
+    },
+    [loadRecordingStatus],
+  );
 
-  const takeSnapshot = useCallback(async (projectId: string) => {
-    const result = await mockApi.recording.snapshot(projectId);
-    await loadRecordingStatus(projectId);
-    return result;
-  }, [loadRecordingStatus]);
+  const takeSnapshot = useCallback(
+    async (projectId: string) => {
+      const result = await mockApi.recording.snapshot(projectId);
+      await loadRecordingStatus(projectId);
+      return result;
+    },
+    [loadRecordingStatus],
+  );
 
   const state: MockManagerState = {
     projects,

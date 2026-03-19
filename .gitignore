@@ -35,6 +35,7 @@ Thumbs.db
 # IDE / Editor
 .cursor/
 .vscode/
+!.vscode/settings.json
 .windsurf/
 .idea/
 *.swp

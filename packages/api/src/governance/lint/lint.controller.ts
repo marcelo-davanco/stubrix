@@ -50,7 +50,9 @@ export class LintController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Lint an OpenAPI spec file upload' })
-  async lintFile(@UploadedFile() file: Express.Multer.File): Promise<LintResult> {
+  async lintFile(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<LintResult> {
     if (!file?.buffer) {
       throw new BadRequestException('No file provided');
     }

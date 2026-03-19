@@ -48,16 +48,42 @@ export class ServiceLifecycleService implements OnModuleInit {
 
   onModuleInit(): void {
     this.health.startMonitoring();
+    void this.syncEnabledStateOnStartup();
 
     const autoStartServices = this.configDb.getAutoStartServices();
-    if (autoStartServices.length === 0) return;
-    this.logger.log(
-      `Auto-starting ${autoStartServices.length} service(s): ${autoStartServices.map((s) => s.id).join(', ')}`,
-    );
-    for (const row of autoStartServices) {
-      this.ensureServiceRunning(row.id).catch((err: unknown) => {
-        this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
-      });
+    if (autoStartServices.length > 0) {
+      this.logger.log(
+        `Auto-starting ${autoStartServices.length} service(s): ${autoStartServices.map((s) => s.id).join(', ')}`,
+      );
+      for (const row of autoStartServices) {
+        this.ensureServiceRunning(row.id).catch((err: unknown) => {
+          this.logger.warn(`Auto-start failed for ${row.id}: ${String(err)}`);
+        });
+      }
+    }
+  }
+
+  private async syncEnabledStateOnStartup(): Promise<void> {
+    const candidates = this.configDb.getEnabledNoAutoStartServices();
+    if (candidates.length === 0) return;
+
+    try {
+      const running = await this.docker.getRunningContainers();
+      const runningServices = new Set(running.map((c) => c.service));
+
+      for (const row of candidates) {
+        const def = this.registry.getService(row.id);
+        if (!def?.dockerService) continue;
+        if (!runningServices.has(def.dockerService)) {
+          this.configDb.updateServiceStatus(row.id, false);
+          this.configDb.updateHealthStatus(row.id, 'unknown');
+          this.logger.log(
+            `Startup sync: disabled "${row.id}" (container not running, auto-start off)`,
+          );
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`Startup sync failed: ${String(err)}`);
     }
   }
 
@@ -81,9 +107,25 @@ export class ServiceLifecycleService implements OnModuleInit {
     serviceId: string,
     options?: EnableServiceDto,
   ): Promise<ServiceActionResult> {
+    return this.enableServiceInternal(serviceId, options, new Set<string>());
+  }
+
+  private async enableServiceInternal(
+    serviceId: string,
+    options: EnableServiceDto | undefined,
+    visited: Set<string>,
+  ): Promise<ServiceActionResult> {
     const enableDeps = options?.enableDependencies !== false;
     const skipHealthCheck = options?.skipHealthCheck === true;
     const timeout = options?.timeout ?? 60000;
+
+    if (visited.has(serviceId)) {
+      return this.errorResult(
+        serviceId,
+        'enable',
+        `Circular dependency detected for "${serviceId}"`,
+      );
+    }
 
     if (this.inProgress.has(serviceId)) {
       return this.errorResult(
@@ -110,34 +152,39 @@ export class ServiceLifecycleService implements OnModuleInit {
       );
     }
 
+    visited.add(serviceId);
     this.inProgress.add(serviceId);
 
     const affectedServices: string[] = [];
 
-    // Auto-enable dependencies
-    if (enableDeps) {
-      const deps = this.registry.getDependencies(serviceId);
-      for (const depId of deps) {
-        const depRow = this.configDb.getService(depId);
-        if (depRow && depRow.enabled !== 1) {
-          this.logger.log(`Auto-enabling dependency: ${depId}`);
-          const depResult = await this.enableService(depId, {
-            enableDependencies: true,
-            timeout,
-          });
-          if (!depResult.success) {
-            return this.errorResult(
-              serviceId,
-              'enable',
-              `Failed to enable dependency "${depId}": ${depResult.message}`,
+    try {
+      // Auto-enable dependencies
+      if (enableDeps) {
+        const deps = this.registry.getDependencies(serviceId);
+        for (const depId of deps) {
+          const depRow = this.configDb.getService(depId);
+          if (depRow && depRow.enabled !== 1) {
+            this.logger.log(`Auto-enabling dependency: ${depId}`);
+            const depResult = await this.enableServiceInternal(
+              depId,
+              {
+                enableDependencies: true,
+                timeout,
+              },
+              new Set(visited),
             );
+            if (!depResult.success) {
+              return this.errorResult(
+                serviceId,
+                'enable',
+                `Failed to enable dependency "${depId}": ${depResult.message}`,
+              );
+            }
+            affectedServices.push(depId);
           }
-          affectedServices.push(depId);
         }
       }
-    }
 
-    try {
       // Mark as enabled in SQLite
       this.configDb.updateServiceStatus(serviceId, true);
       this.configDb.updateHealthStatus(serviceId, 'unknown');
@@ -313,7 +360,11 @@ export class ServiceLifecycleService implements OnModuleInit {
 
     this.configDb.updateHealthStatus(serviceId, 'unknown');
 
-    const result = await this.docker.restartService(def.dockerService);
+    const envOverrides = this.buildEnvOverrides(serviceId);
+    const result = await this.docker.restartService(
+      def.dockerService,
+      envOverrides,
+    );
     if (!result.success) {
       return this.errorResult(
         serviceId,

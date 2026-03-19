@@ -4,9 +4,7 @@ import { LintController } from './lint.controller';
 import { LintService } from './lint.service';
 
 @Module({
-  imports: [
-    MulterModule.register({ limits: { fileSize: 5 * 1024 * 1024 } }),
-  ],
+  imports: [MulterModule.register({ limits: { fileSize: 5 * 1024 * 1024 } })],
   controllers: [LintController],
   providers: [LintService],
   exports: [LintService],

@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../lib/i18n';
 import { GovernancePage } from '@stubrix/mock-ui';
 
 export function GovernanceBridge() {
-  const navigate = useNavigate();
-  return <GovernancePage onNavigateBack={() => navigate('/')} />;
+  const { t } = useTranslation();
+  return <GovernancePage t={t} />;
 }

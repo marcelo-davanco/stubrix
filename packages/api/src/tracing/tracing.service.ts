@@ -33,16 +33,22 @@ export class TracingService {
   private readonly enabled: boolean;
 
   constructor(private readonly config: ConfigService) {
-    this.jaegerUrl = this.config.get<string>('JAEGER_URL') ?? 'http://localhost:16686';
+    this.jaegerUrl =
+      this.config.get<string>('JAEGER_URL') ?? 'http://localhost:16686';
     this.enabled = this.config.get<string>('OTEL_ENABLED') !== 'false';
     const mocksDir =
-      this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
     this.storageDir = path.join(mocksDir, 'traces');
     this.tracesFile = path.join(this.storageDir, 'traces.json');
     fs.mkdirSync(this.storageDir, { recursive: true });
   }
 
-  startSpan(operationName: string, service = 'stubrix-api', parentSpanId?: string): Span {
+  startSpan(
+    operationName: string,
+    service = 'stubrix-api',
+    parentSpanId?: string,
+  ): Span {
     return {
       traceId: uuidv4().replace(/-/g, ''),
       spanId: uuidv4().replace(/-/g, '').slice(0, 16),
@@ -55,7 +61,11 @@ export class TracingService {
     };
   }
 
-  finishSpan(span: Span, tags?: Record<string, string | number | boolean>, error?: Error): Span {
+  finishSpan(
+    span: Span,
+    tags?: Record<string, string | number | boolean>,
+    error?: Error,
+  ): Span {
     span.duration = Date.now() - span.startTime;
     span.tags = tags;
     if (error) {
@@ -68,7 +78,9 @@ export class TracingService {
 
   listTraces(service?: string, limit = 20): Trace[] {
     const traces = this.loadTraces();
-    const filtered = service ? traces.filter((t) => t.service === service) : traces;
+    const filtered = service
+      ? traces.filter((t) => t.service === service)
+      : traces;
     return filtered.slice(0, limit);
   }
 
@@ -78,7 +90,9 @@ export class TracingService {
 
   async jaegerHealth(): Promise<{ available: boolean; url: string }> {
     try {
-      const res = await fetch(`${this.jaegerUrl}/`, { signal: AbortSignal.timeout(3_000) });
+      const res = await fetch(`${this.jaegerUrl}/api/services`, {
+        signal: AbortSignal.timeout(3_000),
+      });
       return { available: res.ok, url: this.jaegerUrl };
     } catch {
       return { available: false, url: this.jaegerUrl };
@@ -88,9 +102,13 @@ export class TracingService {
   getOtelConfig(): Record<string, unknown> {
     return {
       enabled: this.enabled,
-      exporterEndpoint: this.config.get<string>('OTEL_EXPORTER_ENDPOINT') ?? 'http://localhost:4318',
+      exporterEndpoint:
+        this.config.get<string>('OTEL_EXPORTER_ENDPOINT') ??
+        'http://localhost:4318',
       serviceName: this.config.get<string>('OTEL_SERVICE_NAME') ?? 'stubrix',
-      samplingRate: parseFloat(this.config.get<string>('OTEL_SAMPLING_RATE') ?? '1.0'),
+      samplingRate: parseFloat(
+        this.config.get<string>('OTEL_SAMPLING_RATE') ?? '1.0',
+      ),
       jaegerUrl: this.jaegerUrl,
     };
   }
@@ -111,12 +129,18 @@ export class TracingService {
         timestamp: new Date().toISOString(),
       });
     }
-    fs.writeFileSync(this.tracesFile, JSON.stringify(traces.slice(0, 500), null, 2));
+    fs.writeFileSync(
+      this.tracesFile,
+      JSON.stringify(traces.slice(0, 500), null, 2),
+    );
   }
 
   private loadTraces(): Trace[] {
     if (!fs.existsSync(this.tracesFile)) return [];
-    try { return JSON.parse(fs.readFileSync(this.tracesFile, 'utf-8')) as Trace[]; }
-    catch { return []; }
+    try {
+      return JSON.parse(fs.readFileSync(this.tracesFile, 'utf-8')) as Trace[];
+    } catch {
+      return [];
+    }
   }
 }

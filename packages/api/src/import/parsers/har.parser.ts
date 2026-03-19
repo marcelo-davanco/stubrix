@@ -122,7 +122,10 @@ function safeParseUrl(url: string): URL | null {
   }
 }
 
-function decodeHarBody(content?: { text?: string; encoding?: string }): string | undefined {
+function decodeHarBody(content?: {
+  text?: string;
+  encoding?: string;
+}): string | undefined {
   if (!content?.text) return undefined;
   if (content.encoding === 'base64') {
     try {
@@ -136,7 +139,11 @@ function decodeHarBody(content?: { text?: string; encoding?: string }): string |
 
 function isInternalHeader(name: string): boolean {
   const internal = [
-    ':method', ':path', ':scheme', ':authority', ':status',
+    ':method',
+    ':path',
+    ':scheme',
+    ':authority',
+    ':status',
     'x-chrome-id-consistency-request',
   ];
   return internal.includes(name.toLowerCase());

@@ -2,14 +2,12 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
   Delete,
   Param,
   Body,
   HttpCode,
   HttpStatus,
   Query,
-  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { IsString, IsEmail, IsOptional } from 'class-validator';
@@ -42,15 +40,21 @@ export class AuthController {
   constructor(private readonly service: AuthService) {}
 
   @Get('users')
-  @ApiOperation({ summary: 'List all users (optionally filtered by workspace)' })
+  @ApiOperation({
+    summary: 'List all users (optionally filtered by workspace)',
+  })
   @ApiQuery({ name: 'workspaceId', required: false })
   listUsers(@Query('workspaceId') workspaceId?: string) {
-    return this.service.listUsers(workspaceId).map((u) => ({ ...u, apiKey: undefined }));
+    return this.service
+      .listUsers(workspaceId)
+      .map((u) => ({ ...u, apiKey: undefined }));
   }
 
   @Post('users')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new user with role and workspace assignment' })
+  @ApiOperation({
+    summary: 'Create a new user with role and workspace assignment',
+  })
   createUser(@Body() dto: CreateUserDto) {
     const user = this.service.createUser(
       dto.username,

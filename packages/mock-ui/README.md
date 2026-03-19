@@ -38,31 +38,31 @@ src/
 
 ```typescript
 // API client
-export { mockApi, configureMockApi } from './lib/mock-api'
-export type { CreateMockDto, UpdateMockDto } from './lib/mock-api'
+export { mockApi, configureMockApi } from './lib/mock-api';
+export type { CreateMockDto, UpdateMockDto } from './lib/mock-api';
 
 // Central state hook
-export { useMockManager } from './hooks/useMockManager'
+export { useMockManager } from './hooks/useMockManager';
 
 // Components
-export { StatCard } from './components/StatCard'
-export { ProjectCard } from './components/ProjectCard'
-export { ActionBtn } from './components/ActionBtn'
-export { CreateProjectModal } from './components/CreateProjectModal'
-export { Field } from './components/Field'
-export { EmptyState } from './components/EmptyState'
-export { MockMethodBadge } from './components/MockMethodBadge'
-export { EngineStatusBar } from './components/EngineStatusBar'
-export { ToastProvider, useToast } from './components/ToastProvider'
-export type { ToastType } from './components/ToastProvider'
-export { InlineAlert } from './components/InlineAlert'
+export { StatCard } from './components/StatCard';
+export { ProjectCard } from './components/ProjectCard';
+export { ActionBtn } from './components/ActionBtn';
+export { CreateProjectModal } from './components/CreateProjectModal';
+export { Field } from './components/Field';
+export { EmptyState } from './components/EmptyState';
+export { MockMethodBadge } from './components/MockMethodBadge';
+export { EngineStatusBar } from './components/EngineStatusBar';
+export { ToastProvider, useToast } from './components/ToastProvider';
+export type { ToastType } from './components/ToastProvider';
+export { InlineAlert } from './components/InlineAlert';
 
 // Pages
-export { MockServersPage } from './pages/MockServersPage'
-export { ProjectDashboardPage } from './pages/ProjectDashboardPage'
-export { MocksListPage } from './pages/MocksListPage'
-export { MockEditorPage } from './pages/MockEditorPage'
-export { RecordingPanelPage } from './pages/RecordingPanelPage'
+export { MockServersPage } from './pages/MockServersPage';
+export { ProjectDashboardPage } from './pages/ProjectDashboardPage';
+export { MocksListPage } from './pages/MocksListPage';
+export { MockEditorPage } from './pages/MockEditorPage';
+export { RecordingPanelPage } from './pages/RecordingPanelPage';
 ```
 
 ## useMockManager
@@ -138,31 +138,33 @@ All pages are decoupled from any router. Navigation is injected via props:
 Independent API client — configurable base URL.
 
 ```typescript
-import { configureMockApi, mockApi } from '@stubrix/mock-ui'
+import { configureMockApi, mockApi } from '@stubrix/mock-ui';
 
 // Configure (optional — defaults to /api)
-configureMockApi({ baseUrl: 'http://localhost:9090/api' })
+configureMockApi({ baseUrl: 'http://localhost:9090/api' });
 
 // Usage
-const projects = await mockApi.projects.list()
-const status = await mockApi.status.get()
-await mockApi.recording.start(projectId, { proxyTarget: 'https://api.example.com' })
+const projects = await mockApi.projects.list();
+const status = await mockApi.status.get();
+await mockApi.recording.start(projectId, {
+  proxyTarget: 'https://api.example.com',
+});
 ```
 
 ## Toast System
 
 ```tsx
-import { ToastProvider, useToast } from '@stubrix/mock-ui'
+import { ToastProvider, useToast } from '@stubrix/mock-ui';
 
 // Wrap your app
 <ToastProvider>
   <App />
-</ToastProvider>
+</ToastProvider>;
 
 // Use anywhere
-const { toast } = useToast()
-toast({ type: 'success', title: 'Saved!', description: 'Mock created.' })
-toast({ type: 'error', title: 'Failed', description: error.message })
+const { toast } = useToast();
+toast({ type: 'success', title: 'Saved!', description: 'Mock created.' });
+toast({ type: 'error', title: 'Failed', description: error.message });
 ```
 
 ## Development

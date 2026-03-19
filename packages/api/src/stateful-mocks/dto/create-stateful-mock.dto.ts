@@ -79,7 +79,10 @@ export class StateConfigDto {
   @IsPositive()
   queryTimeoutMs?: number;
 
-  @ApiPropertyOptional({ example: 30, description: 'Cache TTL in seconds (0 = disabled)' })
+  @ApiPropertyOptional({
+    example: 30,
+    description: 'Cache TTL in seconds (0 = disabled)',
+  })
   @IsOptional()
   @IsNumber()
   @Min(0)

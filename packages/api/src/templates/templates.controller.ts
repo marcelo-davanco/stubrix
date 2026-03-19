@@ -53,8 +53,14 @@ export class TemplatesController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all environment templates (built-in + custom)' })
-  @ApiQuery({ name: 'builtIn', required: false, description: 'Include built-in templates (default true)' })
+  @ApiOperation({
+    summary: 'List all environment templates (built-in + custom)',
+  })
+  @ApiQuery({
+    name: 'builtIn',
+    required: false,
+    description: 'Include built-in templates (default true)',
+  })
   list(@Query('builtIn') builtIn?: string) {
     const include = builtIn !== 'false';
     return this.service.listTemplates(include);
@@ -92,7 +98,8 @@ export class TemplatesController {
   @ApiOperation({ summary: 'Apply a template to generate mock files' })
   apply(@Param('id') id: string, @Body() dto: ApplyTemplateDto) {
     const mocksDir =
-      this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
     const outputDir = dto.outputDir ?? path.join(mocksDir, 'mappings');
     return this.service.applyTemplate(id, dto.variables, outputDir);
   }

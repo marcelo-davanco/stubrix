@@ -1,25 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { TemplateEngineService } from './template-engine.service';
-import type { TemplateContext } from './template-engine.service';
+import { TemplateContextBuilder } from '../test/builders';
 
-const sampleContext: TemplateContext = {
-  state: {
-    rows: [
-      { id: 1, name: 'Alice', active: true },
-      { id: 2, name: 'Bob', active: false },
-    ],
-    rowCount: 2,
-    queryTimeMs: 8,
-    fromCache: false,
-  },
-  request: {
-    method: 'GET',
-    url: '/api/users',
-    query: { page: '1' },
-    headers: { accept: 'application/json' },
-  },
-};
+const sampleContext = TemplateContextBuilder.create()
+  .withRows([
+    { id: 1, name: 'Alice', active: true },
+    { id: 2, name: 'Bob', active: false },
+  ])
+  .withQueryTimeMs(8)
+  .withRequestMethod('GET')
+  .withRequestUrl('/api/users')
+  .withRequestQuery({ page: '1' })
+  .withRequestHeaders({ accept: 'application/json' })
+  .build();
 
 describe('TemplateEngineService', () => {
   let service: TemplateEngineService;
@@ -50,25 +44,35 @@ describe('TemplateEngineService', () => {
     });
 
     it('should render {{pick}} helper — first element', () => {
-      const result = service.render('{{json (pick state.rows 0)}}', sampleContext);
+      const result = service.render(
+        '{{json (pick state.rows 0)}}',
+        sampleContext,
+      );
       const parsed = JSON.parse(result);
       expect(parsed.name).toBe('Alice');
     });
 
     it('should render {{first}} helper', () => {
-      const result = service.render('{{json (first state.rows)}}', sampleContext);
+      const result = service.render(
+        '{{json (first state.rows)}}',
+        sampleContext,
+      );
       const parsed = JSON.parse(result);
       expect(parsed.name).toBe('Alice');
     });
 
     it('should render {{last}} helper', () => {
-      const result = service.render('{{json (last state.rows)}}', sampleContext);
+      const result = service.render(
+        '{{json (last state.rows)}}',
+        sampleContext,
+      );
       const parsed = JSON.parse(result);
       expect(parsed.name).toBe('Bob');
     });
 
     it('should render full JSON object template', () => {
-      const template = '{ "users": {{json state.rows}}, "count": {{state.rowCount}} }';
+      const template =
+        '{ "users": {{json state.rows}}, "count": {{state.rowCount}} }';
       const result = service.render(template, sampleContext);
       const parsed = JSON.parse(result);
       expect(parsed.count).toBe(2);
@@ -76,13 +80,18 @@ describe('TemplateEngineService', () => {
     });
 
     it('should render with empty rows context', () => {
-      const emptyCtx: TemplateContext = { ...sampleContext, state: { ...sampleContext.state, rows: [], rowCount: 0 } };
+      const emptyCtx = TemplateContextBuilder.create()
+        .withRows([])
+        .withRowCount(0)
+        .build();
       const result = service.render('{{state.rowCount}}', emptyCtx);
       expect(result).toBe('0');
     });
 
     it('should throw BadRequestException for invalid template syntax', () => {
-      expect(() => service.render('{{#if}}broken', sampleContext)).toThrow(BadRequestException);
+      expect(() => service.render('{{#if}}broken', sampleContext)).toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -101,8 +110,16 @@ describe('TemplateEngineService', () => {
 
   describe('buildContext()', () => {
     it('should build context from StateQueryResult and request', () => {
-      const stateResult = { rows: [{ id: 1 }], rowCount: 1, queryTimeMs: 5, fromCache: false };
-      const ctx = service.buildContext(stateResult, { method: 'GET', url: '/test' });
+      const stateResult = {
+        rows: [{ id: 1 }],
+        rowCount: 1,
+        queryTimeMs: 5,
+        fromCache: false,
+      };
+      const ctx = service.buildContext(stateResult, {
+        method: 'GET',
+        url: '/test',
+      });
       expect(ctx.state.rows).toHaveLength(1);
       expect(ctx.request.method).toBe('GET');
     });

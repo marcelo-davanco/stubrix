@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
@@ -40,10 +36,18 @@ export class UniversalImportService {
 
     try {
       const parsed = JSON.parse(content) as Record<string, unknown>;
-      if (parsed.log && (parsed.log as Record<string, unknown>).entries) return 'har';
-      if (parsed.info && (parsed.info as Record<string, unknown>).schema?.toString().includes('postman')) return 'postman';
+      if (parsed.log && (parsed.log as Record<string, unknown>).entries)
+        return 'har';
+      if (
+        parsed.info &&
+        (parsed.info as Record<string, unknown>).schema
+          ?.toString()
+          .includes('postman')
+      )
+        return 'postman';
       if (parsed.item) return 'postman';
-      if (parsed.openapi || parsed.swagger) return parsed.swagger ? 'swagger' : 'openapi';
+      if (parsed.openapi || parsed.swagger)
+        return parsed.swagger ? 'swagger' : 'openapi';
     } catch {
       if (content.includes('openapi:') || content.includes('swagger:')) {
         return 'openapi';
@@ -123,11 +127,16 @@ export class UniversalImportService {
     }
 
     if (filterStatusCodes?.length) {
-      entries = entries.filter((e) => filterStatusCodes.includes(e.response.status));
+      entries = entries.filter((e) =>
+        filterStatusCodes.includes(e.response.status),
+      );
     }
 
     const filteredIR: ImportIR = { ...ir, entries };
-    const mappings = emitWireMockMappings(filteredIR, { projectId, useUrlPath: true });
+    const mappings = emitWireMockMappings(filteredIR, {
+      projectId,
+      useUrlPath: true,
+    });
 
     const result: ImportResult = {
       created: 0,
@@ -147,8 +156,14 @@ export class UniversalImportService {
     if (deduplicate) {
       for (const filename of existingFiles) {
         try {
-          const raw = fs.readFileSync(path.join(this.mappingsDir, filename), 'utf-8');
-          const m = JSON.parse(raw) as { request?: { method?: string; urlPath?: string; url?: string }; metadata?: { project?: string } };
+          const raw = fs.readFileSync(
+            path.join(this.mappingsDir, filename),
+            'utf-8',
+          );
+          const m = JSON.parse(raw) as {
+            request?: { method?: string; urlPath?: string; url?: string };
+            metadata?: { project?: string };
+          };
           if (!overwrite && m.metadata?.project !== projectId) continue;
           const key = `${m.request?.method}:${m.request?.urlPath ?? m.request?.url}`;
           existingKeys.add(key);
@@ -167,7 +182,11 @@ export class UniversalImportService {
           continue;
         }
 
-        const urlSlug = (mapping.request.urlPath ?? mapping.request.url ?? 'unknown')
+        const urlSlug = (
+          mapping.request.urlPath ??
+          mapping.request.url ??
+          'unknown'
+        )
           .replace(/[^a-z0-9]/gi, '_')
           .toLowerCase()
           .slice(0, 40);
@@ -185,7 +204,9 @@ export class UniversalImportService {
 
         result.created++;
       } catch (err) {
-        result.errors.push(`Failed to create mapping for ${mapping.name}: ${(err as Error).message}`);
+        result.errors.push(
+          `Failed to create mapping for ${mapping.name}: ${(err as Error).message}`,
+        );
         this.logger.warn(`Import error: ${(err as Error).message}`);
       }
     }
@@ -195,16 +216,42 @@ export class UniversalImportService {
     return result;
   }
 
-  async importFromUrl(url: string, options: ImportOptions): Promise<ImportResult> {
+  async importFromUrl(
+    url: string,
+    options: ImportOptions,
+  ): Promise<ImportResult> {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new BadRequestException(
+        `URL scheme not allowed: ${parsed.protocol}`,
+      );
+    }
+    const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (
+      hostname === 'localhost' ||
+      hostname === '0.0.0.0' ||
+      hostname === '::1' ||
+      /^127\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^169\.254\./.test(hostname) ||
+      hostname.endsWith('.internal') ||
+      hostname.endsWith('.local')
+    ) {
+      throw new BadRequestException(`URL hostname not allowed: ${hostname}`);
+    }
     let content: string;
     try {
-      const res = await fetch(url);
+      const res = await fetch(parsed.href);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
       content = await res.text();
     } catch (err) {
-      throw new BadRequestException(`Failed to fetch from URL: ${(err as Error).message}`);
+      throw new BadRequestException(
+        `Failed to fetch from URL: ${(err as Error).message}`,
+      );
     }
 
     const filename = url.split('/').pop();

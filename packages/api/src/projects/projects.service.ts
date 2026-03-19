@@ -30,11 +30,14 @@ export class ProjectsService {
   }
 
   private ensureProjectsFile(): void {
-    if (!fs.existsSync(this.projectsFile)) {
+    try {
       fs.writeFileSync(
         this.projectsFile,
         JSON.stringify([DEFAULT_PROJECT], null, 2),
+        { flag: 'wx' },
       );
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
     }
   }
 

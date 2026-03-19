@@ -13,12 +13,14 @@ The Stubrix MCP server includes **4 predefined prompts** that help AI assistants
 **Purpose**: Guides through setting up a complete recording session for API traffic.
 
 **Parameters**:
+
 - `projectId` (optional): Project ID to use (will create if not provided)
 - `proxyTarget` (required): Target API URL to record from
 - `includePatterns` (optional): Comma-separated URL patterns to include
 - `excludePatterns` (optional): Comma-separated URL patterns to exclude
 
 **Example Usage**:
+
 ```bash
 # Start recording session with filters
 setup-recording-session proxyTarget="https://api.example.com" includePatterns="/api/*,/api/users/**" excludePatterns="/api/health,/api/metrics/*"
@@ -28,12 +30,14 @@ setup-recording-session proxyTarget="https://staging.api.com"
 ```
 
 **Workflow Steps**:
+
 1. Get or create project
 2. Start recording session
 3. Monitor recording status
 4. Stop recording when done
 
 **Tools Used**:
+
 - `stubrix_get_project` / `stubrix_create_project`
 - `stubrix_start_recording`
 - `stubrix_get_recording_status`
@@ -46,10 +50,12 @@ setup-recording-session proxyTarget="https://staging.api.com"
 **Purpose**: Creates a complete mock from natural language description.
 
 **Parameters**:
+
 - `projectId` (required): Project ID where to create the mock
 - `description` (required): Natural language description of the mock behavior
 
 **Example Usage**:
+
 ```bash
 # Create a simple GET endpoint mock
 create-mock-from-description projectId="proj_123" description="Create a GET endpoint at /api/users that returns a list of 3 users with id, name, and email"
@@ -59,6 +65,7 @@ create-mock-from-description projectId="proj_123" description="POST /api/orders 
 ```
 
 **Workflow Steps**:
+
 1. Analyze description to extract mock details
 2. Extract HTTP method and URL pattern
 3. Determine response status and content type
@@ -66,6 +73,7 @@ create-mock-from-description projectId="proj_123" description="POST /api/orders 
 5. Create the mock using available tools
 
 **Tools Used**:
+
 - `stubrix_create_mock`
 - `stubrix_get_project`
 
@@ -76,11 +84,13 @@ create-mock-from-description projectId="proj_123" description="POST /api/orders 
 **Purpose**: Guides through snapshot, make changes, and restore database workflow.
 
 **Parameters**:
+
 - `projectId` (required): Project ID for database operations
 - `databaseEngine` (optional): Database engine (postgres, mysql, sqlite)
 - `snapshotName` (optional): Custom snapshot name
 
 **Example Usage**:
+
 ```bash
 # Complete snapshot cycle for PostgreSQL
 database-snapshot-cycle projectId="proj_123" databaseEngine="postgres" snapshotName="pre-migration-snapshot"
@@ -90,12 +100,14 @@ database-snapshot-cycle projectId="proj_123"
 ```
 
 **Workflow Steps**:
+
 1. Check database configurations
 2. Create snapshot before changes
 3. Make your database changes
 4. Restore snapshot when needed
 
 **Tools Used**:
+
 - `stubrix_get_db_configs`
 - `stubrix_get_databases`
 - `stubrix_create_snapshot`
@@ -103,6 +115,7 @@ database-snapshot-cycle projectId="proj_123"
 - `stubrix_restore_snapshot`
 
 **Best Practices**:
+
 - Always create snapshot before making changes
 - Use descriptive snapshot names
 - Test database connectivity before operations
@@ -115,10 +128,12 @@ database-snapshot-cycle projectId="proj_123"
 **Purpose**: Comprehensive health check of all Stubrix services and components.
 
 **Parameters**:
+
 - `includeDatabases` (optional): Include database health check
 - `includeContainers` (optional): Include Docker container health
 
 **Example Usage**:
+
 ```bash
 # Full health check including databases
 full-platform-health-check includeDatabases=true includeContainers=true
@@ -128,6 +143,7 @@ full-platform-health-check
 ```
 
 **Workflow Steps**:
+
 1. Check API server status
 2. Check mock server engine
 3. List projects and mocks
@@ -136,6 +152,7 @@ full-platform-health-check
 6. (Optional) Check Docker containers
 
 **Tools Used**:
+
 - `stubrix_get_status`
 - `stubrix_get_engine_status`
 - `stubrix_list_projects`
@@ -144,6 +161,7 @@ full-platform-health-check
 - `stubrix_get_databases` (if databases included)
 
 **Health Indicators**:
+
 - ✅ API server responsive
 - ✅ Mock engine running
 - ✅ Projects accessible
@@ -265,6 +283,7 @@ These prompts work seamlessly with:
 ### Prompt Structure
 
 Each prompt follows this structure:
+
 - **Description**: Clear purpose and scope
 - **Parameters**: Required and optional inputs with validation
 - **Workflow**: Step-by-step guidance
@@ -274,6 +293,7 @@ Each prompt follows this structure:
 ### Error Handling
 
 Prompts include:
+
 - Parameter validation with Zod schemas
 - Graceful error messages
 - Fallback options for missing parameters
@@ -282,6 +302,7 @@ Prompts include:
 ### Extensibility
 
 New prompts can be added by:
+
 1. Adding `server.prompt()` calls to the MCP server
 2. Defining parameter schemas with Zod
 3. Implementing the prompt logic
@@ -299,6 +320,7 @@ New prompts can be added by:
 ### Debug Mode
 
 Enable debug logging by setting:
+
 ```bash
 export DEBUG=stubrix-mcp:*
 ```
@@ -306,6 +328,7 @@ export DEBUG=stubrix-mcp:*
 ## Future Enhancements
 
 Planned improvements:
+
 - Additional prompts for specific use cases
 - Integration with more external services
 - Enhanced error recovery workflows

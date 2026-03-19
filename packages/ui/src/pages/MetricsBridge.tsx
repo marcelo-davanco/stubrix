@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../lib/i18n';
 import { MetricsPage } from '@stubrix/mock-ui';
 
 export default function MetricsBridge() {
-  const navigate = useNavigate();
-  return <MetricsPage onNavigateBack={() => navigate(-1)} />;
+  const { t } = useTranslation();
+  return <MetricsPage t={t} />;
 }

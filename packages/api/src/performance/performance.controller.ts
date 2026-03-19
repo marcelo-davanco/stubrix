@@ -28,7 +28,11 @@ export class CreateScriptDto {
 
   @IsOptional()
   @IsObject()
-  options?: { vus?: number; duration?: string; thresholds?: Record<string, string[]> };
+  options?: {
+    vus?: number;
+    duration?: string;
+    thresholds?: Record<string, string[]>;
+  };
 }
 
 export class SaveBaselineDto {
@@ -63,7 +67,12 @@ export class PerformanceController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a custom k6 test script' })
   createScript(@Body() dto: CreateScriptDto) {
-    return this.service.createScript(dto.name, dto.script, dto.options ?? {}, dto.description);
+    return this.service.createScript(
+      dto.name,
+      dto.script,
+      dto.options ?? {},
+      dto.description,
+    );
   }
 
   @Get('scripts/:id/export')
@@ -91,7 +100,9 @@ export class PerformanceController {
 
   @Post('baselines/:id/compare')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Compare current metrics against a baseline (CI gate)' })
+  @ApiOperation({
+    summary: 'Compare current metrics against a baseline (CI gate)',
+  })
   @ApiParam({ name: 'id' })
   compare(@Param('id') id: string, @Body() dto: CompareBaselineDto) {
     return this.service.compareBaseline(id, dto.current);

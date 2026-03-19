@@ -71,7 +71,10 @@ export class StatefulMocksService {
       .filter((f) => f.endsWith('.json'))
       .flatMap((filename) => {
         try {
-          const raw = fs.readFileSync(path.join(this.storageDir, filename), 'utf-8');
+          const raw = fs.readFileSync(
+            path.join(this.storageDir, filename),
+            'utf-8',
+          );
           return [JSON.parse(raw) as StatefulMock];
         } catch {
           return [];
@@ -80,6 +83,9 @@ export class StatefulMocksService {
   }
 
   findOne(id: string): StatefulMock {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) {
+      throw new NotFoundException(`Stateful mock '${id}' not found`);
+    }
     const filePath = path.join(this.storageDir, `${id}.json`);
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException(`Stateful mock '${id}' not found`);
@@ -88,7 +94,9 @@ export class StatefulMocksService {
   }
 
   create(dto: CreateStatefulMockDto): StatefulMock {
-    const validation = this.templateEngine.validate(dto.stateConfig.stateTemplate);
+    const validation = this.templateEngine.validate(
+      dto.stateConfig.stateTemplate,
+    );
     if (!validation.valid) {
       throw new BadRequestException(
         `Invalid Handlebars template: ${validation.error}`,
@@ -128,7 +136,9 @@ export class StatefulMocksService {
     const existing = this.findOne(id);
 
     if (dto.stateConfig?.stateTemplate) {
-      const validation = this.templateEngine.validate(dto.stateConfig.stateTemplate);
+      const validation = this.templateEngine.validate(
+        dto.stateConfig.stateTemplate,
+      );
       if (!validation.valid) {
         throw new BadRequestException(
           `Invalid Handlebars template: ${validation.error}`,
@@ -153,15 +163,17 @@ export class StatefulMocksService {
   }
 
   remove(id: string): void {
-    const filePath = path.join(this.storageDir, `${id}.json`);
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundException(`Stateful mock '${id}' not found`);
-    }
+    const mock = this.findOne(id);
+    const safeId = path.basename(mock.id);
+    const filePath = path.join(this.storageDir, `${safeId}.json`);
     fs.unlinkSync(filePath);
-    this.stateResolver.invalidateCache(id);
+    this.stateResolver.invalidateCache(mock.id);
   }
 
-  async test(id: string, request?: ProxyRequest): Promise<{
+  async test(
+    id: string,
+    request?: ProxyRequest,
+  ): Promise<{
     response: { status: number; headers: Record<string, string>; body: string };
     resolvedFromState: boolean;
     stateQueryTimeMs?: number;
@@ -186,7 +198,10 @@ export class StatefulMocksService {
     };
   }
 
-  preview(id: string): { template: string; sampleContext: Record<string, unknown> } {
+  preview(id: string): {
+    template: string;
+    sampleContext: Record<string, unknown>;
+  } {
     const mock = this.findOne(id);
     const sampleContext = {
       state: {
@@ -208,7 +223,10 @@ export class StatefulMocksService {
       sampleContext,
     );
 
-    return { template: mock.stateConfig.stateTemplate, sampleContext: { ...sampleContext, renderedBody } };
+    return {
+      template: mock.stateConfig.stateTemplate,
+      sampleContext: { ...sampleContext, renderedBody },
+    };
   }
 
   private save(mock: StatefulMock): void {

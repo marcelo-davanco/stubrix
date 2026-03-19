@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 
 const API_URL = () =>
-  vscode.workspace.getConfiguration('stubrix').get<string>('apiUrl') ?? 'http://localhost:9090';
+  vscode.workspace.getConfiguration('stubrix').get<string>('apiUrl') ??
+  'http://localhost:9090';
 
 async function apiGet(path: string): Promise<unknown> {
   const res = await fetch(`${API_URL()}${path}`);
@@ -20,16 +21,24 @@ async function apiPost(path: string, body?: unknown): Promise<unknown> {
 }
 
 class MocksTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-  private _onDidChangeTreeData = new vscode.EventEmitter<vscode.TreeItem | undefined | null>();
+  private _onDidChangeTreeData = new vscode.EventEmitter<
+    vscode.TreeItem | undefined | null
+  >();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  refresh(): void { this._onDidChangeTreeData.fire(undefined); }
+  refresh(): void {
+    this._onDidChangeTreeData.fire(undefined);
+  }
 
-  getTreeItem(element: vscode.TreeItem): vscode.TreeItem { return element; }
+  getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+    return element;
+  }
 
   async getChildren(): Promise<vscode.TreeItem[]> {
     try {
-      const projects = (await apiGet('/api/projects')) as Array<Record<string, unknown>>;
+      const projects = (await apiGet('/api/projects')) as Array<
+        Record<string, unknown>
+      >;
       return projects.map((p) => {
         const item = new vscode.TreeItem(
           String(p['name'] ?? p['id']),
@@ -46,16 +55,24 @@ class MocksTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
 }
 
 class ScenariosTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-  private _onDidChangeTreeData = new vscode.EventEmitter<vscode.TreeItem | undefined | null>();
+  private _onDidChangeTreeData = new vscode.EventEmitter<
+    vscode.TreeItem | undefined | null
+  >();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  refresh(): void { this._onDidChangeTreeData.fire(undefined); }
+  refresh(): void {
+    this._onDidChangeTreeData.fire(undefined);
+  }
 
-  getTreeItem(element: vscode.TreeItem): vscode.TreeItem { return element; }
+  getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+    return element;
+  }
 
   async getChildren(): Promise<vscode.TreeItem[]> {
     try {
-      const scenarios = (await apiGet('/api/scenarios')) as Array<Record<string, unknown>>;
+      const scenarios = (await apiGet('/api/scenarios')) as Array<
+        Record<string, unknown>
+      >;
       return scenarios.map((s) => {
         const meta = (s['meta'] ?? s) as Record<string, unknown>;
         const item = new vscode.TreeItem(
@@ -82,7 +99,9 @@ async function updateStatusBar(): Promise<void> {
     statusBarItem.backgroundColor = undefined;
   } catch {
     statusBarItem.text = '$(warning) Stubrix: offline';
-    statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    statusBarItem.backgroundColor = new vscode.ThemeColor(
+      'statusBarItem.warningBackground',
+    );
   }
   statusBarItem.show();
 }
@@ -93,14 +112,22 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('stubrix.mocks', mocksProvider),
-    vscode.window.registerTreeDataProvider('stubrix.scenarios', scenariosProvider),
+    vscode.window.registerTreeDataProvider(
+      'stubrix.scenarios',
+      scenariosProvider,
+    ),
   );
 
-  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
+  statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left,
+    0,
+  );
   statusBarItem.command = 'stubrix.openDocs';
   context.subscriptions.push(statusBarItem);
 
-  const showConfig = vscode.workspace.getConfiguration('stubrix').get<boolean>('showStatusBar', true);
+  const showConfig = vscode.workspace
+    .getConfiguration('stubrix')
+    .get<boolean>('showStatusBar', true);
   if (showConfig) {
     updateStatusBar();
     const interval = setInterval(updateStatusBar, 30_000);
@@ -116,14 +143,19 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand('stubrix.startEngine', async () => {
       await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: 'Starting Stubrix engine...' },
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Starting Stubrix engine...',
+        },
         async () => {
           try {
             await apiPost('/api/engine/start');
             vscode.window.showInformationMessage('Stubrix engine started.');
             updateStatusBar();
           } catch (err) {
-            vscode.window.showErrorMessage(`Failed to start engine: ${(err as Error).message}`);
+            vscode.window.showErrorMessage(
+              `Failed to start engine: ${(err as Error).message}`,
+            );
           }
         },
       );
@@ -135,19 +167,25 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.showInformationMessage('Stubrix engine stopped.');
         updateStatusBar();
       } catch (err) {
-        vscode.window.showErrorMessage(`Failed to stop engine: ${(err as Error).message}`);
+        vscode.window.showErrorMessage(
+          `Failed to stop engine: ${(err as Error).message}`,
+        );
       }
     }),
 
     vscode.commands.registerCommand('stubrix.captureScenario', async () => {
-      const name = await vscode.window.showInputBox({ prompt: 'Scenario name' });
+      const name = await vscode.window.showInputBox({
+        prompt: 'Scenario name',
+      });
       if (!name) return;
       try {
         await apiPost('/api/scenarios/capture', { name });
         vscode.window.showInformationMessage(`Scenario "${name}" captured.`);
         scenariosProvider.refresh();
       } catch (err) {
-        vscode.window.showErrorMessage(`Failed to capture scenario: ${(err as Error).message}`);
+        vscode.window.showErrorMessage(
+          `Failed to capture scenario: ${(err as Error).message}`,
+        );
       }
     }),
 
@@ -170,7 +208,9 @@ export function activate(context: vscode.ExtensionContext): void {
           results.push(`❌ ${c.name}`);
         }
       }
-      vscode.window.showInformationMessage(`Stubrix Doctor:\n${results.join('\n')}`);
+      vscode.window.showInformationMessage(
+        `Stubrix Doctor:\n${results.join('\n')}`,
+      );
     }),
   );
 }

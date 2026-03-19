@@ -33,6 +33,7 @@ describe('AuditLogService', () => {
       default_port: 8080,
       external_url: undefined,
       enabled: 0,
+      auto_start: 0,
       health_status: 'unknown',
       last_health_check: undefined,
     });

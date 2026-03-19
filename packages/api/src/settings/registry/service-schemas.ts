@@ -166,7 +166,7 @@ export const ADMINER_CONFIG_SCHEMA: ConfigField[] = [
     key: 'ADMINER_PORT',
     label: 'Port',
     dataType: 'number',
-    defaultValue: 8082,
+    defaultValue: 8084,
     validation: { min: 1, max: 65535 },
   },
   {
@@ -184,6 +184,49 @@ export const CLOUDBEAVER_CONFIG_SCHEMA: ConfigField[] = [
     dataType: 'number',
     defaultValue: 8083,
     validation: { min: 1, max: 65535 },
+  },
+  {
+    key: 'CLOUDBEAVER_CONTENT_ROOT',
+    label: 'Web Content Root',
+    dataType: 'string',
+    defaultValue: '/opt/cloudbeaver/web',
+  },
+  {
+    key: 'CLOUDBEAVER_WORKSPACE_DIR',
+    label: 'Workspace Directory',
+    dataType: 'string',
+    defaultValue: '/opt/cloudbeaver/workspace',
+  },
+  {
+    key: 'CLOUDBEAVER_DRIVERS_DIR',
+    label: 'Drivers Directory',
+    dataType: 'string',
+    defaultValue: '/opt/cloudbeaver/drivers',
+  },
+  {
+    key: 'CLOUDBEAVER_PRODUCT_CONF',
+    label: 'Product Config Path',
+    dataType: 'string',
+    defaultValue: '/opt/cloudbeaver/conf/product.conf',
+  },
+  {
+    key: 'CLOUDBEAVER_SESSION_EXPIRE',
+    label: 'Session Expiry (ms)',
+    dataType: 'number',
+    defaultValue: 1800000,
+    validation: { min: 60000 },
+  },
+  {
+    key: 'CLOUDBEAVER_ANONYMOUS_ACCESS',
+    label: 'Allow Anonymous Access',
+    dataType: 'boolean',
+    defaultValue: true,
+  },
+  {
+    key: 'CLOUDBEAVER_CUSTOM_CONNECTIONS',
+    label: 'Allow Custom Connections',
+    dataType: 'boolean',
+    defaultValue: true,
   },
 ];
 

@@ -26,19 +26,25 @@ export class IamService {
   private readonly zitadelUrl: string;
 
   constructor(private readonly config: ConfigService) {
-    this.keycloakUrl = this.config.get<string>('KEYCLOAK_URL') ?? 'http://localhost:8180';
+    this.keycloakUrl =
+      this.config.get<string>('KEYCLOAK_URL') ?? 'http://localhost:8180';
     this.realm = this.config.get<string>('KEYCLOAK_REALM') ?? 'stubrix';
-    this.clientId = this.config.get<string>('KEYCLOAK_CLIENT_ID') ?? 'stubrix-api';
+    this.clientId =
+      this.config.get<string>('KEYCLOAK_CLIENT_ID') ?? 'stubrix-api';
     this.clientSecret = this.config.get<string>('KEYCLOAK_CLIENT_SECRET') ?? '';
-    this.zitadelUrl = this.config.get<string>('ZITADEL_URL') ?? 'http://localhost:8080';
+    this.zitadelUrl =
+      this.config.get<string>('ZITADEL_URL') ?? 'http://localhost:8080';
   }
 
-  async keycloakHealth(): Promise<{ available: boolean; url: string; realm: string }> {
+  async keycloakHealth(): Promise<{
+    available: boolean;
+    url: string;
+    realm: string;
+  }> {
     try {
-      const res = await fetch(
-        `${this.keycloakUrl}/realms/${this.realm}`,
-        { signal: AbortSignal.timeout(3_000) },
-      );
+      const res = await fetch(`${this.keycloakUrl}/realms/${this.realm}`, {
+        signal: AbortSignal.timeout(3_000),
+      });
       return { available: res.ok, url: this.keycloakUrl, realm: this.realm };
     } catch {
       return { available: false, url: this.keycloakUrl, realm: this.realm };
@@ -75,7 +81,8 @@ export class IamService {
       },
     );
 
-    if (!res.ok) throw new Error(`Keycloak token request failed: HTTP ${res.status}`);
+    if (!res.ok)
+      throw new Error(`Keycloak token request failed: HTTP ${res.status}`);
     const data = (await res.json()) as Record<string, unknown>;
     return {
       accessToken: String(data['access_token'] ?? ''),
@@ -102,7 +109,8 @@ export class IamService {
       },
     );
 
-    if (!res.ok) throw new Error(`Keycloak client credentials failed: HTTP ${res.status}`);
+    if (!res.ok)
+      throw new Error(`Keycloak client credentials failed: HTTP ${res.status}`);
     const data = (await res.json()) as Record<string, unknown>;
     return {
       accessToken: String(data['access_token'] ?? ''),
@@ -128,7 +136,8 @@ export class IamService {
       },
     );
 
-    if (!res.ok) throw new Error(`Token introspection failed: HTTP ${res.status}`);
+    if (!res.ok)
+      throw new Error(`Token introspection failed: HTTP ${res.status}`);
     return res.json() as Promise<Record<string, unknown>>;
   }
 

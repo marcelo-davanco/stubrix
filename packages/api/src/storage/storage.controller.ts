@@ -1,6 +1,14 @@
-import { Controller, Get, Post, Body, HttpCode, HttpStatus, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Param,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString } from 'class-validator';
 import { StorageService } from './storage.service';
 
 export class UploadMockBodyDto {
@@ -13,7 +21,10 @@ export class UploadMockBodyDto {
 
 export class ArchiveSnapshotDto {
   @IsString()
-  snapshotPath: string;
+  engine: string;
+
+  @IsString()
+  filename: string;
 
   @IsString()
   projectId: string;
@@ -47,7 +58,11 @@ export class StorageController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Archive a database snapshot to MinIO' })
   archive(@Body() dto: ArchiveSnapshotDto) {
-    return this.service.archiveSnapshot(dto.snapshotPath, dto.projectId);
+    return this.service.archiveSnapshot(
+      dto.engine,
+      dto.filename,
+      dto.projectId,
+    );
   }
 
   @Get('url/:bucket/*key')

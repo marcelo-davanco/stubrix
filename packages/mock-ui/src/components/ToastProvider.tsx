@@ -21,7 +21,13 @@ export function useToast() {
   return useContext(ToastContext);
 }
 
-function ToastItem({ toast, onClose }: { toast: ToastMessage; onClose: () => void }) {
+function ToastItem({
+  toast,
+  onClose,
+}: {
+  toast: ToastMessage;
+  onClose: () => void;
+}) {
   const styles = {
     success: {
       icon: <CheckCircle2 size={18} className="text-green-400" />,
@@ -54,7 +60,9 @@ function ToastItem({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
       <div className="flex-1">
         <p className="text-sm font-semibold text-text-primary">{toast.title}</p>
         {toast.description && (
-          <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">{toast.description}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">
+            {toast.description}
+          </p>
         )}
       </div>
       <button

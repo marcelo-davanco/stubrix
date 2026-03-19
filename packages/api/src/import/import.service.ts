@@ -1,8 +1,20 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { WireMockClientService } from '../common/wiremock-client.service';
 import { ProjectsService } from '../projects/projects.service';
-import * as fs from 'fs';
-import * as path from 'path';
+
+interface WireMockMappingDraft {
+  request: {
+    method: string;
+    url?: string;
+    headers?: Record<string, string>;
+    bodyPatterns?: Array<{ equalTo: string; caseInsensitive: boolean }>;
+  };
+  response: {
+    status: number;
+    headers: Record<string, string>;
+    body: string;
+  };
+}
 
 export interface ImportResult {
   created: number;
@@ -40,7 +52,7 @@ export interface PostmanItem {
     body?: {
       mode: string;
       raw?: string;
-      graphql?: any;
+      graphql?: { query?: string; variables?: Record<string, unknown> };
     };
     url: {
       raw: string;
@@ -75,12 +87,15 @@ export class ImportService {
     private readonly projects: ProjectsService,
   ) {}
 
-  async importFromHar(projectId: string, harContent: string): Promise<ImportResult> {
+  async importFromHar(
+    projectId: string,
+    harContent: string,
+  ): Promise<ImportResult> {
     this.logger.log(`Starting HAR import for project ${projectId}`);
-    
+
     try {
       const har = JSON.parse(harContent) as { log: { entries: HarEntry[] } };
-      
+
       if (!har.log?.entries) {
         throw new BadRequestException('Invalid HAR file format');
       }
@@ -95,7 +110,7 @@ export class ImportService {
       // Get existing mappings to check for duplicates
       const existingMappings = await this.getExistingMappings();
       const existingUrls = new Set(
-        existingMappings.map(m => `${m.request.method}:${m.request.url}`)
+        existingMappings.map((m) => `${m.request.method}:${m.request.url}`),
       );
 
       for (const entry of har.log.entries) {
@@ -114,7 +129,7 @@ export class ImportService {
           existingUrls.add(mappingKey);
           this.logger.debug(`Created mapping: ${mappingKey}`);
         } catch (error) {
-          const errorMsg = `Failed to import entry ${entry.request.url}: ${error.message}`;
+          const errorMsg = `Failed to import entry ${entry.request.url}: ${(error as Error).message}`;
           result.errors.push(errorMsg);
           this.logger.error(errorMsg);
         }
@@ -124,16 +139,21 @@ export class ImportService {
       return result;
     } catch (error) {
       this.logger.error('HAR import failed:', error);
-      throw new BadRequestException(`HAR import failed: ${error.message}`);
+      throw new BadRequestException(
+        `HAR import failed: ${(error as Error).message}`,
+      );
     }
   }
 
-  async importFromPostman(projectId: string, postmanContent: string): Promise<ImportResult> {
+  async importFromPostman(
+    projectId: string,
+    postmanContent: string,
+  ): Promise<ImportResult> {
     this.logger.log(`Starting Postman import for project ${projectId}`);
-    
+
     try {
       const collection = JSON.parse(postmanContent) as PostmanCollection;
-      
+
       if (!collection.item) {
         throw new BadRequestException('Invalid Postman collection format');
       }
@@ -148,7 +168,7 @@ export class ImportService {
       // Get existing mappings to check for duplicates
       const existingMappings = await this.getExistingMappings();
       const existingUrls = new Set(
-        existingMappings.map(m => `${m.request.method}:${m.request.url}`)
+        existingMappings.map((m) => `${m.request.method}:${m.request.url}`),
       );
 
       for (const item of collection.item) {
@@ -167,7 +187,7 @@ export class ImportService {
           existingUrls.add(mappingKey);
           this.logger.debug(`Created mapping: ${mappingKey}`);
         } catch (error) {
-          const errorMsg = `Failed to import item ${item.request?.url?.raw || 'unknown'}: ${error.message}`;
+          const errorMsg = `Failed to import item ${item.request?.url?.raw || 'unknown'}: ${(error as Error).message}`;
           result.errors.push(errorMsg);
           this.logger.error(errorMsg);
         }
@@ -177,35 +197,46 @@ export class ImportService {
       return result;
     } catch (error) {
       this.logger.error('Postman import failed:', error);
-      throw new BadRequestException(`Postman import failed: ${error.message}`);
+      throw new BadRequestException(
+        `Postman import failed: ${(error as Error).message}`,
+      );
     }
   }
 
-  private async getExistingMappings() {
+  private async getExistingMappings(): Promise<WireMockMappingDraft[]> {
     try {
-      const mappings = await this.wireMock.get<any[]>('/mappings');
+      const mappings =
+        await this.wireMock.get<WireMockMappingDraft[]>('/mappings');
       return mappings || [];
     } catch {
       return [];
     }
   }
 
-  private convertHarEntryToWireMock(entry: HarEntry): any {
-    const headers: { [key: string]: string } = {};
-    entry.request.headers?.forEach(header => {
-      headers[header.name] = header.value;
+  private isSafeHeaderName(name: string): boolean {
+    return (
+      name !== '__proto__' && name !== 'constructor' && name !== 'prototype'
+    );
+  }
+
+  private convertHarEntryToWireMock(entry: HarEntry): WireMockMappingDraft {
+    const headers = Object.create(null) as Record<string, string>;
+    entry.request.headers?.forEach((header) => {
+      if (this.isSafeHeaderName(header.name)) {
+        headers[header.name] = header.value;
+      }
     });
 
     // Build query parameters
     let url = entry.request.url;
     if (entry.request.queryString && entry.request.queryString.length > 0) {
       const queryParams = entry.request.queryString
-        .map(q => `${q.name}=${encodeURIComponent(q.value)}`)
+        .map((q) => `${q.name}=${encodeURIComponent(q.value)}`)
         .join('&');
       url += (url.includes('?') ? '&' : '?') + queryParams;
     }
 
-    const mapping: any = {
+    const mapping: WireMockMappingDraft = {
       request: {
         method: entry.request.method,
         url: url,
@@ -213,28 +244,35 @@ export class ImportService {
       },
       response: {
         status: entry.response.status,
-        headers: {},
+        headers: Object.create(null) as Record<string, string>,
         body: entry.response.content.text || '',
       },
     };
 
     // Set response headers
-    entry.response.headers?.forEach(header => {
-      mapping.response.headers[header.name] = header.value;
+    entry.response.headers?.forEach((header) => {
+      if (this.isSafeHeaderName(header.name)) {
+        mapping.response.headers[header.name] = header.value;
+      }
     });
 
     // Set content type if available
     if (entry.response.content.mimeType) {
-      mapping.response.headers['Content-Type'] = entry.response.content.mimeType;
+      mapping.response.headers['Content-Type'] =
+        entry.response.content.mimeType;
     }
 
     return mapping;
   }
 
-  private convertPostmanItemToWireMock(item: PostmanItem): any {
-    const headers: { [key: string]: string } = {};
-    item.request.header?.forEach(header => {
-      headers[header.key] = header.value;
+  private convertPostmanItemToWireMock(
+    item: PostmanItem,
+  ): WireMockMappingDraft {
+    const headers = Object.create(null) as Record<string, string>;
+    item.request.header?.forEach((header) => {
+      if (this.isSafeHeaderName(header.key)) {
+        headers[header.key] = header.value;
+      }
     });
 
     let body = '';
@@ -275,21 +313,25 @@ export class ImportService {
       status = item.response[0].code || 200;
     }
 
-    const mapping: any = {
+    const mapping: WireMockMappingDraft = {
       request: {
         method: item.request.method,
         url: url,
         headers: Object.keys(headers).length > 0 ? headers : undefined,
-        bodyPatterns: body ? [{
-          equalTo: body,
-          caseInsensitive: false,
-    }] : undefined,
+        bodyPatterns: body
+          ? [
+              {
+                equalTo: body,
+                caseInsensitive: false,
+              },
+            ]
+          : undefined,
       },
       response: {
         status: status,
-        headers: {
+        headers: Object.assign(Object.create(null), {
           'Content-Type': contentType,
-        },
+        }) as Record<string, string>,
         body: '',
       },
     };
@@ -297,10 +339,12 @@ export class ImportService {
     // Add response headers from Postman if available
     if (item.response && item.response.length > 0) {
       const response = item.response[0];
-      response.header?.forEach(header => {
-        mapping.response.headers[header.key] = header.value;
+      response.header?.forEach((header) => {
+        if (this.isSafeHeaderName(header.key)) {
+          mapping.response.headers[header.key] = header.value;
+        }
       });
-      
+
       if (response.body) {
         mapping.response.body = response.body;
       }
@@ -320,7 +364,7 @@ export class ImportService {
     if (result.errors.length > 0) {
       parts.push(`${result.errors.length} errors`);
     }
-    
+
     return parts.length > 0 ? parts.join(', ') : 'No changes';
   }
 }

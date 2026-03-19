@@ -1,22 +1,26 @@
-import type { Engine } from '@stubrix/shared'
-import { Server } from 'lucide-react'
-import { EmptyState } from './EmptyState'
+import type { Engine } from '@stubrix/shared';
+import { Server } from 'lucide-react';
+import { useDbUiTranslation } from '../lib/i18n';
+import { EmptyState } from './EmptyState';
 
 type EngineSelectorProps = {
-  engines: Array<Engine>
-  allEngines: Array<Engine>
-  selectedEngine: null | string
-  onSelect: (engine: string) => void
-}
+  engines: Array<Engine>;
+  allEngines: Array<Engine>;
+  selectedEngine: null | string;
+  onSelect: (engine: string) => void;
+};
 
 const ENGINE_ICON: Record<string, string> = {
   postgres: '🐘',
   mysql: '🐬',
   sqlite: '📁',
   mongodb: '🍃',
-}
+};
 
-const ENGINE_COLOR: Record<string, { ring: string; bg: string; text: string; glow: string }> = {
+const ENGINE_COLOR: Record<
+  string,
+  { ring: string; bg: string; text: string; glow: string }
+> = {
   postgres: {
     ring: 'ring-blue-500/40',
     bg: 'bg-blue-500/10',
@@ -41,26 +45,36 @@ const ENGINE_COLOR: Record<string, { ring: string; bg: string; text: string; glo
     text: 'text-green-300',
     glow: 'shadow-green-500/20',
   },
-}
+};
 
-export function EngineSelector({ allEngines, selectedEngine, onSelect }: EngineSelectorProps) {
+export function EngineSelector({
+  allEngines,
+  selectedEngine,
+  onSelect,
+}: EngineSelectorProps) {
+  const t = useDbUiTranslation();
   if (allEngines.length === 0) {
     return (
       <EmptyState
         icon={<Server size={24} strokeWidth={1.5} />}
-        title="Nenhuma engine configurada"
-        description="Configure uma engine de banco de dados para começar a gerenciar suas conexões e snapshots."
+        title={t('db.noEngineTitle')}
+        description={t('db.noEngineDesc')}
       />
-    )
+    );
   }
 
   return (
-    <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${allEngines.length}, minmax(0, 1fr))` }}>
+    <div
+      className="grid gap-3"
+      style={{
+        gridTemplateColumns: `repeat(${allEngines.length}, minmax(0, 1fr))`,
+      }}
+    >
       {allEngines.map((engine) => {
-        const isSelected = selectedEngine === engine.name
-        const isActive = engine.status === 'active'
-        const color = ENGINE_COLOR[engine.name] ?? ENGINE_COLOR.sqlite
-        const icon = ENGINE_ICON[engine.name] ?? '🗄️'
+        const isSelected = selectedEngine === engine.name;
+        const isActive = engine.status === 'active';
+        const color = ENGINE_COLOR[engine.name] ?? ENGINE_COLOR.sqlite;
+        const icon = ENGINE_ICON[engine.name] ?? '🗄️';
 
         return (
           <button
@@ -77,26 +91,34 @@ export function EngineSelector({ allEngines, selectedEngine, onSelect }: EngineS
                   : 'cursor-not-allowed border-white/5 bg-main-bg opacity-40',
             ].join(' ')}
           >
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-2xl ${isSelected ? color.bg : 'bg-main-bg'}`}>
+            <div
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-2xl ${isSelected ? color.bg : 'bg-main-bg'}`}
+            >
               {icon}
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`font-semibold capitalize ${isSelected ? color.text : 'text-text-primary'}`}>
+              <p
+                className={`font-semibold capitalize ${isSelected ? color.text : 'text-text-primary'}`}
+              >
                 {engine.name}
               </p>
               <div className="mt-0.5 flex items-center gap-1.5">
-                <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-green-400' : 'bg-white/20'}`} />
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-green-400' : 'bg-white/20'}`}
+                />
                 <span className="text-xs text-text-secondary">
-                  {isActive ? 'Online' : 'Offline'}
+                  {isActive ? t('db.online') : t('db.offline')}
                 </span>
               </div>
             </div>
             {isSelected && isActive && (
-              <div className={`h-2 w-2 shrink-0 rounded-full ${color.text.replace('text-', 'bg-')}`} />
+              <div
+                className={`h-2 w-2 shrink-0 rounded-full ${color.text.replace('text-', 'bg-')}`}
+              />
             )}
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

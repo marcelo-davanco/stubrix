@@ -23,7 +23,7 @@ src/
 ## Public API
 
 ```typescript
-import { DatabasesPage, useDbManager, dbApi } from '@stubrix/db-ui'
+import { DatabasesPage, useDbManager, dbApi } from '@stubrix/db-ui';
 ```
 
 ### DatabasesPage
@@ -43,13 +43,18 @@ Central state hook for database operations.
 const {
   // State
   projects,
-  selectedProjectId, setSelectedProjectId,
-  engines, activeEngines,
-  selectedEngine, setSelectedEngine,
-  databases, loadingDatabases,
+  selectedProjectId,
+  setSelectedProjectId,
+  engines,
+  activeEngines,
+  selectedEngine,
+  setSelectedEngine,
+  databases,
+  loadingDatabases,
   snapshots,
   databaseInfo,
-  loading, error,
+  loading,
+  error,
 
   // Actions
   refreshAll,
@@ -59,7 +64,7 @@ const {
   deleteSnapshot,
   saveProjectDatabaseConfig,
   deleteProjectDatabaseConfig,
-} = useDbManager()
+} = useDbManager();
 ```
 
 ### dbApi
@@ -88,19 +93,19 @@ await dbApi.deleteProjectDatabaseConfig(projectId, id)
 
 ## API Endpoints Consumed
 
-| Endpoint | Description |
-| -------- | ----------- |
-| `GET /api/db/engines` | List available DB engines |
-| `GET /api/db/databases` | List databases for engine |
-| `GET /api/db/databases/:name` | Database info (tables, size) |
-| `GET /api/db/snapshots` | List snapshots |
-| `POST /api/db/snapshots` | Create snapshot (pg_dump) |
-| `POST /api/db/snapshots/:name/restore` | Restore snapshot (psql) |
-| `DELETE /api/db/snapshots/:name` | Delete snapshot |
-| `GET /api/projects/:id/databases/configs` | Project DB configs |
-| `PUT /api/projects/:id/databases/configs` | Upsert project DB config |
-| `DELETE /api/projects/:id/databases/configs/:configId` | Delete DB config |
-| `GET /api/projects` | List projects (for selector) |
+| Endpoint                                               | Description                  |
+| ------------------------------------------------------ | ---------------------------- |
+| `GET /api/db/engines`                                  | List available DB engines    |
+| `GET /api/db/databases`                                | List databases for engine    |
+| `GET /api/db/databases/:name`                          | Database info (tables, size) |
+| `GET /api/db/snapshots`                                | List snapshots               |
+| `POST /api/db/snapshots`                               | Create snapshot (pg_dump)    |
+| `POST /api/db/snapshots/:name/restore`                 | Restore snapshot (psql)      |
+| `DELETE /api/db/snapshots/:name`                       | Delete snapshot              |
+| `GET /api/projects/:id/databases/configs`              | Project DB configs           |
+| `PUT /api/projects/:id/databases/configs`              | Upsert project DB config     |
+| `DELETE /api/projects/:id/databases/configs/:configId` | Delete DB config             |
+| `GET /api/projects`                                    | List projects (for selector) |
 
 ## Development
 

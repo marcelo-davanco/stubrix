@@ -9,7 +9,9 @@ export function registerMockCommands(program: Command): void {
     .description('List mocks (optionally filtered by project)')
     .option('--json', 'Output raw JSON')
     .action(async (projectId: string | undefined, opts: { json?: boolean }) => {
-      const url = projectId ? `/api/projects/${projectId}/mocks` : '/api/projects';
+      const url = projectId
+        ? `/api/projects/${projectId}/mocks`
+        : '/api/projects';
       const data = await apiGet(url);
       if (opts.json) {
         console.log(JSON.stringify(data, null, 2));
@@ -29,13 +31,22 @@ export function registerMockCommands(program: Command): void {
     .requiredOption('--path <path>', 'URL path')
     .option('--status <status>', 'Response status code', '200')
     .option('--body <body>', 'Response body JSON', '{}')
-    .action(async (projectId: string, opts: { method: string; path: string; status: string; body: string }) => {
-      const result = await apiPost(`/api/projects/${projectId}/mocks`, {
-        request: { method: opts.method.toUpperCase(), urlPath: opts.path },
-        response: { status: parseInt(opts.status), body: opts.body, headers: { 'Content-Type': 'application/json' } },
-      });
-      console.log(JSON.stringify(result, null, 2));
-    });
+    .action(
+      async (
+        projectId: string,
+        opts: { method: string; path: string; status: string; body: string },
+      ) => {
+        const result = await apiPost(`/api/projects/${projectId}/mocks`, {
+          request: { method: opts.method.toUpperCase(), urlPath: opts.path },
+          response: {
+            status: parseInt(opts.status),
+            body: opts.body,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        });
+        console.log(JSON.stringify(result, null, 2));
+      },
+    );
 
   mocks
     .command('delete <projectId> <mockId>')

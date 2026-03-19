@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -23,7 +18,8 @@ export class ScenariosService {
 
   constructor(private readonly config: ConfigService) {
     const mocksDir =
-      this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
     this.mappingsDir = path.join(mocksDir, 'mappings');
     this.scenariosDir = path.join(mocksDir, 'scenarios');
     fs.mkdirSync(this.scenariosDir, { recursive: true });
@@ -72,14 +68,19 @@ export class ScenariosService {
     };
 
     const bundle: ScenarioBundle = { meta, mocks };
-    const slug = name.replace(/[^a-z0-9]/gi, '_').toLowerCase().slice(0, 30);
-    const filename = `${slug}_${id}.json`;
+    const slug = name
+      .replace(/[^a-z0-9]/gi, '_')
+      .toLowerCase()
+      .slice(0, 30);
+    const filename = path.basename(`${slug}_${id}.json`);
     fs.writeFileSync(
       path.join(this.scenariosDir, filename),
       JSON.stringify(bundle, null, 2),
     );
 
-    this.logger.log(`Scenario captured: ${name} (${id}) — ${mocks.length} mocks`);
+    this.logger.log(
+      `Scenario captured: ${name} (${id}) — ${mocks.length} mocks`,
+    );
     return bundle;
   }
 
@@ -96,11 +97,18 @@ export class ScenariosService {
 
     for (const mock of bundle.mocks) {
       const mockId = (mock as { id?: string }).id ?? uuidv4();
-      const filename = `scenario_${bundle.meta.id}_${mockId}.json`;
-      fs.writeFileSync(path.join(this.mappingsDir, filename), JSON.stringify(mock, null, 2));
+      const filename = path.basename(
+        `scenario_${bundle.meta.id}_${mockId}.json`,
+      );
+      fs.writeFileSync(
+        path.join(this.mappingsDir, filename),
+        JSON.stringify(mock, null, 2),
+      );
     }
 
-    this.logger.log(`Scenario restored: ${bundle.meta.name} — ${bundle.mocks.length} mocks`);
+    this.logger.log(
+      `Scenario restored: ${bundle.meta.name} — ${bundle.mocks.length} mocks`,
+    );
     return { restored: bundle.mocks.length, name: bundle.meta.name };
   }
 
@@ -120,7 +128,9 @@ export class ScenariosService {
     const getMockKeys = (bundle: ScenarioBundle): Map<string, string> => {
       const map = new Map<string, string>();
       for (const mock of bundle.mocks) {
-        const m = mock as { request?: { method?: string; urlPath?: string; url?: string } };
+        const m = mock as {
+          request?: { method?: string; urlPath?: string; url?: string };
+        };
         const key = `${m.request?.method}:${m.request?.urlPath ?? m.request?.url}`;
         map.set(key, JSON.stringify(mock));
       }
@@ -184,6 +194,6 @@ export class ScenariosService {
 
     return match
       ? path.join(this.scenariosDir, match)
-      : path.join(this.scenariosDir, `${id}.json`);
+      : path.join(this.scenariosDir, `${path.basename(id)}.json`);
   }
 }

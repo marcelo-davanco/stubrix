@@ -36,7 +36,8 @@ export class WebhooksService {
 
   constructor(private readonly config: ConfigService) {
     const mocksDir =
-      this.config.get<string>('MOCKS_DIR') ?? path.join(process.cwd(), '../../mocks');
+      this.config.get<string>('MOCKS_DIR') ??
+      path.join(process.cwd(), '../../mocks');
     this.storageDir = path.join(mocksDir, 'webhooks');
     fs.mkdirSync(this.storageDir, { recursive: true });
     this.eventsFile = path.join(this.storageDir, 'events.json');
@@ -51,11 +52,14 @@ export class WebhooksService {
     secret?: string,
   ): WebhookEvent {
     const raw = typeof body === 'string' ? body : JSON.stringify(body);
-    const signature = headers['x-hub-signature-256'] ?? headers['x-signature'] ?? '';
+    const signature =
+      headers['x-hub-signature-256'] ?? headers['x-signature'] ?? '';
     let verified = false;
 
     if (secret && signature) {
-      const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(raw).digest('hex');
+      const expected =
+        'sha256=' +
+        crypto.createHmac('sha256', secret).update(raw).digest('hex');
       verified = expected === signature;
     }
 
@@ -72,8 +76,13 @@ export class WebhooksService {
 
     const events = this.loadEvents();
     events.unshift(event);
-    fs.writeFileSync(this.eventsFile, JSON.stringify(events.slice(0, 500), null, 2));
-    this.logger.log(`Webhook received: ${method} ${endpoint} (verified: ${verified})`);
+    fs.writeFileSync(
+      this.eventsFile,
+      JSON.stringify(events.slice(0, 500), null, 2),
+    );
+    this.logger.log(
+      `Webhook received: ${method} ${endpoint} (verified: ${verified})`,
+    );
     return event;
   }
 
@@ -91,16 +100,50 @@ export class WebhooksService {
     fs.writeFileSync(this.eventsFile, '[]');
   }
 
-  async replayEvent(id: string, targetUrl?: string): Promise<{ status: number; ok: boolean }> {
+  private assertHttpUrl(url: string): string {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new Error(`URL scheme not allowed: ${parsed.protocol}`);
+    }
+    const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (
+      hostname === 'localhost' ||
+      hostname === '0.0.0.0' ||
+      hostname === '::1' ||
+      /^127\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^169\.254\./.test(hostname) ||
+      hostname.endsWith('.internal') ||
+      hostname.endsWith('.local')
+    ) {
+      throw new Error(`URL hostname not allowed: ${hostname}`);
+    }
+    return parsed.href;
+  }
+
+  async replayEvent(
+    id: string,
+    targetUrl?: string,
+  ): Promise<{ status: number; ok: boolean }> {
     const event = this.getEvent(id);
     if (!event) throw new Error(`Event not found: ${id}`);
 
     const url = targetUrl ?? event.endpoint;
+    const safeUrl = this.assertHttpUrl(url);
     try {
-      const res = await fetch(url, {
-        method: event.method,
-        headers: event.headers,
-        body: event.method !== 'GET' ? JSON.stringify(event.body) : undefined,
+      const safeMethod = String(event.method ?? 'GET');
+      const safeHeaders = Object.fromEntries(
+        Object.entries(event.headers ?? {}).map(([k, v]) => [
+          String(k),
+          String(v),
+        ]),
+      );
+      const res = await fetch(safeUrl, {
+        method: safeMethod,
+        headers: safeHeaders,
+        body: safeMethod !== 'GET' ? JSON.stringify(event.body) : undefined,
         signal: AbortSignal.timeout(10_000),
       });
       return { status: res.status, ok: res.ok };
@@ -141,10 +184,15 @@ export class WebhooksService {
     const sim = this.loadSimulations().find((s) => s.id === id);
     if (!sim) throw new Error(`Simulation not found: ${id}`);
 
-    const res = await fetch(sim.targetUrl, {
-      method: sim.method,
-      headers: { 'Content-Type': 'application/json', ...sim.headers },
-      body: sim.method !== 'GET' ? JSON.stringify(sim.payload) : undefined,
+    const safeUrl = this.assertHttpUrl(sim.targetUrl);
+    const safeMethod = String(sim.method ?? 'GET');
+    const safeHeaders = Object.fromEntries(
+      Object.entries(sim.headers ?? {}).map(([k, v]) => [String(k), String(v)]),
+    );
+    const res = await fetch(safeUrl, {
+      method: safeMethod,
+      headers: { 'Content-Type': 'application/json', ...safeHeaders },
+      body: safeMethod !== 'GET' ? JSON.stringify(sim.payload) : undefined,
       signal: AbortSignal.timeout(10_000),
     });
     return { status: res.status, ok: res.ok };
@@ -153,14 +201,22 @@ export class WebhooksService {
   private loadEvents(): WebhookEvent[] {
     if (!fs.existsSync(this.eventsFile)) return [];
     try {
-      return JSON.parse(fs.readFileSync(this.eventsFile, 'utf-8')) as WebhookEvent[];
-    } catch { return []; }
+      return JSON.parse(
+        fs.readFileSync(this.eventsFile, 'utf-8'),
+      ) as WebhookEvent[];
+    } catch {
+      return [];
+    }
   }
 
   private loadSimulations(): WebhookSimulation[] {
     if (!fs.existsSync(this.simsFile)) return [];
     try {
-      return JSON.parse(fs.readFileSync(this.simsFile, 'utf-8')) as WebhookSimulation[];
-    } catch { return []; }
+      return JSON.parse(
+        fs.readFileSync(this.simsFile, 'utf-8'),
+      ) as WebhookSimulation[];
+    } catch {
+      return [];
+    }
   }
 }

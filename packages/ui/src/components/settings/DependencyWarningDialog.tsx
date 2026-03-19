@@ -1,12 +1,12 @@
-import { AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle, X } from 'lucide-react';
 
 interface DependencyWarningDialogProps {
-  open: boolean
-  serviceId: string
-  serviceName: string
-  dependents: string[]
-  onCancel: () => void
-  onForceDisable: () => void
+  open: boolean;
+  serviceId: string;
+  serviceName: string;
+  dependents: string[];
+  onCancel: () => void;
+  onForceDisable: () => void;
 }
 
 export function DependencyWarningDialog({
@@ -16,7 +16,7 @@ export function DependencyWarningDialog({
   onCancel,
   onForceDisable,
 }: DependencyWarningDialogProps) {
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -24,14 +24,24 @@ export function DependencyWarningDialog({
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div className="flex items-center gap-2 text-yellow-400">
             <AlertTriangle size={16} />
-            <h2 className="text-sm font-semibold">Cannot Disable {serviceName}</h2>
+            <h2 className="text-sm font-semibold">
+              Cannot Disable {serviceName}
+            </h2>
           </div>
-          <button type="button" onClick={onCancel} className="text-text-secondary hover:text-text-primary transition-colors">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-text-secondary hover:text-text-primary transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
         <div className="px-5 py-4 text-sm text-text-secondary">
-          <p className="mb-3">The following services depend on <strong className="text-text-primary">{serviceName}</strong> and are currently enabled:</p>
+          <p className="mb-3">
+            The following services depend on{' '}
+            <strong className="text-text-primary">{serviceName}</strong> and are
+            currently enabled:
+          </p>
           <ul className="space-y-1 mb-4">
             {dependents.map((d) => (
               <li key={d} className="flex items-center gap-2">
@@ -43,7 +53,11 @@ export function DependencyWarningDialog({
           <p>Disable these services first, or force disable all.</p>
         </div>
         <div className="flex justify-end gap-2 px-5 py-4 border-t border-white/10">
-          <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
             Cancel
           </button>
           <button
@@ -56,5 +70,5 @@ export function DependencyWarningDialog({
         </div>
       </div>
     </div>
-  )
+  );
 }

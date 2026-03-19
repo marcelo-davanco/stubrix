@@ -6,7 +6,7 @@ import { TemplateEngineService } from './template-engine.service';
 import { StateResolverService } from './state-resolver.service';
 import { WireMockTransformerProxyService } from './wiremock-transformer-proxy.service';
 import { ConfigService } from '@nestjs/config';
-import type { CreateStatefulMockDto } from './dto/create-stateful-mock.dto';
+import { CreateStatefulMockDtoBuilder } from '../test/builders';
 
 const mockConfigService = {
   get: jest.fn().mockReturnValue(undefined),
@@ -15,7 +15,10 @@ const mockConfigService = {
 const mockTemplateEngine = {
   validate: jest.fn().mockReturnValue({ valid: true }),
   render: jest.fn().mockReturnValue('{"users":[]}'),
-  buildContext: jest.fn().mockReturnValue({ state: { rows: [], rowCount: 0, queryTimeMs: 0, fromCache: false }, request: {} }),
+  buildContext: jest.fn().mockReturnValue({
+    state: { rows: [], rowCount: 0, queryTimeMs: 0, fromCache: false },
+    request: {},
+  }),
 };
 
 const mockStateResolver = {
@@ -27,17 +30,18 @@ const mockProxy = {
   resolve: jest.fn(),
 };
 
-const validCreateDto: CreateStatefulMockDto = {
-  name: 'List Users',
-  description: 'Returns users from DB',
-  request: { method: 'GET', urlPath: '/api/users' },
-  stateConfig: {
+const validCreateDto = CreateStatefulMockDtoBuilder.create()
+  .withName('List Users')
+  .withDescription('Returns users from DB')
+  .withRequest({ method: 'GET', urlPath: '/api/users' })
+  .withStateConfig({
     stateEngine: 'postgres',
     stateQuery: 'SELECT * FROM users',
-    stateTemplate: '{ "users": {{json state.rows}}, "count": {{state.rowCount}} }',
-  },
-  response: { status: 200 },
-};
+    stateTemplate:
+      '{ "users": {{json state.rows}}, "count": {{state.rowCount}} }',
+  })
+  .withResponse({ status: 200 })
+  .build();
 
 describe('StatefulMocksService', () => {
   let service: StatefulMocksService;
@@ -80,16 +84,18 @@ describe('StatefulMocksService', () => {
     });
 
     it('should throw BadRequestException when template is invalid', () => {
-      mockTemplateEngine.validate.mockReturnValueOnce({ valid: false, error: 'Unexpected token' });
+      mockTemplateEngine.validate.mockReturnValueOnce({
+        valid: false,
+        error: 'Unexpected token',
+      });
 
       expect(() => service.create(validCreateDto)).toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when no URL field is provided', () => {
-      const dto: CreateStatefulMockDto = {
-        ...validCreateDto,
-        request: { method: 'GET' },
-      };
+      const dto = CreateStatefulMockDtoBuilder.create()
+        .withRequest({ method: 'GET' })
+        .build();
       expect(() => service.create(dto)).toThrow(BadRequestException);
     });
   });
@@ -101,7 +107,9 @@ describe('StatefulMocksService', () => {
 
     it('should return all persisted mocks', () => {
       service.create(validCreateDto);
-      service.create({ ...validCreateDto, name: 'Mock 2' });
+      service.create(
+        CreateStatefulMockDtoBuilder.create().withName('Mock 2').build(),
+      );
 
       const results = service.findAll();
       expect(results).toHaveLength(2);
@@ -116,14 +124,19 @@ describe('StatefulMocksService', () => {
     });
 
     it('should throw NotFoundException for unknown id', () => {
-      expect(() => service.findOne('non-existent-id')).toThrow(NotFoundException);
+      expect(() => service.findOne('non-existent-id')).toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('update()', () => {
     it('should update name and description', () => {
       const created = service.create(validCreateDto);
-      const updated = service.update(created.id, { name: 'Updated Name', description: 'New desc' });
+      const updated = service.update(created.id, {
+        name: 'Updated Name',
+        description: 'New desc',
+      });
 
       expect(updated.name).toBe('Updated Name');
       expect(updated.description).toBe('New desc');
@@ -132,17 +145,25 @@ describe('StatefulMocksService', () => {
 
     it('should throw BadRequestException when updating with invalid template', () => {
       const created = service.create(validCreateDto);
-      mockTemplateEngine.validate.mockReturnValueOnce({ valid: false, error: 'Bad template' });
+      mockTemplateEngine.validate.mockReturnValueOnce({
+        valid: false,
+        error: 'Bad template',
+      });
 
       expect(() =>
         service.update(created.id, {
-          stateConfig: { ...validCreateDto.stateConfig, stateTemplate: '{{#bad' },
+          stateConfig: {
+            ...validCreateDto.stateConfig,
+            stateTemplate: '{{#bad',
+          },
         }),
       ).toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when mock does not exist', () => {
-      expect(() => service.update('unknown', { name: 'X' })).toThrow(NotFoundException);
+      expect(() => service.update('unknown', { name: 'X' })).toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -160,7 +181,9 @@ describe('StatefulMocksService', () => {
     it('should invalidate cache on removal', () => {
       const created = service.create(validCreateDto);
       service.remove(created.id);
-      expect(mockStateResolver.invalidateCache).toHaveBeenCalledWith(created.id);
+      expect(mockStateResolver.invalidateCache).toHaveBeenCalledWith(
+        created.id,
+      );
     });
   });
 

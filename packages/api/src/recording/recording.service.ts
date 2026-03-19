@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Minimatch } from 'minimatch';
@@ -32,7 +31,11 @@ export class RecordingService {
   /**
    * Check if a URL should be recorded based on include/exclude patterns
    */
-  private shouldRecordUrl(url: string, includePatterns?: string[], excludePatterns?: string[]): boolean {
+  private shouldRecordUrl(
+    url: string,
+    includePatterns?: string[],
+    excludePatterns?: string[],
+  ): boolean {
     // Extract path from URL (remove query string and fragment)
     const urlPath = new URL(url).pathname;
 
@@ -41,7 +44,9 @@ export class RecordingService {
       for (const pattern of excludePatterns) {
         const mm = new Minimatch(pattern);
         if (mm.match(urlPath)) {
-          this.logger.debug(`URL excluded by pattern: ${urlPath} matches ${pattern}`);
+          this.logger.debug(
+            `URL excluded by pattern: ${urlPath} matches ${pattern}`,
+          );
           return false;
         }
       }
@@ -52,12 +57,16 @@ export class RecordingService {
       for (const pattern of includePatterns) {
         const mm = new Minimatch(pattern);
         if (mm.match(urlPath)) {
-          this.logger.debug(`URL included by pattern: ${urlPath} matches ${pattern}`);
+          this.logger.debug(
+            `URL included by pattern: ${urlPath} matches ${pattern}`,
+          );
           return true;
         }
       }
       // If include patterns are defined but none match, exclude the URL
-      this.logger.debug(`URL excluded: ${urlPath} doesn't match any include patterns`);
+      this.logger.debug(
+        `URL excluded: ${urlPath} doesn't match any include patterns`,
+      );
       return false;
     }
 
@@ -69,26 +78,33 @@ export class RecordingService {
    * Filter mappings based on URL patterns after recording stops
    */
   private async filterMappings(
-    mappingIds: string[], 
-    includePatterns?: string[], 
-    excludePatterns?: string[]
+    mappingIds: string[],
+    includePatterns?: string[],
+    excludePatterns?: string[],
   ): Promise<string[]> {
     if (!includePatterns?.length && !excludePatterns?.length) {
       return mappingIds;
     }
 
     this.logger.log(`Filtering ${mappingIds.length} mappings with patterns...`);
-    
+
     const filteredIds: string[] = [];
-    
+
     for (const mappingId of mappingIds) {
       try {
         // Get the mapping details from WireMock
-        const mapping = await this.wireMock.get<any>(`/mappings/${mappingId}`);
-        const requestUrl = mapping.request?.url || mapping.request?.urlPattern;
-        
+        const mapping = await this.wireMock.get<{
+          request?: {
+            url?: string;
+            urlPattern?: string | { urlPattern?: string };
+          };
+        }>(`/mappings/${mappingId}`);
+        const requestUrl = mapping.request?.url ?? mapping.request?.urlPattern;
+
         if (!requestUrl) {
-          this.logger.warn(`Mapping ${mappingId} has no URL pattern, keeping by default`);
+          this.logger.warn(
+            `Mapping ${mappingId} has no URL pattern, keeping by default`,
+          );
           filteredIds.push(mappingId);
           continue;
         }
@@ -97,24 +113,35 @@ export class RecordingService {
         let urlToCheck: string;
         if (typeof requestUrl === 'string') {
           urlToCheck = requestUrl;
-        } else if (requestUrl.urlPattern) {
+        } else if (
+          typeof requestUrl === 'object' &&
+          typeof requestUrl.urlPattern === 'string'
+        ) {
           urlToCheck = requestUrl.urlPattern;
         } else {
-          this.logger.warn(`Mapping ${mappingId} has unsupported URL pattern type, keeping by default`);
+          this.logger.warn(
+            `Mapping ${mappingId} has unsupported URL pattern type, keeping by default`,
+          );
           filteredIds.push(mappingId);
           continue;
         }
 
         // Convert WireMock patterns to standard URLs for matching
         // WireMock uses patterns like "/api/users/**" which we can test directly
-        const shouldKeep = this.shouldRecordUrl(`http://example.com${urlToCheck}`, includePatterns, excludePatterns);
-        
+        const shouldKeep = this.shouldRecordUrl(
+          `http://example.com${urlToCheck}`,
+          includePatterns,
+          excludePatterns,
+        );
+
         if (shouldKeep) {
           filteredIds.push(mappingId);
         } else {
           // Delete the mapping that doesn't match filters
           await this.wireMock.delete(`/mappings/${mappingId}`);
-          this.logger.debug(`Deleted mapping ${mappingId} due to filter: ${urlToCheck}`);
+          this.logger.debug(
+            `Deleted mapping ${mappingId} due to filter: ${urlToCheck}`,
+          );
         }
       } catch (error) {
         this.logger.error(`Error processing mapping ${mappingId}:`, error);
@@ -123,7 +150,9 @@ export class RecordingService {
       }
     }
 
-    this.logger.log(`Filtered mappings: ${mappingIds.length} → ${filteredIds.length} (${mappingIds.length - filteredIds.length} removed)`);
+    this.logger.log(
+      `Filtered mappings: ${mappingIds.length} → ${filteredIds.length} (${mappingIds.length - filteredIds.length} removed)`,
+    );
     return filteredIds;
   }
 
@@ -198,7 +227,11 @@ export class RecordingService {
     };
   }
 
-  async stop(projectId: string, includePatterns?: string[], excludePatterns?: string[]): Promise<RecordingStopResult> {
+  async stop(
+    projectId: string,
+    includePatterns?: string[],
+    excludePatterns?: string[],
+  ): Promise<RecordingStopResult> {
     this.projects.findOne(projectId);
 
     const result = await this.wireMock.post<{
@@ -210,22 +243,31 @@ export class RecordingService {
       .filter(Boolean) as string[];
 
     // Apply filters if provided
-    const filteredMappingIds = await this.filterMappings(mappingIds, includePatterns, excludePatterns);
+    const filteredMappingIds = await this.filterMappings(
+      mappingIds,
+      includePatterns,
+      excludePatterns,
+    );
     this.injectProjectMetadata(projectId, filteredMappingIds);
 
     const filteredCount = mappingIds.length - filteredMappingIds.length;
 
     return {
-      message: filteredCount > 0 
-        ? `Recording stopped and filtered: ${newMocks} recorded, ${filteredCount} removed by filters`
-        : 'Recording stopped',
+      message:
+        filteredCount > 0
+          ? `Recording stopped and filtered: ${newMocks} recorded, ${filteredCount} removed by filters`
+          : 'Recording stopped',
       projectId,
       newMocks: filteredMappingIds.length,
       files: [],
     };
   }
 
-  async snapshot(projectId: string, includePatterns?: string[], excludePatterns?: string[]): Promise<SnapshotResult> {
+  async snapshot(
+    projectId: string,
+    includePatterns?: string[],
+    excludePatterns?: string[],
+  ): Promise<SnapshotResult> {
     this.projects.findOne(projectId);
 
     const result = await this.wireMock.post<{
@@ -239,17 +281,22 @@ export class RecordingService {
       .filter(Boolean) as string[];
 
     // Apply filters if provided
-    const filteredMappingIds = await this.filterMappings(mappingIds, includePatterns, excludePatterns);
+    const filteredMappingIds = await this.filterMappings(
+      mappingIds,
+      includePatterns,
+      excludePatterns,
+    );
     this.injectProjectMetadata(projectId, filteredMappingIds);
 
     const filteredCount = mappingIds.length - filteredMappingIds.length;
 
-    return { 
-      message: filteredCount > 0
-        ? `Snapshot taken and filtered: ${newMocks} recorded, ${filteredCount} removed by filters`
-        : 'Snapshot taken', 
-      projectId, 
-      newMocks: filteredMappingIds.length 
+    return {
+      message:
+        filteredCount > 0
+          ? `Snapshot taken and filtered: ${newMocks} recorded, ${filteredCount} removed by filters`
+          : 'Snapshot taken',
+      projectId,
+      newMocks: filteredMappingIds.length,
     };
   }
 

@@ -7,7 +7,12 @@ type ActionBtnProps = {
   danger?: boolean;
 };
 
-export function ActionBtn({ children, onClick, title, danger }: ActionBtnProps) {
+export function ActionBtn({
+  children,
+  onClick,
+  title,
+  danger,
+}: ActionBtnProps) {
   return (
     <button
       onClick={onClick}

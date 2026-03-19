@@ -47,10 +47,10 @@ Or step by step:
 make vscode-package     # generates packages/vscode-extension/stubrix-vscode-X.Y.Z.vsix
 
 # Windsurf:
-windsurf --install-extension packages/vscode-extension/stubrix-vscode-2.3.0.vsix
+make windsurf-install
 
 # VS Code:
-code --install-extension packages/vscode-extension/stubrix-vscode-2.3.0.vsix
+make vscode-install
 ```
 
 Or via UI: `Cmd+Shift+P → Extensions: Install from VSIX...` → select the `.vsix` file.
@@ -74,10 +74,10 @@ TypeScript compiles to `dist/extension.js`. The `.vsix` is generated at the pack
 
 ## Configuration
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `stubrix.apiUrl` | `http://localhost:9090` | Stubrix API base URL |
-| `stubrix.showStatusBar` | `true` | Show status in the status bar |
+| Setting                 | Default                 | Description                   |
+| ----------------------- | ----------------------- | ----------------------------- |
+| `stubrix.apiUrl`        | `http://localhost:9090` | Stubrix API base URL          |
+| `stubrix.showStatusBar` | `true`                  | Show status in the status bar |
 
 Change via `Settings → Extensions → Stubrix` or `settings.json`:
 

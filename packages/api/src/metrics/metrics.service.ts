@@ -12,7 +12,10 @@ export interface HealthStatus {
   status: 'ok' | 'degraded' | 'error';
   uptime: number;
   version: string;
-  checks: Record<string, { status: 'ok' | 'error'; latencyMs?: number; detail?: string }>;
+  checks: Record<
+    string,
+    { status: 'ok' | 'error'; latencyMs?: number; detail?: string }
+  >;
   timestamp: string;
 }
 
@@ -41,7 +44,9 @@ export class MetricsService {
 
     lines.push('# HELP stubrix_uptime_seconds API uptime in seconds');
     lines.push('# TYPE stubrix_uptime_seconds gauge');
-    lines.push(`stubrix_uptime_seconds ${Math.floor((Date.now() - this.startTime) / 1000)}`);
+    lines.push(
+      `stubrix_uptime_seconds ${Math.floor((Date.now() - this.startTime) / 1000)}`,
+    );
 
     for (const [name, value] of this.counters.entries()) {
       const metricName = `stubrix_${name.replace(/[^a-z0-9_]/gi, '_')}`;
@@ -96,12 +101,19 @@ export class MetricsService {
 
   async getHealthStatus(): Promise<HealthStatus> {
     const checks: HealthStatus['checks'] = {};
-    const apiUrl = `http://localhost:${this.config.get<string>('API_PORT') ?? '9090'}`;
-
     const externalChecks = [
-      { name: 'pact-broker', url: `${this.config.get<string>('PACT_BROKER_URL') ?? 'http://localhost:9292'}/` },
-      { name: 'toxiproxy', url: `${this.config.get<string>('TOXIPROXY_URL') ?? 'http://localhost:8474'}/version` },
-      { name: 'rag', url: `${this.config.get<string>('OPENRAG_URL') ?? 'http://localhost:8888'}/health` },
+      {
+        name: 'pact-broker',
+        url: `${this.config.get<string>('PACT_BROKER_URL') ?? 'http://localhost:9292'}/`,
+      },
+      {
+        name: 'toxiproxy',
+        url: `${this.config.get<string>('TOXIPROXY_URL') ?? 'http://localhost:8474'}/version`,
+      },
+      {
+        name: 'rag',
+        url: `${this.config.get<string>('OPENRAG_URL') ?? 'http://localhost:8888'}/health`,
+      },
     ];
 
     checks['api'] = { status: 'ok', detail: 'running' };
@@ -109,8 +121,13 @@ export class MetricsService {
     for (const check of externalChecks) {
       const t0 = Date.now();
       try {
-        const res = await fetch(check.url, { signal: AbortSignal.timeout(2_000) });
-        checks[check.name] = { status: res.ok ? 'ok' : 'error', latencyMs: Date.now() - t0 };
+        const res = await fetch(check.url, {
+          signal: AbortSignal.timeout(2_000),
+        });
+        checks[check.name] = {
+          status: res.ok ? 'ok' : 'error',
+          latencyMs: Date.now() - t0,
+        };
       } catch {
         checks[check.name] = { status: 'error', detail: 'unreachable' };
       }

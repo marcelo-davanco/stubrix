@@ -1,31 +1,41 @@
-import { cn } from '../../lib/utils'
+import { cn } from '../../lib/utils';
 
-type ConflictStrategy = 'skip' | 'overwrite' | 'merge'
+type ConflictStrategy = 'skip' | 'overwrite' | 'merge';
 
 interface ConflictStrategySelectorProps {
-  value: ConflictStrategy
-  onChange: (strategy: ConflictStrategy) => void
+  value: ConflictStrategy;
+  onChange: (strategy: ConflictStrategy) => void;
 }
 
-const options: { value: ConflictStrategy; label: string; description: string }[] = [
+const options: {
+  value: ConflictStrategy;
+  label: string;
+  description: string;
+}[] = [
   {
     value: 'skip',
     label: 'Skip',
-    description: 'Only add new keys. Never overwrite existing values. Safest option.',
+    description:
+      'Only add new keys. Never overwrite existing values. Safest option.',
   },
   {
     value: 'overwrite',
     label: 'Overwrite',
-    description: 'Replace all existing values with imported values. Use for full sync.',
+    description:
+      'Replace all existing values with imported values. Use for full sync.',
   },
   {
     value: 'merge',
     label: 'Merge',
-    description: 'Import new keys and update only values that match defaults. Keeps your customizations.',
+    description:
+      'Import new keys and update only values that match defaults. Keeps your customizations.',
   },
-]
+];
 
-export function ConflictStrategySelector({ value, onChange }: ConflictStrategySelectorProps) {
+export function ConflictStrategySelector({
+  value,
+  onChange,
+}: ConflictStrategySelectorProps) {
   return (
     <div className="space-y-2">
       {options.map((opt) => (
@@ -48,10 +58,12 @@ export function ConflictStrategySelector({ value, onChange }: ConflictStrategySe
           />
           <div>
             <p className="text-sm font-medium">{opt.label}</p>
-            <p className="text-xs text-text-secondary mt-0.5">{opt.description}</p>
+            <p className="text-xs text-text-secondary mt-0.5">
+              {opt.description}
+            </p>
           </div>
         </label>
       ))}
     </div>
-  )
+  );
 }

@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IamService } from './iam.service';
@@ -32,7 +39,9 @@ export class IamController {
   }
 
   @Get('config')
-  @ApiOperation({ summary: 'Get IAM configuration (Keycloak realm, issuer, Zitadel URL)' })
+  @ApiOperation({
+    summary: 'Get IAM configuration (Keycloak realm, issuer, Zitadel URL)',
+  })
   config() {
     return this.service.getConfig();
   }
@@ -46,7 +55,9 @@ export class IamController {
 
   @Post('token/client-credentials')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get a Keycloak access token (client credentials grant)' })
+  @ApiOperation({
+    summary: 'Get a Keycloak access token (client credentials grant)',
+  })
   clientCredentials() {
     return this.service.getClientCredentialsToken();
   }
