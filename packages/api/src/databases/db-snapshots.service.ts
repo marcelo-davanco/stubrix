@@ -178,7 +178,8 @@ export class DbSnapshotsService {
     name: string,
     updates: Partial<SnapshotMeta>,
   ): SnapshotMeta {
-    const baseName = path.basename(name, path.extname(name));
+    const ext = this.getSnapshotExtension(name);
+    const baseName = path.basename(name, ext);
     if (DbSnapshotsService.FORBIDDEN_KEYS.has(baseName)) {
       throw new ForbiddenException('Invalid snapshot name');
     }
@@ -194,9 +195,9 @@ export class DbSnapshotsService {
       projectId:
         typeof updates.projectId === 'string' ? updates.projectId : null,
     };
-    meta[baseName] = safeUpdates;
+    meta[name] = safeUpdates;
     this.writeMetadata(meta);
-    return meta[baseName];
+    return meta[name];
   }
 
   private listSnapshotFiles(): SnapshotFile[] {
