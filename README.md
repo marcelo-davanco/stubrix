@@ -181,7 +181,7 @@ npm run build:mock-ui
 
 ```bash
 # Option A: Docker (recommended for production-like setup)
-make up                  # WireMock + PostgreSQL + Control Plane
+make wiremock            # WireMock + PostgreSQL + Control Plane
 
 # Option B: Local development
 npm run dev -w @stubrix/api    # API on :9090
@@ -201,12 +201,12 @@ http://localhost:5173          # Development (Vite)
 
 ### Mock Engines
 
-| Profile          | Service             | Port  | Command                    |
-| ---------------- | ------------------- | ----- | -------------------------- |
-| `wiremock`       | WireMock (serve)    | :8081 | `make up`                  |
-| `wiremock-record`| WireMock (record)   | :8081 | `make record TARGET=<url>` |
-| `mockoon`        | Mockoon CLI (serve) | :8081 | `make mockoon`             |
-| `mockoon-proxy`  | Mockoon (proxy)     | :8081 | `make mockoon-proxy`       |
+| Profile           | Service             | Port  | Command                |
+| ----------------- | ------------------- | ----- | ---------------------- |
+| `wiremock`        | WireMock (serve)    | :8081 | `make wiremock`        |
+| `wiremock-record` | WireMock (record)   | :8081 | `make wiremock-record` |
+| `mockoon`         | Mockoon CLI (serve) | :8081 | `make mockoon`         |
+| `mockoon-proxy`   | Mockoon (proxy)     | :8081 | `make mockoon-proxy`   |
 
 ### Databases
 
@@ -220,11 +220,11 @@ http://localhost:5173          # Development (Vite)
 
 ### Messaging & Protocols
 
-| Profile      | Service            | Port           | Command            |
-| ------------ | ------------------ | -------------- | ------------------ |
-| `kafka`      | Redpanda (Kafka)   | :9092 / :8082  | `make kafka`       |
-| `rabbitmq`   | RabbitMQ           | :5672 / :15672 | `make rabbitmq`    |
-| `gripmock`   | GripMock (gRPC)    | :4770 / :4771  | `make gripmock`    |
+| Profile    | Service          | Port           | Command         |
+| ---------- | ---------------- | -------------- | --------------- |
+| `kafka`    | Redpanda (Kafka) | :9092 / :8082  | `make kafka`    |
+| `rabbitmq` | RabbitMQ         | :5672 / :15672 | `make rabbitmq` |
+| `gripmock` | GripMock (gRPC)  | :4770 / :4771  | `make gripmock` |
 
 ### Quality & Contracts
 
@@ -242,15 +242,15 @@ http://localhost:5173          # Development (Vite)
 
 ### Cloud & Infrastructure
 
-| Profile      | Service    | Port           | Command          |
-| ------------ | ---------- | -------------- | ---------------- |
-| `localstack` | LocalStack | :4566          | `make localstack`|
-| `minio`      | MinIO      | :9000 / :9001  | `make minio`     |
-| `keycloak`   | Keycloak   | :8180          | `make keycloak`  |
-| `zitadel`    | Zitadel    | :8085          | `make zitadel`   |
-| `redis`      | Redis      | :6379          | `make redis`     |
-| `toxiproxy`  | Toxiproxy  | :8474          | `make toxiproxy` |
-| `hoppscotch` | Hoppscotch | :3100          | `make hoppscotch`|
+| Profile      | Service    | Port          | Command           |
+| ------------ | ---------- | ------------- | ----------------- |
+| `localstack` | LocalStack | :4566         | `make localstack` |
+| `minio`      | MinIO      | :9000 / :9001 | `make minio`      |
+| `keycloak`   | Keycloak   | :8180         | `make keycloak`   |
+| `zitadel`    | Zitadel    | :8085         | `make zitadel`    |
+| `redis`      | Redis      | :6379         | `make redis`      |
+| `toxiproxy`  | Toxiproxy  | :8474         | `make toxiproxy`  |
+| `hoppscotch` | Hoppscotch | :3100         | `make hoppscotch` |
 
 ---
 
