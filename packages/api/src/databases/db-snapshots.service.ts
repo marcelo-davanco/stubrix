@@ -210,7 +210,12 @@ export class DbSnapshotsService {
         continue;
       }
       const engineFiles = dirEntries
-        .filter((f: string) => f.endsWith('.sql') || f.endsWith('.db'))
+        .filter(
+          (f: string) =>
+            f.endsWith('.sql') ||
+            f.endsWith('.db') ||
+            f.endsWith('.archive.gz'),
+        )
         .map((file: string) => {
           const filepath = path.join(engineDir, file);
           const stats = fs.statSync(filepath);
