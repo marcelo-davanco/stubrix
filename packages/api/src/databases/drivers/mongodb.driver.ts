@@ -1,12 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { execFileSync, spawnSync } from 'child_process';
+import { execFile, execFileSync, spawn } from 'child_process';
 import * as fs from 'fs';
+import { promisify } from 'util';
 import { MongoClient } from 'mongodb';
 import type {
   ConnectionOverrides,
   DatabaseDriverInterface,
 } from './database-driver.interface';
+
+const execFileAsync = promisify(execFile);
 
 @Injectable()
 export class MongodbDriver implements DatabaseDriverInterface {
@@ -19,6 +22,7 @@ export class MongodbDriver implements DatabaseDriverInterface {
   private readonly password: string;
   private readonly database: string;
   private readonly containerName: string;
+  private _mongoToolsAvailable: boolean | null = null;
 
   constructor(private readonly config: ConfigService) {
     this.host = this.config.get<string>('MONGO_HOST');
@@ -31,10 +35,13 @@ export class MongodbDriver implements DatabaseDriverInterface {
   }
 
   /**
-   * Constrói a URI de conexão MongoDB.
-   * Formato: mongodb://user:pass@host:port/database?authSource=admin
+   * Builds the MongoDB connection URI.
+   * Format: mongodb://user:pass@host:port/database?authSource=admin
    */
-  private buildUri(database?: string, overrides?: ConnectionOverrides): string {
+  protected buildUri(
+    database?: string,
+    overrides?: ConnectionOverrides,
+  ): string {
     const h = overrides?.host ?? this.host;
     const p = overrides?.port ?? this.port;
     const u = encodeURIComponent(overrides?.username ?? this.user);
@@ -62,6 +69,9 @@ export class MongodbDriver implements DatabaseDriverInterface {
   }
 
   async listDatabases(overrides?: ConnectionOverrides): Promise<string[]> {
+    if (!this.isConfigured()) {
+      throw new Error('MongoDB driver is not configured');
+    }
     const client = new MongoClient(this.buildUri(undefined, overrides));
     try {
       await client.connect();
@@ -82,6 +92,9 @@ export class MongodbDriver implements DatabaseDriverInterface {
     totalSize: string;
     tables: Array<{ name: string; size: string }>;
   }> {
+    if (!this.isConfigured()) {
+      throw new Error('MongoDB driver is not configured');
+    }
     const client = new MongoClient(this.buildUri(dbName, overrides));
     try {
       await client.connect();
@@ -115,14 +128,26 @@ export class MongodbDriver implements DatabaseDriverInterface {
     query: string,
     params?: Record<string, unknown>,
   ): Promise<Record<string, unknown>[]> {
+    if (!this.isConfigured()) {
+      throw new Error('MongoDB driver is not configured');
+    }
     const client = new MongoClient(this.buildUri());
     try {
       await client.connect();
       const db = client.db(this.database);
 
-      // Tenta parsear como JSON (find query simplificado)
-      // Formato esperado: { "collection": "USERS", "filter": { "name": "Alice" } }
-      const parsed = JSON.parse(query) as {
+      // Parses a simplified find query in JSON format.
+      // Expected format: { "collection": "USERS", "filter": { "name": "Alice" } }
+      const raw: unknown = JSON.parse(query);
+      if (
+        !raw ||
+        typeof raw !== 'object' ||
+        !('collection' in raw) ||
+        typeof (raw as Record<string, unknown>)['collection'] !== 'string'
+      ) {
+        throw new Error('Query must be JSON with a "collection" string field');
+      }
+      const parsed = raw as {
         collection: string;
         filter?: Record<string, unknown>;
       };
@@ -136,24 +161,26 @@ export class MongodbDriver implements DatabaseDriverInterface {
   }
 
   /**
-   * Verifica se mongodump está disponível localmente no PATH.
+   * Checks if mongodump and mongorestore are available locally in PATH.
+   * Result is cached after the first call to avoid blocking the event loop on every snapshot.
    */
-  private hasMongodumpLocal(): boolean {
-    try {
-      execFileSync('mongodump', ['--version'], { stdio: 'pipe' });
-      return true;
-    } catch {
-      return false;
+  private hasMongoToolsLocal(): boolean {
+    if (this._mongoToolsAvailable === null) {
+      try {
+        execFileSync('mongodump', ['--version'], { stdio: 'pipe' });
+        execFileSync('mongorestore', ['--version'], { stdio: 'pipe' });
+        this._mongoToolsAvailable = true;
+      } catch {
+        this._mongoToolsAvailable = false;
+      }
     }
+    return this._mongoToolsAvailable;
   }
 
   /**
-   * Cria um snapshot usando mongodump --archive --gzip
-   *
-   * O comando gera um ÚNICO arquivo binário compactado,
-   * encaixando perfeitamente na estrutura dumps/mongodb/.
+   * Creates a snapshot using mongodump --archive --gzip.
+   * Produces a single compressed binary file in dumps/mongodb/.
    */
-  // eslint-disable-next-line @typescript-eslint/require-await
   async createSnapshot(
     database: string,
     filepath: string,
@@ -164,48 +191,23 @@ export class MongodbDriver implements DatabaseDriverInterface {
     }
 
     try {
-      const uri = this.buildUri(database, overrides);
       this.logger.log(`Creating MongoDB snapshot: ${database} -> ${filepath}`);
 
-      if (this.hasMongodumpLocal()) {
-        execFileSync(
+      if (this.hasMongoToolsLocal()) {
+        const uri = this.buildUri(database, overrides);
+        await execFileAsync(
           'mongodump',
           [`--uri=${uri}`, `--archive=${filepath}`, '--gzip'],
-          { stdio: 'pipe', maxBuffer: 512 * 1024 * 1024 },
+          { maxBuffer: 512 * 1024 * 1024 },
         );
       } else {
-        // Use --add-host to make host.docker.internal work on all platforms (Linux/Windows/macOS)
-        const dockerUri = uri.replace(
-          /localhost|127\.0\.0\.1/g,
-          'host.docker.internal',
-        );
-        const result = spawnSync(
-          'docker',
-          [
-            'exec',
-            '-i',
-            '--add-host=host.docker.internal:host-gateway',
-            this.containerName,
-            'mongodump',
-            `--uri=${dockerUri}`,
-            '--archive',
-            '--gzip',
-          ],
-          { encoding: 'buffer', maxBuffer: 512 * 1024 * 1024 },
-        );
-        if (result.error) throw result.error;
-        if (result.status !== 0) {
-          throw new Error(
-            result.stderr?.toString('utf8') ??
-              'mongodump via docker exec failed',
-          );
-        }
-        if (!result.stdout || result.stdout.length === 0) {
-          this.logger.warn(
-            'mongodump produced no output (empty database?) — creating empty snapshot file',
-          );
-        }
-        fs.writeFileSync(filepath, result.stdout);
+        // Run mongodump inside the MongoDB container via docker exec.
+        // mongodump connects to localhost within the container.
+        const containerUri = this.buildUri(database, {
+          ...overrides,
+          host: 'localhost',
+        });
+        await this.dockerExecMongodump(containerUri, filepath);
       }
       this.logger.log(`MongoDB snapshot created successfully: ${filepath}`);
     } catch (error: unknown) {
@@ -216,12 +218,9 @@ export class MongodbDriver implements DatabaseDriverInterface {
   }
 
   /**
-   * Restaura um snapshot usando mongorestore --archive --gzip --drop
-   *
-   * A flag --drop é OBRIGATÓRIA.
-   * Garante que as coleções existentes sejam apagadas antes da restauração.
+   * Restores a snapshot using mongorestore --archive --gzip --drop.
+   * The --drop flag is REQUIRED to drop existing collections before restoring.
    */
-  // eslint-disable-next-line @typescript-eslint/require-await
   async restoreSnapshot(
     database: string,
     filepath: string,
@@ -232,47 +231,26 @@ export class MongodbDriver implements DatabaseDriverInterface {
     }
 
     try {
-      const uri = this.buildUri(database, overrides);
       this.logger.log(`Restoring MongoDB snapshot: ${filepath} -> ${database}`);
 
-      if (this.hasMongodumpLocal()) {
-        execFileSync(
+      if (this.hasMongoToolsLocal()) {
+        const uri = this.buildUri(database, overrides);
+        await execFileAsync(
           'mongorestore',
           [`--uri=${uri}`, `--archive=${filepath}`, '--gzip', '--drop'],
-          { stdio: 'pipe', maxBuffer: 512 * 1024 * 1024 },
+          { maxBuffer: 512 * 1024 * 1024 },
         );
       } else {
-        // Use --add-host to make host.docker.internal work on all platforms (Linux/Windows/macOS)
-        const dockerUri = uri.replace(
-          /localhost|127\.0\.0\.1/g,
-          'host.docker.internal',
-        );
         if (!fs.existsSync(filepath)) {
           throw new Error(`Snapshot file not found: ${filepath}`);
         }
-        const fileData = fs.readFileSync(filepath);
-        const result = spawnSync(
-          'docker',
-          [
-            'exec',
-            '-i',
-            '--add-host=host.docker.internal:host-gateway',
-            this.containerName,
-            'mongorestore',
-            `--uri=${dockerUri}`,
-            '--archive',
-            '--gzip',
-            '--drop',
-          ],
-          { input: fileData, encoding: 'buffer', maxBuffer: 512 * 1024 * 1024 },
-        );
-        if (result.error) throw result.error;
-        if (result.status !== 0) {
-          throw new Error(
-            result.stderr?.toString('utf8') ??
-              'mongorestore via docker exec failed',
-          );
-        }
+        // Run mongorestore inside the MongoDB container via docker exec.
+        // mongorestore connects to localhost within the container.
+        const containerUri = this.buildUri(database, {
+          ...overrides,
+          host: 'localhost',
+        });
+        await this.dockerExecMongorestore(containerUri, filepath);
       }
       this.logger.log(`MongoDB snapshot restored successfully: ${filepath}`);
     } catch (error: unknown) {
@@ -280,5 +258,74 @@ export class MongodbDriver implements DatabaseDriverInterface {
       this.logger.error(`Failed to restore MongoDB snapshot: ${msg}`);
       throw new Error(`MongoDB restore failed: ${msg}`);
     }
+  }
+
+  private dockerExecMongodump(uri: string, filepath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const child = spawn('docker', [
+        'exec',
+        '-i',
+        this.containerName,
+        'mongodump',
+        `--uri=${uri}`,
+        '--archive',
+        '--gzip',
+      ]);
+
+      const writeStream = fs.createWriteStream(filepath);
+      child.stdout.pipe(writeStream);
+
+      const stderrChunks: Buffer[] = [];
+      child.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
+
+      child.on('close', (code) => {
+        writeStream.close();
+        if (code !== 0) {
+          const errMsg = Buffer.concat(stderrChunks).toString('utf8');
+          reject(new Error(errMsg || 'mongodump via docker exec failed'));
+          return;
+        }
+        resolve();
+      });
+
+      child.on('error', reject);
+    });
+  }
+
+  private dockerExecMongorestore(
+    uri: string,
+    filepath: string,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const child = spawn('docker', [
+        'exec',
+        '-i',
+        this.containerName,
+        'mongorestore',
+        `--uri=${uri}`,
+        '--archive',
+        '--gzip',
+        '--drop',
+      ]);
+
+      const readStream = fs.createReadStream(filepath);
+      readStream.pipe(child.stdin);
+
+      const stderrChunks: Buffer[] = [];
+      child.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
+
+      child.on('close', (code) => {
+        if (code !== 0) {
+          const errMsg = Buffer.concat(stderrChunks).toString('utf8');
+          reject(
+            new Error(errMsg || 'mongorestore via docker exec failed'),
+          );
+          return;
+        }
+        resolve();
+      });
+
+      child.on('error', reject);
+    });
   }
 }
