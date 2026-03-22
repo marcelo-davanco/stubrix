@@ -43,6 +43,10 @@ export class DockerComposeService {
     serviceName: string,
     envOverrides?: Record<string, string>,
   ): Promise<DockerResult> {
+    const recreateFlag =
+      envOverrides && Object.keys(envOverrides).length > 0
+        ? '--force-recreate'
+        : '--no-recreate';
     return this.run(
       [
         'compose',
@@ -52,7 +56,7 @@ export class DockerComposeService {
         this.projectName,
         'up',
         '-d',
-        '--no-recreate',
+        recreateFlag,
         serviceName,
       ],
       envOverrides,
@@ -105,6 +109,42 @@ export class DockerComposeService {
     ]);
   }
 
+  async rebuildService(
+    serviceName: string,
+    envOverrides?: Record<string, string>,
+  ): Promise<DockerResult> {
+    const stop = await this.stopService(serviceName);
+    if (!stop.success) return stop;
+    return this.run(
+      [
+        'compose',
+        '-f',
+        this.composePath,
+        '-p',
+        this.projectName,
+        'up',
+        '-d',
+        '--force-recreate',
+        '--build',
+        serviceName,
+      ],
+      envOverrides,
+    );
+  }
+
+  async removeContainer(serviceName: string): Promise<DockerResult> {
+    return this.run([
+      'compose',
+      '-f',
+      this.composePath,
+      '-p',
+      this.projectName,
+      'rm',
+      '-sf',
+      serviceName,
+    ]);
+  }
+
   async restartService(
     serviceName: string,
     envOverrides?: Record<string, string>,
@@ -129,7 +169,7 @@ export class DockerComposeService {
           this.projectName,
           'up',
           '-d',
-          '--no-recreate',
+          '--force-recreate',
           serviceName,
         ],
         envOverrides,

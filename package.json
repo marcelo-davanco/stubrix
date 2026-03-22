@@ -84,7 +84,5 @@
     "close-issue": "./scripts/close-issue.sh",
     "close-issues": "./scripts/close-issue.sh --batch"
   },
-  "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.59.0"
-  }
+  "optionalDependencies": {}
 }

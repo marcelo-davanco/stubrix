@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Patch,
   Post,
@@ -62,6 +63,23 @@ export class ServiceLifecycleController {
   @ApiOperation({ summary: 'Check service health' })
   checkHealth(@Param('id') id: string) {
     return this.health.checkHealth(id);
+  }
+
+  @Post(':id/rebuild')
+  @ApiOperation({
+    summary:
+      'Rebuild and restart a service container (--build --force-recreate)',
+  })
+  rebuildService(@Param('id') id: string) {
+    return this.lifecycle.rebuildService(id);
+  }
+
+  @Delete(':id/container')
+  @ApiOperation({
+    summary: 'Remove a service container (docker compose rm -sf)',
+  })
+  removeContainer(@Param('id') id: string) {
+    return this.lifecycle.removeContainer(id);
   }
 
   @Get(':id/logs')
