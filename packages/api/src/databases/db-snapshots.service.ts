@@ -64,6 +64,13 @@ export interface RestoreSnapshotResponse {
 
 @Injectable()
 export class DbSnapshotsService {
+  private static readonly FORBIDDEN_KEYS = new Set([
+    '__proto__',
+    'constructor',
+    'prototype',
+  ]);
+  private static readonly SAFE_SNAPSHOT_NAME = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
+
   private readonly dumpsDir: string;
   private readonly postgresHost: string | undefined;
   private readonly postgresPort: string;
@@ -117,12 +124,6 @@ export class DbSnapshotsService {
     return path.join(this.dumpsDir, '.snapshot-metadata.json');
   }
 
-  private static readonly FORBIDDEN_KEYS = new Set([
-    '__proto__',
-    'constructor',
-    'prototype',
-  ]);
-
   private readMetadata(): Record<string, SnapshotMeta> {
     try {
       const file = this.getMetadataFile();
@@ -156,9 +157,15 @@ export class DbSnapshotsService {
     const meta = this.readMetadata();
     const ext = this.getSnapshotExtension(name);
     const baseName = path.basename(name, ext);
+    const key = DbSnapshotsService.SAFE_SNAPSHOT_NAME.test(name)
+      ? name
+      : undefined;
+    const legacyKey = DbSnapshotsService.SAFE_SNAPSHOT_NAME.test(baseName)
+      ? baseName
+      : undefined;
     return (
-      meta[name] ??
-      meta[baseName] ?? {
+      (key ? meta[key] : undefined) ??
+      (legacyKey ? meta[legacyKey] : undefined) ?? {
         favorite: false,
         protected: false,
         category: null,
@@ -183,7 +190,10 @@ export class DbSnapshotsService {
   ): SnapshotMeta {
     const ext = this.getSnapshotExtension(name);
     const baseName = path.basename(name, ext);
-    if (DbSnapshotsService.FORBIDDEN_KEYS.has(baseName)) {
+    if (
+      DbSnapshotsService.FORBIDDEN_KEYS.has(baseName) ||
+      !DbSnapshotsService.SAFE_SNAPSHOT_NAME.test(name)
+    ) {
       throw new ForbiddenException('Invalid snapshot name');
     }
     const meta = this.readMetadata();
@@ -198,9 +208,10 @@ export class DbSnapshotsService {
       projectId:
         typeof updates.projectId === 'string' ? updates.projectId : null,
     };
-    meta[name] = safeUpdates;
+    const safeKey = String(name);
+    meta[safeKey] = safeUpdates;
     this.writeMetadata(meta);
-    return meta[name];
+    return meta[safeKey];
   }
 
   private listSnapshotFiles(): SnapshotFile[] {
@@ -526,9 +537,12 @@ export class DbSnapshotsService {
       }
       fs.renameSync(currentPath, newPath);
       const meta = this.readMetadata();
+      const safePattern = DbSnapshotsService.SAFE_SNAPSHOT_NAME;
       const forbidden = DbSnapshotsService.FORBIDDEN_KEYS;
       if (
         meta[currentName] &&
+        safePattern.test(newName) &&
+        safePattern.test(currentName) &&
         !forbidden.has(newName) &&
         !forbidden.has(currentName)
       ) {
