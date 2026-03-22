@@ -686,18 +686,23 @@ services:
   # Hoppscotch – Self-Hosted API Client (F8.01)
   # Access: http://localhost:3100
   # --------------------------------------------------------------------------
-  # hoppscotch-migrate:
-  #   image: hoppscotch/hoppscotch:latest
-  #   profiles: ["hoppscotch"]
-  #   container_name: stubrix-hoppscotch-migrate
-  #   command: ["sh", "-c", "cd /dist/backend && node_modules/.pnpm/node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma"]
-  #   environment:
-  #     DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
-  #   depends_on:
-  #     db-postgres:
-  #       condition: service_healthy
-  #       required: false
-  #   restart: "no"
+  hoppscotch-migrate:
+    image: hoppscotch/hoppscotch:latest
+    profiles: ['hoppscotch']
+    container_name: stubrix-hoppscotch-migrate
+    command:
+      [
+        'sh',
+        '-c',
+        'cd /dist/backend && node_modules/.pnpm/node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma',
+      ]
+    environment:
+      DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:${PG_EXTERNAL_PORT:-5542}/${PG_DATABASE:-postgres}
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+        required: false
+    restart: 'no'
 
   hoppscotch:
     image: hoppscotch/hoppscotch:latest
@@ -712,7 +717,7 @@ services:
       VITE_BACKEND_GQL_URL: http://localhost:3100/backend/graphql
       VITE_BACKEND_WS_URL: wss://localhost:3100/backend/graphql
       VITE_BACKEND_API_URL: http://localhost:3100/backend/v1
-      DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:5432/${PG_DATABASE:-postgres}
+      DATABASE_URL: postgresql://${PG_USER:-postgres}:${PG_PASSWORD:-postgres}@db-postgres:${PG_EXTERNAL_PORT:-5542}/${PG_DATABASE:-postgres}
       SECRET: ${HOPPSCOTCH_SECRET:-stubrix-hoppscotch-secret}
       DATA_ENCRYPTION_KEY: ${HOPPSCOTCH_ENCRYPTION_KEY:-stubrix-hoppscotch-32byteenckey!}
       TOKEN_SALT_COMPLEXITY: 10
@@ -725,6 +730,9 @@ services:
     depends_on:
       db-postgres:
         condition: service_healthy
+        required: false
+      hoppscotch-migrate:
+        condition: service_completed_successfully
         required: false
     restart: unless-stopped
 
