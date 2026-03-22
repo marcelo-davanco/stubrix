@@ -117,6 +117,7 @@ services:
       MONGO_USER: ${MONGO_USER:-stubrix}
       MONGO_PASSWORD: ${MONGO_PASSWORD:-stubrix}
       MONGO_DATABASE: ${MONGO_DATABASE:-stubrix}
+      MONGO_CONTAINER: ${MONGO_CONTAINER:-stubrix-mongodb}
       # SQLite + Dumps
       # Mocks + SQLite + Dumps
       MOCKS_DIR: /app/mocks
