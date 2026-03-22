@@ -1,5 +1,5 @@
 // scripts/mongo-init.js
-// Inicializa o banco stubrix com coleções de exemplo
+// Initializes the stubrix database with example collections
 
 db = db.getSiblingDB("stubrix");
 
