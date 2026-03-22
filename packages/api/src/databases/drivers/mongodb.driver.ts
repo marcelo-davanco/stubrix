@@ -278,24 +278,45 @@ export class MongodbDriver implements DatabaseDriverInterface {
       const stderrChunks: Buffer[] = [];
       child.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
 
-      child.on('close', (code) => {
-        writeStream.close();
-        if (code !== 0) {
+      let settled = false;
+      let exitCode: number | null = null;
+      let childClosed = false;
+      let streamFinished = false;
+
+      const fail = (err: Error) => {
+        if (settled) return;
+        settled = true;
+        reject(err);
+      };
+
+      const maybeComplete = () => {
+        if (!childClosed || !streamFinished || settled) return;
+        settled = true;
+        if (exitCode !== 0) {
           const errMsg = Buffer.concat(stderrChunks).toString('utf8');
           reject(new Error(errMsg || 'mongodump via docker exec failed'));
           return;
         }
         resolve();
+      };
+
+      writeStream.on('error', fail);
+      child.on('error', fail);
+
+      child.on('close', (code) => {
+        childClosed = true;
+        exitCode = code;
+        maybeComplete();
       });
 
-      child.on('error', reject);
+      writeStream.on('finish', () => {
+        streamFinished = true;
+        maybeComplete();
+      });
     });
   }
 
-  private dockerExecMongorestore(
-    uri: string,
-    filepath: string,
-  ): Promise<void> {
+  private dockerExecMongorestore(uri: string, filepath: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const child = spawn('docker', [
         'exec',
@@ -317,9 +338,7 @@ export class MongodbDriver implements DatabaseDriverInterface {
       child.on('close', (code) => {
         if (code !== 0) {
           const errMsg = Buffer.concat(stderrChunks).toString('utf8');
-          reject(
-            new Error(errMsg || 'mongorestore via docker exec failed'),
-          );
+          reject(new Error(errMsg || 'mongorestore via docker exec failed'));
           return;
         }
         resolve();
