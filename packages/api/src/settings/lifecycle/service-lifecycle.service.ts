@@ -14,7 +14,7 @@ import type {
 
 export interface ServiceActionResult {
   serviceId: string;
-  action: 'enable' | 'disable' | 'restart';
+  action: 'enable' | 'disable' | 'restart' | 'rebuild' | 'remove';
   success: boolean;
   message: string;
   affectedServices?: string[];
@@ -392,6 +392,88 @@ export class ServiceLifecycleService implements OnModuleInit {
       success: true,
       message: `Service "${serviceId}" restarted successfully`,
       healthStatus: 'unknown',
+    };
+  }
+
+  async rebuildService(serviceId: string): Promise<ServiceActionResult> {
+    const def = this.registry.getService(serviceId);
+
+    if (!def?.dockerService) {
+      return this.errorResult(
+        serviceId,
+        'rebuild',
+        `Service "${serviceId}" has no Docker service configured`,
+      );
+    }
+
+    this.configDb.updateHealthStatus(serviceId, 'unknown');
+
+    const envOverrides = this.buildEnvOverrides(serviceId);
+    const result = await this.docker.rebuildService(
+      def.dockerService,
+      envOverrides,
+    );
+    if (!result.success) {
+      return this.errorResult(
+        serviceId,
+        'rebuild',
+        `Docker rebuild failed: ${result.stderr || result.stdout}`,
+      );
+    }
+
+    this.waitForHealthy(serviceId, 90000)
+      .then((healthStatus) => {
+        this.configDb.updateHealthStatus(serviceId, healthStatus);
+        this.logger.log(
+          `Rebuilt service: ${serviceId} (health: ${healthStatus})`,
+        );
+      })
+      .catch((err: unknown) => {
+        this.logger.warn(
+          `Health check error after rebuild for ${serviceId}: ${String(err)}`,
+        );
+      });
+
+    return {
+      serviceId,
+      action: 'rebuild',
+      success: true,
+      message: `Service "${serviceId}" rebuilt successfully`,
+      healthStatus: 'unknown',
+    };
+  }
+
+  async removeContainer(serviceId: string): Promise<ServiceActionResult> {
+    const def = this.registry.getService(serviceId);
+
+    if (!def?.dockerService) {
+      return this.errorResult(
+        serviceId,
+        'remove',
+        `Service "${serviceId}" has no Docker service configured`,
+      );
+    }
+
+    const result = await this.docker.removeContainer(def.dockerService);
+    if (!result.success) {
+      return this.errorResult(
+        serviceId,
+        'remove',
+        `Docker remove failed: ${result.stderr || result.stdout}`,
+      );
+    }
+
+    this.configDb.updateServiceStatus(serviceId, false);
+    this.configDb.updateHealthStatus(serviceId, 'disabled' as HealthStatus);
+
+    this.logger.log(`Removed container for service: ${serviceId}`);
+
+    return {
+      serviceId,
+      action: 'remove',
+      success: true,
+      message: `Container for "${serviceId}" removed successfully`,
+      healthStatus: 'disabled' as HealthStatus,
     };
   }
 
