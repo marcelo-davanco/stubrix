@@ -10,8 +10,7 @@ jest.mock('child_process', () => ({
 }));
 
 jest.mock('fs', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  ...jest.requireActual('fs'),
+  ...jest.requireActual<typeof import('fs')>('fs'),
   writeFileSync: jest.fn(),
   existsSync: jest.fn().mockReturnValue(true),
   readFileSync: jest.fn().mockReturnValue(Buffer.alloc(0)),
@@ -47,9 +46,7 @@ jest.mock('mongodb', () => ({
       collection: jest.fn().mockReturnValue({
         find: jest.fn().mockReturnValue({
           limit: jest.fn().mockReturnValue({
-            toArray: jest
-              .fn()
-              .mockResolvedValue([{ _id: '1', name: 'Alice' }]),
+            toArray: jest.fn().mockResolvedValue([{ _id: '1', name: 'Alice' }]),
           }),
         }),
       }),
@@ -86,9 +83,9 @@ class TestableMongodbDriver extends MongodbDriver {
   }
 }
 
-function makeConfig(
-  overrides: Record<string, string | undefined> = {},
-): { get: jest.Mock } {
+function makeConfig(overrides: Record<string, string | undefined> = {}): {
+  get: jest.Mock;
+} {
   const defaults: Record<string, string> = {
     MONGO_HOST: 'localhost',
     MONGO_PORT: '27017',
@@ -187,7 +184,7 @@ describe('MongodbDriver', () => {
     });
 
     it('should return false when connect throws', async () => {
-      (mongodb.MongoClient as jest.Mock).mockImplementationOnce(() => ({
+      mongodb.MongoClient.mockImplementationOnce(() => ({
         connect: jest.fn().mockRejectedValue(new Error('connection refused')),
         close: jest.fn().mockResolvedValue(undefined),
         db: jest.fn(),
@@ -347,7 +344,14 @@ describe('MongodbDriver', () => {
         throw new Error('not found');
       });
 
-      const mockWriteStream = { close: jest.fn(), on: jest.fn() };
+      let finishCb: (() => void) | null = null;
+      const mockWriteStream = {
+        close: jest.fn(),
+        on: jest.fn().mockImplementation((event: string, cb: () => void) => {
+          if (event === 'finish') finishCb = cb;
+          return mockWriteStream;
+        }),
+      };
       fs.createWriteStream.mockReturnValue(mockWriteStream);
 
       const mockStdout = { pipe: jest.fn() };
@@ -360,11 +364,9 @@ describe('MongodbDriver', () => {
         stderr: mockStderr,
         on: jest
           .fn()
-          .mockImplementation(
-            (event: string, cb: (code: number) => void) => {
-              if (event === 'close') closeCallback = cb;
-            },
-          ),
+          .mockImplementation((event: string, cb: (code: number) => void) => {
+            if (event === 'close') closeCallback = cb;
+          }),
       };
       child_process.spawn.mockReturnValue(mockChild);
 
@@ -373,21 +375,17 @@ describe('MongodbDriver', () => {
         '/tmp/snap.archive.gz',
       );
       if (closeCallback) (closeCallback as (code: number) => void)(0);
+      if (finishCb) (finishCb as () => void)();
       await snapshotPromise;
 
-      const spawnArgs = child_process.spawn.mock.calls[0] as [
-        string,
-        string[],
-      ];
+      const spawnArgs = child_process.spawn.mock.calls[0] as [string, string[]];
       expect(spawnArgs[0]).toBe('docker');
       expect(spawnArgs[1]).toContain('exec');
       expect(spawnArgs[1]).not.toContain('--add-host');
       expect(spawnArgs[1]).not.toContain(
         '--add-host=host.docker.internal:host-gateway',
       );
-      const uriArg = spawnArgs[1].find((a: string) =>
-        a.startsWith('--uri='),
-      );
+      const uriArg = spawnArgs[1].find((a: string) => a.startsWith('--uri='));
       expect(uriArg).toBeDefined();
       expect(uriArg).toContain('localhost');
       expect(uriArg).not.toContain('host.docker.internal');
@@ -400,7 +398,14 @@ describe('MongodbDriver', () => {
         throw new Error('not found');
       });
 
-      const mockWriteStream = { close: jest.fn(), on: jest.fn() };
+      let finishCb2: (() => void) | null = null;
+      const mockWriteStream = {
+        close: jest.fn(),
+        on: jest.fn().mockImplementation((event: string, cb: () => void) => {
+          if (event === 'finish') finishCb2 = cb;
+          return mockWriteStream;
+        }),
+      };
       fs.createWriteStream.mockReturnValue(mockWriteStream);
 
       const mockStdout = { pipe: jest.fn() };
@@ -411,25 +416,19 @@ describe('MongodbDriver', () => {
         stderr: mockStderr,
         on: jest
           .fn()
-          .mockImplementation(
-            (event: string, cb: (code: number) => void) => {
-              if (event === 'close') closeCb = cb;
-            },
-          ),
+          .mockImplementation((event: string, cb: (code: number) => void) => {
+            if (event === 'close') closeCb = cb;
+          }),
       };
       child_process.spawn.mockReturnValue(mockChild);
 
       const p = driver127.createSnapshot('testdb', '/tmp/snap.archive.gz');
       if (closeCb) (closeCb as (code: number) => void)(0);
+      if (finishCb2) (finishCb2 as () => void)();
       await p;
 
-      const spawnArgs = child_process.spawn.mock.calls[0] as [
-        string,
-        string[],
-      ];
-      const uriArg = spawnArgs[1].find((a: string) =>
-        a.startsWith('--uri='),
-      );
+      const spawnArgs = child_process.spawn.mock.calls[0] as [string, string[]];
+      const uriArg = spawnArgs[1].find((a: string) => a.startsWith('--uri='));
       expect(uriArg).toContain('localhost');
       expect(uriArg).not.toContain('127.0.0.1');
     });
