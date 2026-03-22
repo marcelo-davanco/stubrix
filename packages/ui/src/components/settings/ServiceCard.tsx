@@ -9,6 +9,8 @@ interface ServiceCardProps {
   onToggle: (serviceId: string, enabled: boolean) => Promise<void> | void;
   onToggleAutoStart: (serviceId: string, autoStart: boolean) => void;
   onRestart: (serviceId: string) => void;
+  onRebuild: (serviceId: string) => void;
+  onRemoveContainer: (serviceId: string) => void;
   onViewLogs: (serviceId: string) => void;
 }
 
@@ -17,6 +19,8 @@ export function ServiceCard({
   onToggle,
   onToggleAutoStart,
   onRestart,
+  onRebuild,
+  onRemoveContainer,
   onViewLogs,
 }: ServiceCardProps) {
   const { t } = useTranslation();
@@ -71,6 +75,8 @@ export function ServiceCard({
         serviceId={service.serviceId}
         externalUrl={service.externalUrl}
         onRestart={() => onRestart(service.serviceId)}
+        onRebuild={() => onRebuild(service.serviceId)}
+        onRemoveContainer={() => onRemoveContainer(service.serviceId)}
         onViewLogs={() => onViewLogs(service.serviceId)}
       />
     </div>

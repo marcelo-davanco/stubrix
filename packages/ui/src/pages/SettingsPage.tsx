@@ -39,6 +39,8 @@ export function SettingsPage() {
     toggleService,
     toggleAutoStart,
     restartService,
+    rebuildService,
+    removeContainer,
     getServiceLogs,
     setupMasterPassword,
     verifyMasterPassword,
@@ -101,6 +103,14 @@ export function SettingsPage() {
     await restartService(serviceId);
   };
 
+  const handleRebuild = async (serviceId: string) => {
+    await rebuildService(serviceId);
+  };
+
+  const handleRemoveContainer = async (serviceId: string) => {
+    await removeContainer(serviceId);
+  };
+
   const handleViewLogs = (serviceId: string) => {
     const svc = services.find((s) => s.serviceId === serviceId);
     if (svc) setLogsTarget({ id: svc.serviceId, name: svc.name });
@@ -155,6 +165,8 @@ export function SettingsPage() {
           onToggle={(id, en) => handleToggle(id, en)}
           onToggleAutoStart={(id, val) => void toggleAutoStart(id, val)}
           onRestart={(id) => void handleRestart(id)}
+          onRebuild={(id) => void handleRebuild(id)}
+          onRemoveContainer={(id) => void handleRemoveContainer(id)}
           onViewLogs={handleViewLogs}
         />
       </div>

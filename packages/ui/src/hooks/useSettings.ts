@@ -86,6 +86,16 @@ export function useSettings() {
     await fetchServices();
   };
 
+  const rebuildService = async (serviceId: string) => {
+    await fetch(`${API}/services/${serviceId}/rebuild`, { method: 'POST' });
+    await fetchServices();
+  };
+
+  const removeContainer = async (serviceId: string) => {
+    await fetch(`${API}/services/${serviceId}/container`, { method: 'DELETE' });
+    await fetchServices();
+  };
+
   const getServiceLogs = async (
     serviceId: string,
     tail = 100,
@@ -113,9 +123,9 @@ export function useSettings() {
       body: JSON.stringify({ password }),
     });
     if (!res.ok) return false;
-    const data = (await res.json()) as { success: boolean };
+    const data = (await res.json()) as { verified: boolean };
     await fetchCryptoStatus();
-    return data.success;
+    return data.verified;
   };
 
   const lockSession = async (): Promise<void> => {
@@ -131,6 +141,8 @@ export function useSettings() {
     toggleService,
     toggleAutoStart,
     restartService,
+    rebuildService,
+    removeContainer,
     getServiceLogs,
     setupMasterPassword,
     verifyMasterPassword,
