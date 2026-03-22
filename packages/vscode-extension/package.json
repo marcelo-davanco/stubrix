@@ -2,7 +2,7 @@
   "name": "stubrix-vscode",
   "displayName": "Stubrix",
   "description": "Stubrix mock server integration for VS Code and Windsurf",
-  "version": "2.3.0",
+  "version": "2.6.3",
   "publisher": "stubrix",
   "icon": "resources/icon.png",
   "repository": {

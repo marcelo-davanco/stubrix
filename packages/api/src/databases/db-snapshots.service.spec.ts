@@ -530,6 +530,74 @@ describe('DbSnapshotsService', () => {
 
       expect(result.name).toBe('renamed-snap.sql');
     });
+
+    it('should look up metadata by basename key for backward compatibility', () => {
+      const BASENAME = 'snapshot-mydb-20240601-10';
+      mockFs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          [BASENAME]: {
+            favorite: true,
+            protected: false,
+            category: 'production',
+            engine: 'postgres',
+            projectId: 'proj-legacy',
+          },
+        }),
+      );
+
+      const result = service.update(SNAP_NAME, { favorite: false });
+
+      expect(result.meta.favorite).toBe(false);
+      expect(result.meta.category).toBe('production');
+      expect(result.meta.projectId).toBe('proj-legacy');
+    });
+
+    it('should preserve existing metadata fields when partial update is applied', () => {
+      mockFs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          [SNAP_NAME]: {
+            favorite: true,
+            protected: false,
+            category: 'staging',
+            engine: 'postgres',
+            projectId: 'proj-1',
+          },
+        }),
+      );
+
+      const result = service.update(SNAP_NAME, { favorite: false });
+
+      expect(result.meta.favorite).toBe(false);
+      expect(result.meta.category).toBe('staging');
+      expect(result.meta.projectId).toBe('proj-1');
+      expect(result.meta.engine).toBe('postgres');
+    });
+
+    it('should migrate basename metadata key to full name after update', () => {
+      const BASENAME = 'snapshot-mydb-20240601-10';
+      mockFs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          [BASENAME]: {
+            favorite: false,
+            protected: false,
+            category: null,
+            engine: 'postgres',
+            projectId: null,
+          },
+        }),
+      );
+
+      service.update(SNAP_NAME, { favorite: true });
+
+      const written = JSON.parse(
+        (mockFs.writeFileSync.mock.calls.find((c) =>
+          String(c[0]).includes('.snapshot-metadata.json'),
+        ) ?? ['', '{}'])[1] as string,
+      ) as Record<string, unknown>;
+
+      expect(written[SNAP_NAME]).toBeDefined();
+      expect(written[BASENAME]).toBeUndefined();
+    });
   });
 
   // ─── remove() ────────────────────────────────────────────────────────────────
@@ -698,6 +766,21 @@ describe('DbSnapshotsService', () => {
       );
 
       expect(result.engine).toBe('mysql');
+    });
+
+    it('should throw with descriptive message when psql restore fails', async () => {
+      mockExecFile.mockImplementation(
+        (
+          _f: unknown,
+          _a: unknown,
+          _o: unknown,
+          cb: (err: Error | null, stdout: string, stderr: string) => void,
+        ) => cb(new Error('psql: connection refused'), '', ''),
+      );
+
+      await expect(
+        service.restore(POSTGRES_SNAP, { database: 'target-db' }),
+      ).rejects.toThrow('psql restore failed: psql: connection refused');
     });
 
     it('should return generic restore message for unsupported engine', async () => {

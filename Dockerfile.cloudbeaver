@@ -7,6 +7,7 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists/*
 
 COPY config/cloudbeaver/cloudbeaver.conf.template /opt/cloudbeaver/conf-template/cloudbeaver.conf.template
+COPY config/cloudbeaver/data-sources.json /opt/cloudbeaver/conf-template/data-sources.json
 
 COPY scripts/cloudbeaver-entrypoint.sh /entrypoint-wrapper.sh
 RUN chmod +x /entrypoint-wrapper.sh

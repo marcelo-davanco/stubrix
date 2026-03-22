@@ -10,6 +10,7 @@
         "expireSessionAfterPeriod": ${CLOUDBEAVER_SESSION_EXPIRE},
         "develMode": false,
         "enableSecurityManager": false,
+        "forceHttps": false,
         "database": {
             "driver": "h2_embedded",
             "url": "jdbc:h2:${CLOUDBEAVER_WORKSPACE_DIR}/.data/cloudbeaver",
