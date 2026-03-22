@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PostgresDriver } from './postgres.driver';
 import { MysqlDriver } from './mysql.driver';
 import { SqliteDriver } from './sqlite.driver';
+import { MongodbDriver } from './mongodb.driver';
 import type { DatabaseDriverInterface } from './database-driver.interface';
 
 @Injectable()
@@ -12,8 +13,9 @@ export class DriverRegistryService {
     private readonly postgres: PostgresDriver,
     private readonly mysql: MysqlDriver,
     private readonly sqlite: SqliteDriver,
+    private readonly mongodb: MongodbDriver,
   ) {
-    this.drivers = [this.postgres, this.mysql, this.sqlite];
+    this.drivers = [this.postgres, this.mysql, this.sqlite, this.mongodb];
   }
 
   getAll(): DatabaseDriverInterface[] {
