@@ -87,12 +87,24 @@ export function useSettings() {
   };
 
   const rebuildService = async (serviceId: string) => {
-    await fetch(`${API}/services/${serviceId}/rebuild`, { method: 'POST' });
+    const res = await fetch(`${API}/services/${serviceId}/rebuild`, {
+      method: 'POST',
+    });
+    if (!res.ok) {
+      await fetchServices();
+      throw new Error(`Failed to rebuild service: ${res.statusText}`);
+    }
     await fetchServices();
   };
 
   const removeContainer = async (serviceId: string) => {
-    await fetch(`${API}/services/${serviceId}/container`, { method: 'DELETE' });
+    const res = await fetch(`${API}/services/${serviceId}/container`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      await fetchServices();
+      throw new Error(`Failed to remove container: ${res.statusText}`);
+    }
     await fetchServices();
   };
 

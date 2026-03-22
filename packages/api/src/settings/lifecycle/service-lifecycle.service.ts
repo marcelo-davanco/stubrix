@@ -323,7 +323,7 @@ export class ServiceLifecycleService implements OnModuleInit {
 
     // Update SQLite
     this.configDb.updateServiceStatus(serviceId, false);
-    this.configDb.updateHealthStatus(serviceId, 'disabled' as HealthStatus);
+    this.configDb.updateHealthStatus(serviceId, 'disabled');
 
     this.logger.log(`Disabled service: ${serviceId}`);
 
@@ -334,7 +334,7 @@ export class ServiceLifecycleService implements OnModuleInit {
       message: `Service "${serviceId}" disabled successfully`,
       affectedServices:
         affectedServices.length > 0 ? affectedServices : undefined,
-      healthStatus: 'disabled' as HealthStatus,
+      healthStatus: 'disabled',
     };
   }
 
@@ -396,6 +396,15 @@ export class ServiceLifecycleService implements OnModuleInit {
   }
 
   async rebuildService(serviceId: string): Promise<ServiceActionResult> {
+    const row = this.configDb.getService(serviceId);
+    if (!row) {
+      return this.errorResult(
+        serviceId,
+        'rebuild',
+        `Service "${serviceId}" has no Docker service configured`,
+      );
+    }
+
     const def = this.registry.getService(serviceId);
 
     if (!def?.dockerService) {
@@ -444,6 +453,15 @@ export class ServiceLifecycleService implements OnModuleInit {
   }
 
   async removeContainer(serviceId: string): Promise<ServiceActionResult> {
+    const row = this.configDb.getService(serviceId);
+    if (!row) {
+      return this.errorResult(
+        serviceId,
+        'remove',
+        `Service "${serviceId}" has no Docker service configured`,
+      );
+    }
+
     const def = this.registry.getService(serviceId);
 
     if (!def?.dockerService) {
@@ -464,7 +482,7 @@ export class ServiceLifecycleService implements OnModuleInit {
     }
 
     this.configDb.updateServiceStatus(serviceId, false);
-    this.configDb.updateHealthStatus(serviceId, 'disabled' as HealthStatus);
+    this.configDb.updateHealthStatus(serviceId, 'disabled');
 
     this.logger.log(`Removed container for service: ${serviceId}`);
 
@@ -473,7 +491,7 @@ export class ServiceLifecycleService implements OnModuleInit {
       action: 'remove',
       success: true,
       message: `Container for "${serviceId}" removed successfully`,
-      healthStatus: 'disabled' as HealthStatus,
+      healthStatus: 'disabled',
     };
   }
 
