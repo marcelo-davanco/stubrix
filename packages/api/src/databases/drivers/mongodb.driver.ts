@@ -335,7 +335,21 @@ export class MongodbDriver implements DatabaseDriverInterface {
       const stderrChunks: Buffer[] = [];
       child.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
 
+      let settled = false;
+
+      const fail = (err: Error) => {
+        if (settled) return;
+        settled = true;
+        reject(err);
+      };
+
+      readStream.on('error', fail);
+      child.stdin.on('error', fail);
+      child.on('error', fail);
+
       child.on('close', (code) => {
+        if (settled) return;
+        settled = true;
         if (code !== 0) {
           const errMsg = Buffer.concat(stderrChunks).toString('utf8');
           reject(new Error(errMsg || 'mongorestore via docker exec failed'));
@@ -343,8 +357,6 @@ export class MongodbDriver implements DatabaseDriverInterface {
         }
         resolve();
       });
-
-      child.on('error', reject);
     });
   }
 }

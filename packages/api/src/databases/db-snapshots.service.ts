@@ -154,8 +154,11 @@ export class DbSnapshotsService {
 
   private getSnapshotMeta(name: string): SnapshotMeta {
     const meta = this.readMetadata();
+    const ext = this.getSnapshotExtension(name);
+    const baseName = path.basename(name, ext);
     return (
-      meta[name] ?? {
+      meta[name] ??
+      meta[baseName] ?? {
         favorite: false,
         protected: false,
         category: null,
