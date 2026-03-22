@@ -23,6 +23,7 @@ const ENGINE_LABEL: Record<string, string> = {
   postgres: '🐘 Postgres',
   mysql: '🐬 MySQL',
   sqlite: '📁 SQLite',
+  mongodb: '🍃 MongoDB',
 };
 
 const STATUS_DOT: Record<string, string> = {

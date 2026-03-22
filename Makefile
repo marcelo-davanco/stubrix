@@ -17,7 +17,8 @@
         localstack-up localstack-down \
         minio-up minio-down \
         keycloak-up keycloak-down \
-        zitadel-up zitadel-down
+        zitadel-up zitadel-down \
+        mongodb mongodb-up mongodb-down mongodb-shell
 
 # Load .env if it exists (values can still be overridden from CLI)
 -include .env
@@ -104,6 +105,18 @@ mysql-down: ## Stop MySQL services
 
 mysql-shell: ## Open mysql shell
 	docker compose exec db-mysql mysql -u $${MYSQL_USER:-stubrix} -p$${MYSQL_PASSWORD:-stubrix}
+
+mongodb: ## Start MongoDB
+	docker compose --profile mongodb up
+
+mongodb-up: ## Start MongoDB (detached)
+	docker compose --profile mongodb up -d
+
+mongodb-down: ## Stop MongoDB
+	docker compose --profile mongodb down
+
+mongodb-shell: ## Open mongosh shell
+	docker compose exec db-mongodb mongosh -u $${MONGO_USER:-stubrix} -p$${MONGO_PASSWORD:-stubrix}
 
 # ---------------------------------------------------------------------------
 # Database Viewers (F29)
@@ -319,7 +332,7 @@ bruno-test-collection: ## Run Bruno tests for a specific collection (e.g. make b
 	COLLECTION=$(COLLECTION) bash scripts/bruno-test.sh
 
 all-down: ## Stop all services
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger --profile localstack --profile minio --profile keycloak --profile zitadel down
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile mongodb --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger --profile localstack --profile minio --profile keycloak --profile zitadel down
 
 # ---------------------------------------------------------------------------
 # Conversion
@@ -343,7 +356,7 @@ list-mappings: ## List current WireMock mappings
 	@ls -la mocks/__files/ 2>/dev/null || echo "No response files found"
 
 clean: ## Remove all generated mocks and stop containers
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger --profile localstack --profile minio --profile keycloak --profile zitadel down -v 2>/dev/null || true
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile mongodb --profile adminer --profile cloudbeaver --profile hoppscotch --profile ai --profile pact --profile toxiproxy --profile kafka --profile rabbitmq --profile gripmock --profile monitoring --profile jaeger --profile localstack --profile minio --profile keycloak --profile zitadel down -v 2>/dev/null || true
 	rm -f .mockoon-env.json
 
 clean-mocks: ## Remove all mock files (careful!)
@@ -352,4 +365,4 @@ clean-mocks: ## Remove all mock files (careful!)
 	@echo "All mocks cleaned."
 
 down: ## Stop all containers
-	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql down
+	docker compose --profile wiremock --profile mockoon --profile wiremock-record --profile mockoon-proxy --profile postgres --profile mysql --profile mongodb down
