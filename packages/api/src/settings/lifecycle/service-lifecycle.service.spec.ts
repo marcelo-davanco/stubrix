@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceLifecycleService } from './service-lifecycle.service';
 import { ServiceRegistryService } from '../registry/service-registry.service';
@@ -47,6 +46,8 @@ describe('ServiceLifecycleService', () => {
       stopService: jest.fn().mockResolvedValue(makeDockerResult(true)),
       stopProfile: jest.fn().mockResolvedValue(makeDockerResult(true)),
       restartService: jest.fn().mockResolvedValue(makeDockerResult(true)),
+      rebuildService: jest.fn().mockResolvedValue(makeDockerResult(true)),
+      removeContainer: jest.fn().mockResolvedValue(makeDockerResult(true)),
       getRunningContainers: jest.fn().mockResolvedValue([]),
       getContainerStatus: jest.fn().mockResolvedValue('unknown'),
       getContainerLogs: jest.fn().mockResolvedValue(''),
@@ -290,6 +291,78 @@ describe('ServiceLifecycleService', () => {
 
     expect(result.success).toBe(false);
     expect(result.message).toMatch(/docker restart failed/i);
+  });
+
+  // ─── Rebuild ──────────────────────────────────────────────────
+
+  it('should rebuild a service container successfully', async () => {
+    const result = await service.rebuildService('wiremock');
+
+    expect(result.success).toBe(true);
+    expect(result.action).toBe('rebuild');
+    expect(result.healthStatus).toBe('unknown');
+    expect(docker.rebuildService).toHaveBeenCalledWith(
+      'wiremock',
+      expect.any(Object),
+    );
+  });
+
+  it('should return error when rebuilding unknown service', async () => {
+    const result = await service.rebuildService('nonexistent');
+
+    expect(result.success).toBe(false);
+    expect(result.message).toMatch(/no Docker service configured/i);
+    expect(docker.rebuildService).not.toHaveBeenCalled();
+  });
+
+  it('should handle Docker rebuild failure gracefully', async () => {
+    docker.rebuildService.mockResolvedValue(
+      makeDockerResult(false, 'build context error'),
+    );
+
+    const result = await service.rebuildService('wiremock');
+
+    expect(result.success).toBe(false);
+    expect(result.message).toMatch(/docker rebuild failed/i);
+  });
+
+  // ─── Remove Container ────────────────────────────────────────
+
+  it('should remove a container and mark service as disabled', async () => {
+    configDb.updateServiceStatus('wiremock', true);
+
+    const result = await service.removeContainer('wiremock');
+
+    expect(result.success).toBe(true);
+    expect(result.action).toBe('remove');
+    expect(result.healthStatus).toBe('disabled');
+    expect(docker.removeContainer).toHaveBeenCalledWith('wiremock');
+
+    const row = configDb.getService('wiremock');
+    expect(row!.enabled).toBe(0);
+    expect(row!.health_status).toBe('disabled');
+  });
+
+  it('should return error when removing container for unknown service', async () => {
+    const result = await service.removeContainer('nonexistent');
+
+    expect(result.success).toBe(false);
+    expect(result.message).toMatch(/no Docker service configured/i);
+    expect(docker.removeContainer).not.toHaveBeenCalled();
+  });
+
+  it('should return error when Docker remove fails', async () => {
+    docker.removeContainer.mockResolvedValue(
+      makeDockerResult(false, 'no such container'),
+    );
+
+    const result = await service.removeContainer('wiremock');
+
+    expect(result.success).toBe(false);
+    expect(result.message).toMatch(/docker remove failed/i);
+
+    const row = configDb.getService('wiremock');
+    expect(row!.enabled).toBe(0);
   });
 
   // ─── Status ───────────────────────────────────────────────────

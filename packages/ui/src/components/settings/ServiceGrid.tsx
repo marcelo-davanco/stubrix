@@ -24,6 +24,8 @@ interface ServiceGridProps {
   onToggle: (serviceId: string, enabled: boolean) => Promise<void> | void;
   onToggleAutoStart: (serviceId: string, autoStart: boolean) => void;
   onRestart: (serviceId: string) => void;
+  onRebuild: (serviceId: string) => void;
+  onRemoveContainer: (serviceId: string) => void;
   onViewLogs: (serviceId: string) => void;
 }
 
@@ -33,6 +35,8 @@ export function ServiceGrid({
   onToggle,
   onToggleAutoStart,
   onRestart,
+  onRebuild,
+  onRemoveContainer,
   onViewLogs,
 }: ServiceGridProps) {
   const filtered = selectedCategory
@@ -72,6 +76,8 @@ export function ServiceGrid({
                 onToggle={onToggle}
                 onToggleAutoStart={onToggleAutoStart}
                 onRestart={onRestart}
+                onRebuild={onRebuild}
+                onRemoveContainer={onRemoveContainer}
                 onViewLogs={onViewLogs}
               />
             ))}

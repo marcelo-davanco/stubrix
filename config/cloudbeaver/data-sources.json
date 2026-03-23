@@ -1,0 +1,45 @@
+{
+  "format-version": 3,
+  "drivers-version": 1,
+  "folders": {},
+  "connections": {
+    "stubrix-postgres": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "Stubrix PostgreSQL",
+      "save-password": true,
+      "read-only": false,
+      "configuration": {
+        "host": "db-postgres",
+        "port": "${PG_EXTERNAL_PORT}",
+        "database": "${PG_DATABASE}",
+        "user": "${PG_USER}",
+        "password": "${PG_PASSWORD}",
+        "auth-model": "native",
+        "properties": {}
+      },
+      "virtual-model": { "id": "stubrix-postgres" },
+      "custom-properties": {},
+      "driver-properties": {}
+    },
+    "stubrix-mysql": {
+      "provider": "mysql",
+      "driver": "mysql8",
+      "name": "Stubrix MySQL",
+      "save-password": true,
+      "read-only": false,
+      "configuration": {
+        "host": "db-mysql",
+        "port": "${MYSQL_PORT}",
+        "database": "${MYSQL_DATABASE}",
+        "user": "${MYSQL_USER}",
+        "password": "${MYSQL_PASSWORD}",
+        "auth-model": "native",
+        "properties": {}
+      },
+      "virtual-model": { "id": "stubrix-mysql" },
+      "custom-properties": {},
+      "driver-properties": {}
+    }
+  }
+}

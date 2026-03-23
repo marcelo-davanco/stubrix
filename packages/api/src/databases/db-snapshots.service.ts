@@ -157,22 +157,26 @@ export class DbSnapshotsService {
     const meta = this.readMetadata();
     const ext = this.getSnapshotExtension(name);
     const baseName = path.basename(name, ext);
-    const key = DbSnapshotsService.SAFE_SNAPSHOT_NAME.test(name)
-      ? name
-      : undefined;
-    const legacyKey = DbSnapshotsService.SAFE_SNAPSHOT_NAME.test(baseName)
-      ? baseName
-      : undefined;
-    return (
-      (key ? meta[key] : undefined) ??
-      (legacyKey ? meta[legacyKey] : undefined) ?? {
+    const byName = meta[name];
+    const byBase = baseName !== name ? meta[baseName] : undefined;
+    if (!byName && !byBase) {
+      return {
         favorite: false,
         protected: false,
         category: null,
         engine: null,
         projectId: null,
-      }
-    );
+      };
+    }
+    if (!byName) return byBase!;
+    if (!byBase) return byName;
+    return {
+      favorite: byName.favorite,
+      protected: byName.protected,
+      category: byName.category ?? byBase.category,
+      engine: byName.engine ?? byBase.engine,
+      projectId: byName.projectId ?? byBase.projectId,
+    };
   }
 
   private resolveProjectId(projectId?: string): string | null {
@@ -197,21 +201,33 @@ export class DbSnapshotsService {
       throw new ForbiddenException('Invalid snapshot name');
     }
     const meta = this.readMetadata();
+    const existing = this.getSnapshotMeta(name);
     const safeUpdates: SnapshotMeta = {
-      ...this.getSnapshotMeta(name),
       favorite:
-        typeof updates.favorite === 'boolean' ? updates.favorite : false,
+        typeof updates.favorite === 'boolean'
+          ? updates.favorite
+          : existing.favorite,
       protected:
-        typeof updates.protected === 'boolean' ? updates.protected : false,
-      category: typeof updates.category === 'string' ? updates.category : null,
-      engine: typeof updates.engine === 'string' ? updates.engine : null,
+        typeof updates.protected === 'boolean'
+          ? updates.protected
+          : existing.protected,
+      category:
+        typeof updates.category === 'string'
+          ? updates.category
+          : existing.category,
+      engine:
+        typeof updates.engine === 'string' ? updates.engine : existing.engine,
       projectId:
-        typeof updates.projectId === 'string' ? updates.projectId : null,
+        typeof updates.projectId === 'string'
+          ? updates.projectId
+          : existing.projectId,
     };
-    const safeKey = String(name);
-    meta[safeKey] = safeUpdates;
+    meta[name] = safeUpdates;
+    if (baseName !== name && meta[baseName] !== undefined) {
+      delete meta[baseName];
+    }
     this.writeMetadata(meta);
-    return meta[safeKey];
+    return meta[name];
   }
 
   private listSnapshotFiles(): SnapshotFile[] {
@@ -347,13 +363,18 @@ export class DbSnapshotsService {
     const host = envOverrides?.host ?? this.postgresHost ?? 'localhost';
     const port = envOverrides?.port ?? this.postgresPort;
     const user = envOverrides?.user ?? this.postgresUser;
-    await this.execFileAsync(
-      'psql',
-      ['-h', host, '-p', port, '-U', user, '--file', filepath, database],
-      {
-        env: this.getPostgresEnv(database, envOverrides),
-      },
-    );
+    try {
+      await this.execFileAsync(
+        'psql',
+        ['-h', host, '-p', port, '-U', user, '--file', filepath, database],
+        {
+          env: this.getPostgresEnv(database, envOverrides),
+        },
+      );
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      throw new Error(`psql restore failed: ${detail}`);
+    }
   }
 
   list(projectId?: string): ListSnapshotsResponse {

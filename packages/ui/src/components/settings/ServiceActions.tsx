@@ -1,4 +1,12 @@
-import { Settings, RefreshCw, ScrollText, ExternalLink } from 'lucide-react';
+import {
+  Settings,
+  RefreshCw,
+  ScrollText,
+  ExternalLink,
+  Hammer,
+  Trash2,
+} from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../lib/i18n';
 import { cn } from '../../lib/utils';
@@ -7,6 +15,8 @@ interface ServiceActionsProps {
   serviceId: string;
   externalUrl?: string;
   onRestart: () => void;
+  onRebuild: () => void;
+  onRemoveContainer: () => void;
   onViewLogs: () => void;
 }
 
@@ -18,10 +28,23 @@ export function ServiceActions({
   serviceId,
   externalUrl,
   onRestart,
+  onRebuild,
+  onRemoveContainer,
   onViewLogs,
 }: ServiceActionsProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [confirmRemove, setConfirmRemove] = useState(false);
+
+  const handleRemoveClick = () => {
+    if (confirmRemove) {
+      onRemoveContainer();
+      setConfirmRemove(false);
+    } else {
+      setConfirmRemove(true);
+      setTimeout(() => setConfirmRemove(false), 3000);
+    }
+  };
 
   return (
     <div className="flex items-center gap-1">
@@ -40,6 +63,30 @@ export function ServiceActions({
         onClick={onRestart}
       >
         <RefreshCw size={13} />
+      </button>
+      <button
+        type="button"
+        title={t('settings.rebuild')}
+        className={btnClass}
+        onClick={onRebuild}
+      >
+        <Hammer size={13} />
+      </button>
+      <button
+        type="button"
+        title={
+          confirmRemove
+            ? t('settings.removeContainerConfirm')
+            : t('settings.removeContainer')
+        }
+        className={cn(
+          btnClass,
+          confirmRemove &&
+            'text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20',
+        )}
+        onClick={handleRemoveClick}
+      >
+        <Trash2 size={13} />
       </button>
       <button
         type="button"

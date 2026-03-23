@@ -626,10 +626,10 @@ export const HOPPSCOTCH_CONFIG_SCHEMA: ConfigField[] = [
     validation: { min: 1, max: 65535 },
   },
   {
-    key: 'HOPPSCOTCH_DB_URL',
+    key: 'DATABASE_URL',
     label: 'Database URL',
     dataType: 'string',
-    defaultValue: 'postgresql://postgres:postgres@db-postgres:5432/hoppscotch',
+    defaultValue: 'postgresql://postgres:postgres@db-postgres:5542/postgres',
     sensitive: true,
   },
 ];

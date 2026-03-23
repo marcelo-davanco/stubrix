@@ -36,8 +36,9 @@ setup: ## Clean install — removes node_modules and reinstalls with correct nat
 	npm install
 	@OS=$$(uname -s | tr '[:upper:]' '[:lower:]'); \
 	ARCH=$$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/'); \
+	LIBC=$$([ "$$OS" = "linux" ] && echo "-gnu" || echo ""); \
 	ROLLUP_VERSION=$$(node -e "console.log(require('./node_modules/rollup/package.json').version)"); \
-	npm_config_os=$$OS npm_config_cpu=$$ARCH npm install @rollup/rollup-$$OS-$$ARCH@$$ROLLUP_VERSION
+	npm_config_os=$$OS npm_config_cpu=$$ARCH npm install @rollup/rollup-$$OS-$$ARCH$$LIBC@$$ROLLUP_VERSION
 
 build: ## Build the Docker image
 	docker compose build
