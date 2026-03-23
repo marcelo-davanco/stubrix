@@ -2,8 +2,8 @@ import { IsIn, IsOptional, IsString } from 'class-validator';
 
 export class UpsertProjectDatabaseDto {
   @IsString()
-  @IsIn(['postgres', 'mysql', 'sqlite'])
-  engine!: 'mysql' | 'postgres' | 'sqlite';
+  @IsIn(['postgres', 'mysql', 'sqlite', 'mongodb'])
+  engine!: 'mysql' | 'postgres' | 'sqlite' | 'mongodb';
 
   @IsString()
   name!: string;
