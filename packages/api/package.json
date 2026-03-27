@@ -65,7 +65,7 @@
     "@types/better-sqlite3": "^7.6.12",
     "@types/express": "^5.0.0",
     "@types/handlebars": "^4.0.40",
-    "@types/ioredis": "^4.28.10",
+    "@types/ioredis": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/multer": "^2.1.0",
