@@ -9,7 +9,7 @@
 # ---------------------------------------------------------------------------
 # Stage 1: Install ALL dependencies + compile native addons for Linux
 # ---------------------------------------------------------------------------
-FROM node:25-slim AS deps
+FROM node:26-slim AS deps
 
 WORKDIR /app
 
@@ -55,7 +55,7 @@ RUN npm prune --omit=dev && \
 # ---------------------------------------------------------------------------
 # Stage 4: Production image (minimal — only runtime artifacts)
 # ---------------------------------------------------------------------------
-FROM node:25-slim AS production
+FROM node:26-slim AS production
 
 WORKDIR /app
 
